@@ -21,10 +21,12 @@ final class VisualParamsProvider: @unchecked Sendable {
     private var motion: Float = 0.5
     private var noise: Float = 0.5
     private var glitch: Float = 0.2
+    private var hasSignal: Bool = true
+    private var resetTransientsRequested: Bool = false
     private let mapping = ParamMapping()
 
     /// Call from main thread when analyzer or user settings change.
-    func update(snapshot: AnalyzerSnapshot, abstraction: Float, seed: UInt32, themeIndex: Int, shapeStyleIndex: Int, sceneTypeIndex: Int, energyBias: Float, motion: Float, noise: Float, glitch: Float) {
+    func update(snapshot: AnalyzerSnapshot, abstraction: Float, seed: UInt32, themeIndex: Int, shapeStyleIndex: Int, sceneTypeIndex: Int, energyBias: Float, motion: Float, noise: Float, glitch: Float, hasSignal: Bool = true) {
         lock.lock()
         self.snapshot = snapshot
         self.abstraction = abstraction
@@ -36,6 +38,14 @@ final class VisualParamsProvider: @unchecked Sendable {
         self.motion = max(0, min(1, motion))
         self.noise = max(0, min(1, noise))
         self.glitch = max(0, min(1, glitch))
+        self.hasSignal = hasSignal
+        lock.unlock()
+    }
+
+    /// Request transient reset on next params() call (panic reset). Call from main thread.
+    func requestTransientReset() {
+        lock.lock()
+        resetTransientsRequested = true
         lock.unlock()
     }
 
@@ -52,8 +62,17 @@ final class VisualParamsProvider: @unchecked Sendable {
         let mot = motion
         let noi = noise
         let gli = glitch
+        let sig = hasSignal
+        let resetReq = resetTransientsRequested
+        resetTransientsRequested = false
         lock.unlock()
+        if resetReq { mapping.resetTransients() }
         let theme = ThemeLibrary.theme(byIndex: tIdx)
-        return mapping.map(snapshot: snap, abstraction: abs, energyBias: bias, theme: theme, seed: s, shapeStyleIndex: styleIdx, sceneTypeIndex: sceneIdx, time: time, resolution: resolution, motion: mot, noise: noi, glitch: gli)
+        var p = mapping.map(snapshot: snap, abstraction: abs, energyBias: bias, theme: theme, seed: s, shapeStyleIndex: styleIdx, sceneTypeIndex: sceneIdx, time: time, resolution: resolution, motion: mot, noise: noi, glitch: gli)
+        if !sig {
+            p.impact = 0
+            p.impulse = 0
+        }
+        return p
     }
 }

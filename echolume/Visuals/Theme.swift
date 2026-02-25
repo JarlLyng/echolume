@@ -34,7 +34,6 @@ struct Theme: Identifiable {
     func nudgedPalette(seed: UInt32) -> [SIMD4<Float>] {
         let t = Float(seed % 1000) / 1000
         return palette.map { c in
-            let hueShift = (t - 0.5) * 0.05
             var r = c.x, g = c.y, b = c.z
             // Simple RGB nudge
             r = max(0, min(1, r + (t - 0.5) * 0.03))

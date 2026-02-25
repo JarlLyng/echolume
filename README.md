@@ -1,6 +1,6 @@
 # Echolume
 
-A macOS app for **live, audio‑reactive 2D visuals** rendered with **Metal**. Echolume is meant as a **performance tool**: use the macOS system audio input (audio interface inputs, loopback inputs, mic, etc.), pick a visual theme, set an “abstraction” level, hit **Ready**, and perform.
+A macOS app for **live, audio‑reactive 2D visuals** rendered with **Metal**. Echolume is meant as a **performance tool**: choose an **audio input device** (audio interface inputs, loopback inputs, mic, etc.), pick a visual theme/scene, tweak a few performance knobs, hit **Ready**, and perform.
 
 > Design goals: **stable**, **low‑latency**, **minimal UI**, **beautiful results with few controls**, and a **clean architecture** that Cursor can extend deterministically.
 
@@ -15,7 +15,7 @@ Echolume turns sound into light.
 2. Choose **Audio Input Device** and channel pair directly inside Echolume.
 3. Choose a **Theme** (or press **Randomize**).
 4. Set **Abstraction** (single slider controlling multiple internal parameters).
-5. Press **Ready** → fullscreen (optionally on an external display) and visuals react to audio.
+5. Press **Ready** → visuals go fullscreen (optionally on a selected external display) and react to audio.
 
 **Important constraints (App Store friendly):**
 - Echolume captures **audio input** only (via CoreAudio/AVAudioEngine). It does **not** capture “system audio” directly.
@@ -35,17 +35,20 @@ Echolume turns sound into light.
   - provides a live **input meter** (RMS + peak)
   - runs a lightweight **FFT** (at least 3 bands: low/mid/high)
 - **Setup screen** (SwiftUI):
-  - Audio Source picker
+  - Audio input device picker (in-app switching)
+  - Channel pair picker (when available)
   - Theme picker
-  - Abstraction slider
+  - Scene picker
+  - Shape style picker
+  - Performance knobs: Abstraction, Energy Bias, Motion, Noise, Glitch
   - Randomize button
+  - Output Display picker (Auto/Main or external display)
   - Ready button
 - **Live screen**:
   - Fullscreen Metal output
-  - Minimal overlay (ESC/Back, tiny audio meter)
+  - Minimal overlay (ESC/Back, tiny audio meter, optional NO SIGNAL banner)
 
 ### Nice‑to‑have (after V1)
-- External display picker (“Output Display”).
 - Presets (save/load theme + abstraction + seed).
 - Additional analysis: onset detection, beat estimation.
 - Multiple scenes.
@@ -216,10 +219,13 @@ A theme defines:
 ### SetupView
 - Persist last used **input device/channel pair/theme/abstraction/seed** in `UserDefaults`.
 - Show a clear “Signal detected” indicator.
+- Keep controls minimal; avoid adding settings that don’t directly improve live performance.
+- Expose a small secondary action for **Panic Reset** (visuals only).
 
 ### LiveView
 - Fullscreen (toggle) with minimal chrome.
 - ESC exits fullscreen; `⌘.` or Back button exits Live.
+- Keyboard-first: Space = Randomize, Enter = Exit/Back, R = Panic Reset, ⌘R = Restart audio.
 
 ---
 
@@ -319,8 +325,12 @@ If the design system exposes ready-made SwiftUI components (buttons, sliders, ca
 
 ### Milestone 5 — Live readiness
 - Fullscreen stability
-- External display support (optional)
+- External display support (select output display; Live on external, Setup on main)
 - Performance tuning (FPS stable, no stutters)
+- Keyboard shortcuts for live use (Space/Enter/R/⌘R + 1–6 themes)
+- No-signal detection + minimal banner in LiveView
+- Panic Reset (resets visuals without restarting audio)
+- Restart audio action + basic error banner
 
 ---
 
@@ -335,6 +345,27 @@ When implementing, follow these rules:
 5. Add lightweight logging around audio start/stop and input format (avoid logging inside realtime callbacks).
 6. Device switching must use a deterministic restart model (dispose engine → create new engine → set device → install tap → start). Avoid KVC hacks or private API access.
 7. Scenes must represent genuinely different spatial and motion logic — avoid copying the same shader code with minor variations.
+
+### Console noise
+
+During development you may see CoreAudio/HAL console messages such as `proxy failed (nope)`, `Unable to obtain a task name port right`, occasional `IOWorkLoop: skipping cycle due to overload` during start/stop, or `-10877` spam.
+
+Treat these as **non-blocking** if:
+- audio capture works,
+- device switching works,
+- visuals remain stable.
+
+Avoid adding logging inside realtime callbacks.
+
+### Pre-review checklist
+
+Before external review / TestFlight:
+- Remove or throttle any `-10877` spam logging.
+- Ensure no debug-only UI is shown in Release builds.
+- Confirm microphone permission copy and behavior.
+- Verify device switching + external display behavior is stable.
+- Avoid heavy work/logging in realtime callbacks.
+- Keep UI minimal: only performance-critical controls.
 
 ---
 

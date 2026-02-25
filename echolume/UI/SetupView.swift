@@ -19,10 +19,6 @@ struct SetupView: View {
     @State private var debugExpanded: Bool = false
     #endif
 
-    private var hasSignal: Bool {
-        appModel.rms > 0.01 || appModel.peak > 0.02
-    }
-
     var body: some View {
         ScrollView {
             VStack(spacing: DesignTokens.Spacing.lg) {
@@ -142,16 +138,33 @@ struct SetupView: View {
 
             if appModel.hasMicPermission {
                 HStack(spacing: DesignTokens.Spacing.sm) {
-                    Image(systemName: hasSignal ? "checkmark.circle.fill" : "exclamationmark.triangle.fill")
+                    Image(systemName: appModel.hasSignal ? "checkmark.circle.fill" : "exclamationmark.triangle.fill")
                         .font(.system(size: DesignTokens.Typography.Size.sm))
-                        .foregroundStyle(hasSignal ? DesignTokens.Common.primary(colorScheme) : DesignTokens.ColorToken.State.warning)
-                    Text(hasSignal ? "Signal" : "No signal")
+                        .foregroundStyle(appModel.hasSignal ? DesignTokens.Common.primary(colorScheme) : DesignTokens.ColorToken.State.warning)
+                    Text(appModel.hasSignal ? "Signal detected ✅" : "No signal ⚠️")
                         .font(.system(size: DesignTokens.Typography.Size.xs, weight: DesignTokens.Typography.Weight.regular))
                         .foregroundStyle(DesignTokens.Common.Text.tertiary(colorScheme))
                     Spacer()
                     LevelMeterView(rms: appModel.rms, peak: appModel.peak, compact: true)
                         .frame(width: 60, height: 14)
                 }
+            }
+
+            if !appModel.debugEngineRunning || appModel.debugLastError != nil {
+                HStack(spacing: DesignTokens.Spacing.sm) {
+                    Image(systemName: "exclamationmark.triangle.fill")
+                        .foregroundStyle(DesignTokens.ColorToken.State.warning)
+                    Text(appModel.debugLastError ?? "Audio not running")
+                        .font(.system(size: DesignTokens.Typography.Size.xs))
+                        .foregroundStyle(DesignTokens.Common.Text.secondary(colorScheme))
+                    Spacer()
+                    Button("Restart audio (⌘R)") { appModel.restartAudio() }
+                        .font(.system(size: DesignTokens.Typography.Size.xs, weight: DesignTokens.Typography.Weight.semibold))
+                        .foregroundStyle(DesignTokens.Common.primary(colorScheme))
+                }
+                .padding(DesignTokens.Spacing.sm)
+                .background(DesignTokens.Common.Background.card(colorScheme).opacity(0.9))
+                .clipShape(RoundedRectangle(cornerRadius: DesignTokens.Radius.sm))
             }
         }
         .padding(DesignTokens.Spacing.md)
@@ -356,6 +369,15 @@ struct SetupView: View {
                     .foregroundStyle(DesignTokens.Common.Text.secondary(colorScheme))
             }
             .buttonStyle(.plain)
+            .keyboardShortcut(.space, modifiers: [])
+
+            Button(action: { appModel.panicReset() }) {
+                Text("Panic")
+                    .font(.system(size: DesignTokens.Typography.Size.sm, weight: DesignTokens.Typography.Weight.regular))
+                    .foregroundStyle(DesignTokens.Common.Text.secondary(colorScheme))
+            }
+            .buttonStyle(.bordered)
+            .keyboardShortcut("r", modifiers: [])
 
             Button(action: { appModel.enterLive() }) {
                 Text("Ready")
@@ -368,6 +390,7 @@ struct SetupView: View {
                     .clipShape(RoundedRectangle(cornerRadius: DesignTokens.Radius.md))
             }
             .buttonStyle(.plain)
+            .keyboardShortcut(.return, modifiers: [])
         }
         .frame(maxWidth: .infinity)
     }

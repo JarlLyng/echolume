@@ -56,6 +56,7 @@ final class AudioManager {
     private var ringWriteIndex: Int = 0
     private var ringReadIndex: Int = 0
     private let ringLock = NSLock()
+    private let statsLock = NSLock()
     private var processBuffer: [Float]
 
     private(set) var lastError: String?
@@ -69,10 +70,14 @@ final class AudioManager {
     private var fftWorkItem: DispatchWorkItem?
 
     var engineRunning: Bool { engine?.isRunning ?? false }
-    var debugLastRMS: Float { _rms }
-    var debugLastPeak: Float { _peak }
-    var debugLastFrames: UInt32 { _frameCount }
-    var debugChannelCount: Int { _channelCount }
+    /// For UI: engine is running.
+    var isRunning: Bool { engine?.isRunning ?? false }
+    /// For UI: last start failure message.
+    var lastErrorMessage: String? { lastError }
+    var debugLastRMS: Float { statsLock.lock(); defer { statsLock.unlock() }; return _rms }
+    var debugLastPeak: Float { statsLock.lock(); defer { statsLock.unlock() }; return _peak }
+    var debugLastFrames: UInt32 { statsLock.lock(); defer { statsLock.unlock() }; return _frameCount }
+    var debugChannelCount: Int { statsLock.lock(); defer { statsLock.unlock() }; return _channelCount }
 
     var lowPublisher: AnyPublisher<Float, Never> { analyzer.lowPublisher.eraseToAnyPublisher() }
     var midPublisher: AnyPublisher<Float, Never> { analyzer.midPublisher.eraseToAnyPublisher() }
@@ -130,17 +135,21 @@ final class AudioManager {
             )
             if err != noErr {
                 lastError = "Could not use selected input device; using current/default input."
+                #if DEBUG
                 if !didLogThisRestart {
-                    Log.warn("AudioManager: AudioUnitSetProperty(CurrentDevice) failed: \(err)")
+                    Log.warn("AudioManager: AudioUnitSetProperty(CurrentDevice) failed: \(err) (once per restart)")
                     didLogThisRestart = true
                 }
+                #endif
             }
         } else if let id = deviceID, id != 0, input.audioUnit == nil {
             lastError = "Could not use selected input device; using current/default input."
+            #if DEBUG
             if !didLogThisRestart {
-                Log.warn("AudioManager: inputNode.audioUnit is nil")
+                Log.warn("AudioManager: inputNode.audioUnit is nil (once per restart)")
                 didLogThisRestart = true
             }
+            #endif
         }
 
         let format = input.inputFormat(forBus: 0)
@@ -152,9 +161,13 @@ final class AudioManager {
 
         input.removeTap(onBus: 0)
         let chCount = Int(format.channelCount)
+        statsLock.lock()
         _channelCount = chCount
+        statsLock.unlock()
+        ringLock.lock()
         ringWriteIndex = 0
         ringReadIndex = 0
+        ringLock.unlock()
         analyzer.setSampleRate(Float(format.sampleRate))
 
         let pairIdx = min(selectedChannelPairIndex, max(0, chCount / 2 - 1))
@@ -172,6 +185,7 @@ final class AudioManager {
 
             var sumSq: Float = 0
             var peak: Float = 0
+            self.ringLock.lock()
             var w = self.ringWriteIndex
             if chCount == 1 {
                 let ptr = channelData[0]
@@ -193,14 +207,20 @@ final class AudioManager {
                     w += 1
                 }
             }
-            self._rms = sqrt(sumSq / Float(n))
-            self._peak = peak
-            self._frameCount = UInt32(n)
             self.ringWriteIndex = w
             if w - self.ringReadIndex > cap {
                 self.ringReadIndex = w - cap
             }
-            if self.ringWriteIndex - self.ringReadIndex >= kFFTWindowSize {
+            let available = self.ringWriteIndex - self.ringReadIndex
+            self.ringLock.unlock()
+
+            self.statsLock.lock()
+            self._rms = sqrt(sumSq / Float(n))
+            self._peak = peak
+            self._frameCount = UInt32(n)
+            self.statsLock.unlock()
+
+            if available >= kFFTWindowSize {
                 self.scheduleFFT()
             }
 #if DEBUG
@@ -214,12 +234,16 @@ final class AudioManager {
             try eng.start()
             formatSampleRate = format.sampleRate
             formatChannelCount = format.channelCount
-            if !didLogThisRestart { Log.info("AudioManager: started \(format.sampleRate) Hz \(format.channelCount) ch") }
+            #if DEBUG
+            if !didLogThisRestart { Log.info("AudioManager: started \(format.sampleRate) Hz \(format.channelCount) ch (once per restart)") }
+            #endif
         } catch {
             lastError = "Could not use selected input device; using current/default input."
             formatSampleRate = 0
             formatChannelCount = 0
-            if !didLogThisRestart { Log.warn("AudioManager: engine.start failed: \(error.localizedDescription)") }
+            #if DEBUG
+            if !didLogThisRestart { Log.warn("AudioManager: engine.start failed: \(error.localizedDescription) (once per restart)") }
+            #endif
         }
     }
 
@@ -251,7 +275,7 @@ final class AudioManager {
         analyzer.process(buffer: processBuffer)
     }
 
-    /// Debounced and serialized. Same device ID selected again does nothing (caller checks). Rapid changes → one restart after ~250ms.
+    /// Single entry point for restart. Serial on audioManagerQueue; coalesced (request during restart runs once after).
     func restart(withDeviceID deviceID: AudioDeviceID?) {
         guard AudioManager.microphonePermissionGranted else { return }
         pendingLock.lock()
@@ -265,7 +289,7 @@ final class AudioManager {
         audioManagerQueue.asyncAfter(deadline: .now() + .milliseconds(kRestartDebounceMs), execute: item)
     }
 
-    /// Runs on audioManagerQueue. Prevents overlapping restarts; drains pending until none.
+    /// Runs on audioManagerQueue only. Guard prevents overlapping; coalesces by re-running once if a new request arrived during startEngine.
     private func performRestartDebounced() {
         guard !isRestarting else { return }
         pendingLock.lock()

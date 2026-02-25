@@ -63,6 +63,13 @@ final class AppModel: ObservableObject {
     @Published var hasMicPermission: Bool = false
     @Published var audioStatus: AudioStatus = .unknown
 
+    /// Signal present (rms > threshold). False after > 2s below threshold.
+    @Published var hasSignal: Bool = true
+    /// Seconds continuously below threshold (for UX).
+    @Published var noSignalSeconds: Double = 0
+    /// Seconds above threshold before setting hasSignal true (hysteresis exit).
+    private var signalOkSeconds: Double = 0
+
     @Published var audioDevices: [AudioDevice] = []
     @Published var selectedDeviceID: AudioDeviceID?
     @Published var showAdvancedDevices: Bool = false
@@ -88,6 +95,7 @@ final class AppModel: ObservableObject {
     private let audioManager = AudioManager()
     private var cancellables = Set<AnyCancellable>()
     private var debugTimer: Timer?
+    private var screenParamsObserver: NSObjectProtocol?
 
     init() {
         debugTimer = Timer.scheduledTimer(withTimeInterval: 0.1, repeats: true) { [weak self] _ in
@@ -95,6 +103,11 @@ final class AppModel: ObservableObject {
             Task { @MainActor in
                 self.debugEngineRunning = self.audioManager.engineRunning
                 self.debugLastError = self.audioManager.lastError
+                if self.audioManager.engineRunning {
+                    self.audioStatus = .running
+                } else if self.hasMicPermission {
+                    self.audioStatus = self.audioManager.lastError != nil ? .error(self.audioManager.lastError ?? "") : .stopped
+                }
                 self.debugFormatSampleRate = self.audioManager.formatSampleRate
                 self.debugFormatChannelCount = self.audioManager.formatChannelCount
                 self.debugLastRMS = self.audioManager.debugLastRMS
@@ -103,6 +116,15 @@ final class AppModel: ObservableObject {
                 self.debugChannelCount = self.audioManager.debugChannelCount
                 self.rms = self.audioManager.debugLastRMS
                 self.peak = self.audioManager.debugLastPeak
+                if self.rms > 0.02 {
+                    self.noSignalSeconds = 0
+                    self.signalOkSeconds += 0.1
+                    if self.signalOkSeconds >= 0.5 { self.hasSignal = true }
+                } else {
+                    self.signalOkSeconds = 0
+                    self.noSignalSeconds += 0.1
+                    if self.noSignalSeconds > 2.0 { self.hasSignal = false }
+                }
                 #if DEBUG
                 let now = CFAbsoluteTimeGetCurrent()
                 if now - self._debugMaxTapTimeReset >= 2.0 {
@@ -135,6 +157,9 @@ final class AppModel: ObservableObject {
             selectedDisplayID = uuid
         }
         refreshDisplays()
+        screenParamsObserver = NotificationCenter.default.addObserver(forName: NSApplication.didChangeScreenParametersNotification, object: nil, queue: .main) { [weak self] _ in
+            self?.refreshDisplays()
+        }
         audioManager.lowPublisher
             .receive(on: DispatchQueue.main)
             .sink { [weak self] v in self?.low = v; self?.pushSnapshot() }
@@ -164,13 +189,33 @@ final class AppModel: ObservableObject {
             energyBias: energyBias,
             motion: motion,
             noise: noise,
-            glitch: glitch
+            glitch: glitch,
+            hasSignal: hasSignal
         )
     }
 
-    /// Build availableDisplays from NSScreen.screens. Call on app start and when SetupView appears.
+    /// Panic reset: new seed, reset glitch/impulse transients. Does not restart audio.
+    func panicReset() {
+        seed = UInt32.random(in: 0 ... .max)
+        visualParamsProvider.requestTransientReset()
+        pushSnapshot()
+    }
+
+    /// Restart audio engine with current device and channel pair.
+    func restartAudio() {
+        audioManager.setChannelPairIndex(selectedChannelPair)
+        audioManager.restart(withDeviceID: selectedDeviceID)
+    }
+
+    /// Build availableDisplays from NSScreen.screens. Call on app start and when SetupView appears. Closes live window if its display was disconnected.
     func refreshDisplays() {
         let screens = NSScreen.screens
+        if let w = liveWindow, let screen = w.screen, !screens.contains(where: { $0 === screen }) {
+            w.close()
+            liveWindow = nil
+            liveOnExternal = false
+            state = .setup
+        }
         availableDisplays = screens.enumerated().map { index, screen in
             OutputDisplay.build(from: screen, isMain: index == 0)
         }

@@ -152,4 +152,11 @@ final class ParamMapping {
         let c = max(0, min(1, x))
         return c * c * (3 - 2 * c)
     }
+
+    /// Reset impulse/glitch transient state. Call from render thread (e.g. from provider when requested).
+    func resetTransients() {
+        impulse = 0
+        glitchPhase = 0
+        prevPeak = 0
+    }
 }

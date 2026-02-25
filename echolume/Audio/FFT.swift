@@ -37,6 +37,7 @@ final class FFTProcessor {
     private let imagIn: UnsafeMutablePointer<Float>
     private let magnitudeSq: UnsafeMutablePointer<Float>
     private let window: UnsafeMutablePointer<Float>
+    private let windowed: UnsafeMutablePointer<Float>
     private let frameCount = kFFTSize
     private let halfN = kFFTHalfN
 
@@ -45,6 +46,7 @@ final class FFTProcessor {
         imagIn = UnsafeMutablePointer.allocate(capacity: halfN)
         magnitudeSq = UnsafeMutablePointer.allocate(capacity: kMagnitudeCount)
         window = UnsafeMutablePointer.allocate(capacity: frameCount)
+        windowed = UnsafeMutablePointer.allocate(capacity: frameCount)
         vDSP_hann_window(window, vDSP_Length(frameCount), Int32(vDSP_HANN_NORM))
         guard let setup = vDSP_create_fftsetup(vDSP_Length(10), FFTRadix(kFFTRadix2)) else {
             return nil
@@ -58,13 +60,13 @@ final class FFTProcessor {
         imagIn.deallocate()
         magnitudeSq.deallocate()
         window.deallocate()
+        windowed.deallocate()
     }
 
-    /// Process 2048 samples; write 513 magnitudes to magnitudeOut.
+    /// Process 2048 samples; write 513 magnitudes to magnitudeOut. No allocations per call.
     func process(samples: UnsafePointer<Float>, magnitudeOut: UnsafeMutablePointer<Float>) {
-        var windowed = [Float](repeating: 0, count: frameCount)
         for i in 0 ..< frameCount { windowed[i] = samples[i] }
-        vDSP_vmul(windowed, 1, window, 1, &windowed, 1, vDSP_Length(frameCount))
+        vDSP_vmul(windowed, 1, window, 1, windowed, 1, vDSP_Length(frameCount))
         for i in 0 ..< halfN {
             realIn[i] = windowed[2 * i]
             imagIn[i] = windowed[2 * i + 1]

@@ -36,9 +36,6 @@ struct MetalView: NSViewRepresentable {
         init(visualParamsProvider: VisualParamsProvider) {
             self.paramsProvider = visualParamsProvider
             super.init()
-            if let device = MTLCreateSystemDefaultDevice() {
-                renderer = Renderer(metalDevice: device, paramsProvider: visualParamsProvider)
-            }
         }
 
         func mtkView(_ view: MTKView, drawableSizeWillChange size: CGSize) {
@@ -46,6 +43,9 @@ struct MetalView: NSViewRepresentable {
         }
 
         func draw(in view: MTKView) {
+            if renderer == nil, let device = view.device {
+                renderer = Renderer(metalDevice: device, paramsProvider: paramsProvider)
+            }
             renderer?.draw(in: view)
         }
     }

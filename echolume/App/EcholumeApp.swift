@@ -13,6 +13,14 @@ struct EcholumeApp: App {
         WindowGroup {
             RootView(appModel: appModel)
         }
+        .commands {
+            CommandGroup(after: .windowArrangement) {
+                Button("Restart Audio") { appModel.restartAudio() }
+                    .keyboardShortcut("r", modifiers: .command)
+                Button("Panic Reset (Visuals)") { appModel.panicReset() }
+                    .keyboardShortcut("r", modifiers: [])
+            }
+        }
     }
 }
 
@@ -37,5 +45,20 @@ private struct RootView: View {
         }
         .animation(.easeInOut(duration: 0.2), value: appModel.state)
         .animation(.easeInOut(duration: 0.2), value: appModel.liveOnExternal)
+        .onKeyPress { key in
+            let ch = key.characters
+            if key.key == .space { appModel.randomize(); return .handled }
+            if key.key == .return {
+                if showSetup { appModel.enterLive() } else { appModel.exitLive() }
+                return .handled
+            }
+            if ch == "1" { appModel.setThemeIndex(0); return .handled }
+            if ch == "2" { appModel.setThemeIndex(1); return .handled }
+            if ch == "3" { appModel.setThemeIndex(2); return .handled }
+            if ch == "4" { appModel.setThemeIndex(3); return .handled }
+            if ch == "5" { appModel.setThemeIndex(4); return .handled }
+            if ch == "6" { appModel.setThemeIndex(5); return .handled }
+            return .ignored
+        }
     }
 }

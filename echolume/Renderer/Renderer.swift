@@ -151,4 +151,7 @@ final class Renderer: NSObject, MTKViewDelegate {
     }
 
     func mtkView(_ view: MTKView, drawableSizeWillChange size: CGSize) {}
+
+    /// Reset any internal feedback/trail state. No-op when renderer is stateless (for panic reset).
+    func resetFeedback() {}
 }
