@@ -389,13 +389,16 @@ A one-page marketing site lives in **`docs/`** and can be hosted on GitHub Pages
 The site will be available at `https://<username>.github.io/echolume/` (or your custom domain if configured).
 
 - **`docs/index.html`** — landing page (hero, features, download).
+- **`docs/how-it-works.html`** — setup guide (mic, audio interface, BlackHole, troubleshooting).
+- **`docs/privacy.html`** — privacy policy.
+- **`docs/support.html`** — FAQ and contact (GitHub Issues).
 - **`docs/styles.css`** — styles (Echolume accent colors, dark theme).
 - **`docs/.nojekyll`** — disables Jekyll so static files are served as-is.
 
 When the app is on the Mac App Store, replace the download CTA in `docs/index.html` with the App Store link.
 
 - **Privacy policy:** `docs/privacy.html` → e.g. `https://JarlLyng.github.io/echolume/privacy.html` (use this URL in App Store Connect).
-- **Support:** `docs/support.html` — FAQ and contact (GitHub Issues). Link from the App Store listing if you want.
+- **Support:** `docs/support.html` — FAQ and contact. Link from the App Store listing if you want.
 
 ---
 

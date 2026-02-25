@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="da">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>How it works — Echolume</title>
+  <meta name="description" content="Set up Echolume with microphone, audio interface, or BlackHole. Quick start and troubleshooting.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <header class="header">
+    <a href="index.html" class="logo">Echolume</a>
+    <nav class="nav">
+      <a href="index.html">Home</a>
+      <a href="how-it-works.html">How it works</a>
+      <a href="index.html#download">Download</a>
+      <a href="privacy.html">Privacy</a>
+      <a href="support.html">Support</a>
+      <a href="https://github.com/JarlLyng/echolume" target="_blank" rel="noopener">GitHub</a>
+    </nav>
+  </header>
+
+  <main class="page-main">
+    <article class="legal">
+      <h1>How to make Echolume react to your sound</h1>
+      <p class="legal-intro">Echolume reacts to any audio input device on your Mac — microphone, audio interface, or virtual loopback like BlackHole.</p>
+
+      <section>
+        <h2>Quick start</h2>
+        <ol class="legal-list">
+          <li>Open Echolume.</li>
+          <li>Choose your Audio Input Device.</li>
+          <li>Press Ready.</li>
+        </ol>
+        <p>If you see the level meter moving, you're ready.</p>
+      </section>
+
+      <section>
+        <h2>Using your Mac microphone</h2>
+        <p>Select “MacBook Microphone” (or similar) in the Audio Input Device menu. Speak or play sound near the mic — watch the level meter respond.</p>
+      </section>
+
+      <section>
+        <h2>Using an audio interface</h2>
+        <p>Connect your interface and turn it on. In Echolume, select it as the Audio Input Device, then choose the correct channel pair (1–2, 3–4, etc.). Play audio through the interface. Echolume does not change your macOS system audio settings.</p>
+      </section>
+
+      <section>
+        <h2>Using BlackHole (recommended for live visuals)</h2>
+        <p>Route your DAW output into Echolume so visuals stay in sync with your mix.</p>
+        <p><strong>Step 1:</strong> Install <a href="https://existential.audio/blackhole/" target="_blank" rel="noopener">BlackHole 2ch</a> from the official site.</p>
+        <p><strong>Step 2:</strong> In your DAW (Ableton, Logic, etc.), set Audio Output → BlackHole 2ch.</p>
+        <p><strong>Step 3:</strong> In Echolume, select Audio Input Device → BlackHole 2ch.</p>
+        <p>This routes your DAW audio directly into Echolume for perfectly synced visuals.</p>
+      </section>
+
+      <section>
+        <h2>Troubleshooting</h2>
+        <dl class="faq">
+          <dt>I don't see any movement.</dt>
+          <dd>Make sure the level meter is moving. If not, check your selected input device.</dd>
+
+          <dt>No devices appear.</dt>
+          <dd>Make sure Echolume has Microphone permission in macOS Settings.</dd>
+
+          <dt>Visuals lag or stutter.</dt>
+          <dd>Try lowering buffer size in your DAW or closing other GPU-heavy apps.</dd>
+        </dl>
+      </section>
+    </article>
+  </main>
+
+  <footer class="footer">
+    <p><a href="index.html">Echolume</a> — <a href="privacy.html">Privacy</a> · <a href="support.html">Support</a> · <a href="https://github.com/JarlLyng/echolume">GitHub</a></p>
+  </footer>
+</body>
+</html>
