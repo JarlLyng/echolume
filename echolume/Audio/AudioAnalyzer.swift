@@ -2,26 +2,34 @@
 //  AudioAnalyzer.swift
 //  echolume
 //
-//  RMS, peak, and FFT bands (low/mid/high). Smoothed and normalized 0…1.
+//  RMS, peak, and FFT bands (low/mid/high). Envelope smoothing per band (fast attack, slower release).
+//  Transient impact when low band increases rapidly. No allocations in process path.
 //
 
 import Accelerate
 import Combine
 import Foundation
 
-/// Computes RMS, peak, and 3-band FFT (low/mid/high). Exposes smoothed values for UI and mapping.
+/// Envelope: attack 0.05 (fast), release 0.25 (slower).
+private let kEnvelopeAttack: Float = 0.05
+private let kEnvelopeRelease: Float = 0.25
+private let kImpactRiseThreshold: Float = 0.25
+private let kImpactDecay: Float = 0.9
+
+/// Computes RMS, peak, and 3-band FFT (low/mid/high). Exposes envelope-smoothed bands and impact.
 final class AudioAnalyzer {
     let rmsPublisher = PassthroughSubject<Float, Never>()
     let peakPublisher = PassthroughSubject<Float, Never>()
     let lowPublisher = PassthroughSubject<Float, Never>()
     let midPublisher = PassthroughSubject<Float, Never>()
     let highPublisher = PassthroughSubject<Float, Never>()
+    let impactPublisher = PassthroughSubject<Float, Never>()
 
     private let rmsSmoother = SmoothValue(initial: 0, attackCoeff: 0.35, releaseCoeff: 0.02)
     private let peakSmoother = SmoothValue(initial: 0, attackCoeff: 0.5, releaseCoeff: 0.08)
-    private let lowSmoother = SmoothValue(initial: 0, attackCoeff: 0.2, releaseCoeff: 0.03)
-    private let midSmoother = SmoothValue(initial: 0, attackCoeff: 0.25, releaseCoeff: 0.03)
-    private let highSmoother = SmoothValue(initial: 0, attackCoeff: 0.35, releaseCoeff: 0.02)
+    private let lowEnvelope = SmoothValue(initial: 0, attackCoeff: kEnvelopeAttack, releaseCoeff: kEnvelopeRelease)
+    private let midEnvelope = SmoothValue(initial: 0, attackCoeff: kEnvelopeAttack, releaseCoeff: kEnvelopeRelease)
+    private let highEnvelope = SmoothValue(initial: 0, attackCoeff: kEnvelopeAttack, releaseCoeff: kEnvelopeRelease)
 
     private var sampleRate: Float = 48000
     private var fftProcessor: FFTProcessor?
@@ -29,6 +37,8 @@ final class AudioAnalyzer {
     private var runningLow: Float = 0.01
     private var runningMid: Float = 0.01
     private var runningHigh: Float = 0.01
+    private var prevLowN: Float = 0
+    private var impact: Float = 0
 
     init() {
         magnitudeBuffer = UnsafeMutablePointer.allocate(capacity: kMagnitudeCount)
@@ -54,9 +64,11 @@ final class AudioAnalyzer {
             let z: Float = 0
             rmsPublisher.send(rmsSmoother.tick(with: z))
             peakPublisher.send(peakSmoother.tick(with: z))
-            lowPublisher.send(lowSmoother.tick(with: z))
-            midPublisher.send(midSmoother.tick(with: z))
-            highPublisher.send(highSmoother.tick(with: z))
+            lowPublisher.send(lowEnvelope.tick(with: z))
+            midPublisher.send(midEnvelope.tick(with: z))
+            highPublisher.send(highEnvelope.tick(with: z))
+            impact *= kImpactDecay
+            impactPublisher.send(min(1, max(0, impact)))
             return
         }
 
@@ -81,15 +93,28 @@ final class AudioAnalyzer {
                     binCount: kMagnitudeCount,
                     sampleRate: sampleRate
                 )
-                runningLow = max(runningLow * 0.997, lowRaw * 0.3)
-                runningMid = max(runningMid * 0.997, midRaw * 0.3)
-                runningHigh = max(runningHigh * 0.997, highRaw * 0.3)
-                let lowN = min(1, lowRaw / (runningLow + 0.001))
-                let midN = min(1, midRaw / (runningMid + 0.001))
-                let highN = min(1, highRaw / (runningHigh + 0.001))
-                lowPublisher.send(lowSmoother.tick(with: lowN))
-                midPublisher.send(midSmoother.tick(with: midN))
-                highPublisher.send(highSmoother.tick(with: highN))
+            runningLow = max(runningLow * 0.997, lowRaw * 0.3)
+            runningMid = max(runningMid * 0.997, midRaw * 0.3)
+            runningHigh = max(runningHigh * 0.997, highRaw * 0.3)
+            let lowN = min(1, lowRaw / (runningLow + 0.001))
+            let midN = min(1, midRaw / (runningMid + 0.001))
+            let highN = min(1, highRaw / (runningHigh + 0.001))
+
+            if lowN - prevLowN > kImpactRiseThreshold {
+                impact = 1.0
+            } else {
+                impact *= kImpactDecay
+            }
+            impact = min(1, max(0, impact))
+            prevLowN = lowN
+
+            let smoothedLow = lowEnvelope.tick(with: lowN)
+            let smoothedMid = midEnvelope.tick(with: midN)
+            let smoothedHigh = highEnvelope.tick(with: highN)
+            lowPublisher.send(smoothedLow)
+            midPublisher.send(smoothedMid)
+            highPublisher.send(smoothedHigh)
+            impactPublisher.send(impact)
         }
     }
 }

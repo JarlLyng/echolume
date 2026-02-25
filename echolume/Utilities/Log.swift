@@ -19,6 +19,10 @@ enum Log {
         log.info("\(message, privacy: .public)")
     }
 
+    static func warn(_ message: String) {
+        log.warning("\(message, privacy: .public)")
+    }
+
     static func error(_ message: String) {
         log.error("\(message, privacy: .public)")
     }

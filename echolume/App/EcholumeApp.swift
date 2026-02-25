@@ -19,15 +19,23 @@ struct EcholumeApp: App {
 private struct RootView: View {
     @ObservedObject var appModel: AppModel
 
+    /// Show Setup when in setup, or when Live is on external (Setup stays on main).
+    private var showSetup: Bool {
+        switch appModel.state {
+        case .setup: return true
+        case .live: return appModel.liveOnExternal
+        }
+    }
+
     var body: some View {
         Group {
-            switch appModel.state {
-            case .setup:
+            if showSetup {
                 SetupView(appModel: appModel)
-            case .live:
+            } else {
                 LiveView(appModel: appModel)
             }
         }
         .animation(.easeInOut(duration: 0.2), value: appModel.state)
+        .animation(.easeInOut(duration: 0.2), value: appModel.liveOnExternal)
     }
 }

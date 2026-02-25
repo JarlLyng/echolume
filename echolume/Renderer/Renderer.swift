@@ -27,6 +27,22 @@ struct ShaderUniforms {
     var palette4: SIMD4<Float>
     var warpAmount: Float
     var trailPersistence: Float
+    var shapeStyleIndex: Int32
+    var shapeCount: Float
+    var noiseStrength: Float
+    var motionSpeed: Float
+    var reactivity: Float
+    var impact: Float
+    var impulse: Float
+    var sceneType: Int32
+    var motion: Float
+    var noise: Float
+    var glitch: Float
+    var lfo1: Float
+    var lfo2: Float
+    var lfo3: Float
+    var speedMul: Float
+    var glitchPhase: Float
 }
 
 final class Renderer: NSObject, MTKViewDelegate {
@@ -105,7 +121,23 @@ final class Renderer: NSObject, MTKViewDelegate {
             palette3: pal.3,
             palette4: pal.4,
             warpAmount: p.warpAmount,
-            trailPersistence: p.trailPersistence
+            trailPersistence: p.trailPersistence,
+            shapeStyleIndex: Int32(p.shapeStyleIndex),
+            shapeCount: p.shapeCount,
+            noiseStrength: p.noiseStrength,
+            motionSpeed: p.motionSpeed,
+            reactivity: p.reactivity,
+            impact: p.impact,
+            impulse: p.impulse,
+            sceneType: Int32(p.sceneType),
+            motion: p.motion,
+            noise: p.noise,
+            glitch: p.glitch,
+            lfo1: p.lfo1,
+            lfo2: p.lfo2,
+            lfo3: p.lfo3,
+            speedMul: p.speedMul,
+            glitchPhase: p.glitchPhase
         )
 
         encoder.setRenderPipelineState(pipelineState)

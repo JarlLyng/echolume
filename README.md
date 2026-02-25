@@ -1,6 +1,6 @@
 # Echolume
 
-A macOS app for **live, audio‑reactive 2D visuals** rendered with **Metal**. Echolume is meant as a **performance tool**: select an audio input source (audio interface inputs, loopback inputs, mic, etc.), pick a visual theme, set an “abstraction” level, hit **Ready**, and perform.
+A macOS app for **live, audio‑reactive 2D visuals** rendered with **Metal**. Echolume is meant as a **performance tool**: use the macOS system audio input (audio interface inputs, loopback inputs, mic, etc.), pick a visual theme, set an “abstraction” level, hit **Ready**, and perform.
 
 > Design goals: **stable**, **low‑latency**, **minimal UI**, **beautiful results with few controls**, and a **clean architecture** that Cursor can extend deterministically.
 
@@ -12,7 +12,7 @@ Echolume turns sound into light.
 
 **User flow (V1):**
 1. Open the app.
-2. Choose **Audio Source** (input device + channel pair).
+2. Choose **Audio Input Device** and channel pair directly inside Echolume.
 3. Choose a **Theme** (or press **Randomize**).
 4. Set **Abstraction** (single slider controlling multiple internal parameters).
 5. Press **Ready** → fullscreen (optionally on an external display) and visuals react to audio.
@@ -28,8 +28,10 @@ Echolume turns sound into light.
 ### Must‑have
 - **Metal renderer** for 2D visuals (single fullscreen pass + optional trail/feedback pass).
 - **Audio engine** that:
-  - enumerates input devices
-  - allows selecting **stereo channel pair** (e.g. 1–2, 3–4)
+  - enumerates available **audio input devices** (input‑only)
+  - allows selecting an **audio input device** directly in-app (without changing macOS system default)
+  - allows selecting a **stereo channel pair** when the chosen device has multiple channels (e.g. 1–2, 3–4)
+  - falls back safely to current/default input if a selected device cannot be activated
   - provides a live **input meter** (RMS + peak)
   - runs a lightweight **FFT** (at least 3 bands: low/mid/high)
 - **Setup screen** (SwiftUI):
@@ -52,11 +54,12 @@ Echolume turns sound into light.
 
 ## Architecture (Cursor should follow this)
 
-Keep the system in **three layers** with clear boundaries:
+Keep the system in **four layers** with clear boundaries:
 
-1) **Audio** (input + analysis)
+1) **Audio** (input + analysis + envelopes + transient detection)
 2) **Mapping** (turn analysis into normalized params)
-3) **Render** (Metal draws frames using params)
+3) **Scene** (defines geometry + motion behavior)
+4) **Render** (Metal draws frames using params)
 
 SwiftUI should be **thin** and mostly wire views to an `AppModel`.
 
@@ -85,6 +88,7 @@ Echolume/
     Theme.swift
     ThemeLibrary.swift
     ParamMapping.swift
+    SceneType.swift
   Renderer/
     MetalView.swift
     Renderer.swift
@@ -146,6 +150,20 @@ A normalized struct passed into the renderer each frame:
 - `palette`: 3–5 colors (as float4)
 - `seed`: UInt32
 
+#### `SceneType`
+Defines fundamentally different visual behaviors.
+
+enum SceneType {
+    case radial
+    case flow
+    case grid
+}
+
+Themes define color and mood.
+Scenes define geometry, motion logic, and audio interpretation.
+
+Scenes must not simply recolor the same shader logic — they must implement different spatial structures and different mappings of audio (low/mid/high, impact, impulse).
+
 #### `ParamMapping`
 Turns analyzer outputs into stable, musical motion:
 - Attack/release smoothing
@@ -196,7 +214,7 @@ A theme defines:
 ## UX / Interaction
 
 ### SetupView
-- Default to the **last used** device/channel/theme (persist in `UserDefaults`).
+- Persist last used **input device/channel pair/theme/abstraction/seed** in `UserDefaults`.
 - Show a clear “Signal detected” indicator.
 
 ### LiveView
@@ -264,15 +282,35 @@ If the design system exposes ready-made SwiftUI components (buttons, sliders, ca
 - SwiftUI SetupView + LiveView navigation
 - MetalView renders a test shader (time-based animation)
 
-### Milestone 2 — Audio input works
-- Device picker
+### Milestone 2 — Audio input works (system default baseline)
 - Permission prompt
+- AVAudioEngine input tap
 - Live meter (rms/peak)
+- Stable capture from macOS default input
 
-### Milestone 3 — Audio → visuals
+### Milestone 2.5 — In‑app device switching (Pro)
+- Enumerate input devices (CoreAudio, input‑only)
+- Audio Source dropdown (real device switching)
+- Deterministic engine restart model (teardown → new engine → set device → start)
+- Channel pair picker based on selected device
+- Safe fallback if device activation fails
+- No modification of macOS system default input
+
+### Milestone 3 — Musical Audio Engine
+
 - FFT bands
-- ParamMapping
-- 2–3 procedural visual styles
+- Envelope smoothing (attack/release per band)
+- Impact detection (low transient boost)
+- Peak impulse system
+- ParamMapping based on smoothed values
+
+### Milestone 3.5 — Scene System
+
+- Introduce SceneType (radial, flow, grid)
+- Scene picker in SetupView
+- Separate shader logic per scene
+- Unique audio interpretation per scene
+- Maintain performance stability
 
 ### Milestone 4 — Themes + Randomize
 - Theme library
@@ -294,7 +332,9 @@ When implementing, follow these rules:
 2. Keep SwiftUI views dumb; most logic goes into `AppModel` and subsystems.
 3. Avoid third‑party deps for V1.
 4. Prefer deterministic code (no hidden magic).
-5. Add lightweight logging around audio start/stop and device selection.
+5. Add lightweight logging around audio start/stop and input format (avoid logging inside realtime callbacks).
+6. Device switching must use a deterministic restart model (dispose engine → create new engine → set device → install tap → start). Avoid KVC hacks or private API access.
+7. Scenes must represent genuinely different spatial and motion logic — avoid copying the same shader code with minor variations.
 
 ---
 

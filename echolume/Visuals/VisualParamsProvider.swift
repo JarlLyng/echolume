@@ -11,19 +11,31 @@ import simd
 
 final class VisualParamsProvider: @unchecked Sendable {
     private let lock = NSLock()
-    private var snapshot = AnalyzerSnapshot(level: 0, peak: 0, low: 0, mid: 0, high: 0)
+    private var snapshot = AnalyzerSnapshot(level: 0, peak: 0, low: 0, mid: 0, high: 0, impact: 0)
     private var abstraction: Float = 0.5
     private var seed: UInt32 = 0
     private var themeIndex: Int = 0
+    private var shapeStyleIndex: Int = 0
+    private var sceneTypeIndex: Int = 0
+    private var energyBias: Float = 0.5
+    private var motion: Float = 0.5
+    private var noise: Float = 0.5
+    private var glitch: Float = 0.2
     private let mapping = ParamMapping()
 
     /// Call from main thread when analyzer or user settings change.
-    func update(snapshot: AnalyzerSnapshot, abstraction: Float, seed: UInt32, themeIndex: Int) {
+    func update(snapshot: AnalyzerSnapshot, abstraction: Float, seed: UInt32, themeIndex: Int, shapeStyleIndex: Int, sceneTypeIndex: Int, energyBias: Float, motion: Float, noise: Float, glitch: Float) {
         lock.lock()
         self.snapshot = snapshot
         self.abstraction = abstraction
         self.seed = seed
         self.themeIndex = max(0, min(themeIndex, ThemeLibrary.themes.count - 1))
+        self.shapeStyleIndex = max(0, min(shapeStyleIndex, 4))
+        self.sceneTypeIndex = max(0, min(sceneTypeIndex, 2))
+        self.energyBias = max(0, min(1, energyBias))
+        self.motion = max(0, min(1, motion))
+        self.noise = max(0, min(1, noise))
+        self.glitch = max(0, min(1, glitch))
         lock.unlock()
     }
 
@@ -34,8 +46,14 @@ final class VisualParamsProvider: @unchecked Sendable {
         let abs = abstraction
         let s = seed
         let tIdx = themeIndex
+        let styleIdx = shapeStyleIndex
+        let sceneIdx = sceneTypeIndex
+        let bias = energyBias
+        let mot = motion
+        let noi = noise
+        let gli = glitch
         lock.unlock()
         let theme = ThemeLibrary.theme(byIndex: tIdx)
-        return mapping.map(snapshot: snap, abstraction: abs, theme: theme, seed: s, time: time, resolution: resolution)
+        return mapping.map(snapshot: snap, abstraction: abs, energyBias: bias, theme: theme, seed: s, shapeStyleIndex: styleIdx, sceneTypeIndex: sceneIdx, time: time, resolution: resolution, motion: mot, noise: noi, glitch: gli)
     }
 }

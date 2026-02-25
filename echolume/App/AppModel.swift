@@ -4,6 +4,7 @@
 //
 
 import AVFoundation
+import AppKit
 import Combine
 import CoreAudio
 import Foundation
@@ -29,34 +30,57 @@ final class AppModel: ObservableObject {
     @Published var selectedThemeIndex: Int = 0
     @Published var abstraction: Float = 0.5
     @Published var seed: UInt32 = 0
+    @Published var selectedShapeStyle: VisualShapeStyle = .blobs
+    @Published var selectedScene: SceneType = .radial
+    @Published var energyBias: Float = 0.5
+    @Published var motion: Float = 0.5
+    @Published var noise: Float = 0.5
+    @Published var glitch: Float = 0.2
 
-    @Published var audioDevices: [AudioDevice] = []
-    @Published var selectedDeviceID: AudioDeviceID?
-    @Published var selectedChannelPair: Int = 0
+    private static let userDefaultsShapeStyleKey = "echolume.selectedShapeStyle"
+    private static let userDefaultsSceneKey = "echolume.selectedScene"
+    private static let userDefaultsMotionKey = "echolume.motion"
+    private static let userDefaultsNoiseKey = "echolume.noise"
+    private static let userDefaultsGlitchKey = "echolume.glitch"
+    private static let userDefaultsSelectedDisplayIDKey = "echolume.selectedDisplayID"
+
+    /// Available displays (main first). Refreshed by refreshDisplays().
+    @Published var availableDisplays: [OutputDisplay] = []
+    /// Persisted in UserDefaults. Nil = use main-window fullscreen fallback.
+    @Published var selectedDisplayID: UUID?
+    /// True when Live is shown in a separate window on an external display.
+    @Published private(set) var liveOnExternal: Bool = false
+
+    private var liveWindow: NSWindow?
+    private let liveWindowDelegate = LiveWindowDelegate()
+
     @Published var rms: Float = 0
     @Published var peak: Float = 0
     @Published var low: Float = 0
     @Published var mid: Float = 0
     @Published var high: Float = 0
+    @Published var impact: Float = 0
     @Published var hasMicPermission: Bool = false
     @Published var audioStatus: AudioStatus = .unknown
-    /// True when the selected input device could not be used and system default is used instead.
-    @Published private(set) var isUsingFallbackInputDevice: Bool = false
-    /// True when the user selected an unsupported device (e.g. iPhone mic); show "This device is not supported yet".
-    @Published private(set) var isUnsupportedDeviceSelected: Bool = false
 
-    // DEBUG: AUHAL and callback state (updated from timer)
-    @Published var debugAUHALRunning: Bool = false
+    @Published var audioDevices: [AudioDevice] = []
+    @Published var selectedDeviceID: AudioDeviceID?
+    @Published var showAdvancedDevices: Bool = false
+    @Published var selectedChannelPair: Int = 0
+
+    // DEBUG: engine state (updated from timer)
+    @Published var debugEngineRunning: Bool = false
+    @Published var debugLastError: String?
+    @Published var debugFormatSampleRate: Double = 0
+    @Published var debugFormatChannelCount: UInt32 = 0
     @Published var debugLastRMS: Float = 0
     @Published var debugLastPeak: Float = 0
-    @Published var debugLastRenderStatus: Int = 0
-    @Published var debugChannelCount: Int = 0
     @Published var debugLastFrames: UInt32 = 0
-    @Published var debugFirstSample: Float = 0
-    @Published var debugMaxAbs: Float = 0
-    @Published var debugFormatFlags: UInt32 = 0
-    @Published var debugBytesPerFrame: UInt32 = 0
-    @Published var debugInterleaved: Bool = false
+    @Published var debugChannelCount: Int = 0
+#if DEBUG
+    @Published var debugMaxTapTimeMs: Float = 0
+    private var _debugMaxTapTimeReset: CFAbsoluteTime = 0
+#endif
 
     /// Renderer reads from this on its thread; we update from main.
     let visualParamsProvider = VisualParamsProvider()
@@ -69,117 +93,227 @@ final class AppModel: ObservableObject {
         debugTimer = Timer.scheduledTimer(withTimeInterval: 0.1, repeats: true) { [weak self] _ in
             guard let self = self else { return }
             Task { @MainActor in
-                self.debugAUHALRunning = self.audioManager.isAUHALActive
+                self.debugEngineRunning = self.audioManager.engineRunning
+                self.debugLastError = self.audioManager.lastError
+                self.debugFormatSampleRate = self.audioManager.formatSampleRate
+                self.debugFormatChannelCount = self.audioManager.formatChannelCount
                 self.debugLastRMS = self.audioManager.debugLastRMS
                 self.debugLastPeak = self.audioManager.debugLastPeak
-                self.debugLastRenderStatus = Int(self.audioManager.debugLastRenderStatus)
-                self.debugChannelCount = self.audioManager.debugChannelCount
                 self.debugLastFrames = self.audioManager.debugLastFrames
-                self.debugFirstSample = self.audioManager.debugFirstSample
-                self.debugMaxAbs = self.audioManager.debugMaxAbs
-                self.debugFormatFlags = self.audioManager.debugFormatFlags
-                self.debugBytesPerFrame = self.audioManager.debugBytesPerFrame
-                self.debugInterleaved = self.audioManager.debugInterleaved
+                self.debugChannelCount = self.audioManager.debugChannelCount
+                self.rms = self.audioManager.debugLastRMS
+                self.peak = self.audioManager.debugLastPeak
+                #if DEBUG
+                let now = CFAbsoluteTimeGetCurrent()
+                if now - self._debugMaxTapTimeReset >= 2.0 {
+                    self.debugMaxTapTimeMs = 0
+                    self._debugMaxTapTimeReset = now
+                }
+                let ns = self.audioManager.lastTapDurationNs
+                if ns > 0 {
+                    let ms = ns / 1_000_000
+                    if ms > self.debugMaxTapTimeMs { self.debugMaxTapTimeMs = ms }
+                }
+                #endif
+                self.pushSnapshot()
             }
         }
         RunLoop.main.add(debugTimer!, forMode: .common)
-
-        audioManager.onFallbackToDefaultDevice = { [weak self] in
-            Task { @MainActor in
-                self?.isUsingFallbackInputDevice = true
-            }
+        if let raw = UserDefaults.standard.string(forKey: Self.userDefaultsShapeStyleKey),
+           let style = VisualShapeStyle(rawValue: raw) {
+            selectedShapeStyle = style
         }
-        audioManager.rmsPublisher
-            .receive(on: DispatchQueue.main)
-            .sink { [weak self] v in
-                self?.rms = v
-                self?.pushSnapshot()
-            }
-            .store(in: &cancellables)
-        audioManager.peakPublisher
-            .receive(on: DispatchQueue.main)
-            .sink { [weak self] v in
-                self?.peak = v
-                self?.pushSnapshot()
-            }
-            .store(in: &cancellables)
+        if let raw = UserDefaults.standard.string(forKey: Self.userDefaultsSceneKey),
+           let scene = SceneType(rawValue: raw) {
+            selectedScene = scene
+        }
+        if let v = UserDefaults.standard.object(forKey: Self.userDefaultsMotionKey) as? Double { motion = Float(v) }
+        if let v = UserDefaults.standard.object(forKey: Self.userDefaultsNoiseKey) as? Double { noise = Float(v) }
+        if let v = UserDefaults.standard.object(forKey: Self.userDefaultsGlitchKey) as? Double { glitch = Float(v) }
+        if let uuidString = UserDefaults.standard.string(forKey: Self.userDefaultsSelectedDisplayIDKey),
+           let uuid = UUID(uuidString: uuidString) {
+            selectedDisplayID = uuid
+        }
+        refreshDisplays()
         audioManager.lowPublisher
             .receive(on: DispatchQueue.main)
-            .sink { [weak self] v in
-                self?.low = v
-                self?.pushSnapshot()
-            }
+            .sink { [weak self] v in self?.low = v; self?.pushSnapshot() }
             .store(in: &cancellables)
         audioManager.midPublisher
             .receive(on: DispatchQueue.main)
-            .sink { [weak self] v in
-                self?.mid = v
-                self?.pushSnapshot()
-            }
+            .sink { [weak self] v in self?.mid = v; self?.pushSnapshot() }
             .store(in: &cancellables)
         audioManager.highPublisher
             .receive(on: DispatchQueue.main)
-            .sink { [weak self] v in
-                self?.high = v
-                self?.pushSnapshot()
-            }
+            .sink { [weak self] v in self?.high = v; self?.pushSnapshot() }
+            .store(in: &cancellables)
+        audioManager.impactPublisher
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] v in self?.impact = v; self?.pushSnapshot() }
             .store(in: &cancellables)
     }
 
     private func pushSnapshot() {
         visualParamsProvider.update(
-            snapshot: AnalyzerSnapshot(level: rms, peak: peak, low: low, mid: mid, high: high),
+            snapshot: AnalyzerSnapshot(level: rms, peak: peak, low: low, mid: mid, high: high, impact: impact),
             abstraction: abstraction,
             seed: seed,
-            themeIndex: selectedThemeIndex
+            themeIndex: selectedThemeIndex,
+            shapeStyleIndex: selectedShapeStyle.shaderIndex,
+            sceneTypeIndex: selectedScene.shaderIndex,
+            energyBias: energyBias,
+            motion: motion,
+            noise: noise,
+            glitch: glitch
         )
     }
 
-    /// Call when app starts or SetupView appears. Requests microphone permission if needed;
-    /// only starts AudioManager after permission is granted.
-    func requestMicrophonePermissionAndStartAudio() {
-        audioDevices = AudioManager.enumerateInputDevices()
-        if selectedDeviceID == nil {
-            selectedDeviceID = preferredDefaultDeviceID()
+    /// Build availableDisplays from NSScreen.screens. Call on app start and when SetupView appears.
+    func refreshDisplays() {
+        let screens = NSScreen.screens
+        availableDisplays = screens.enumerated().map { index, screen in
+            OutputDisplay.build(from: screen, isMain: index == 0)
         }
+        if availableDisplays.count <= 1 {
+            selectedDisplayID = nil
+        } else if let id = selectedDisplayID, !availableDisplays.contains(where: { $0.id == id }) {
+            selectedDisplayID = nil
+        }
+    }
 
+    /// Currently selected display, or nil if none / invalid.
+    var selectedDisplay: OutputDisplay? {
+        guard let id = selectedDisplayID else { return nil }
+        return availableDisplays.first { $0.id == id }
+    }
+
+    private func enterFullscreenOnMainWindow() {
+        state = .live
+        liveOnExternal = false
+        if let window = NSApp.windows.first(where: { $0.isMainWindow }) {
+            window.toggleFullScreen(nil)
+        }
+    }
+
+    private func exitFullscreenOnMainWindow() {
+        if let window = NSApp.windows.first(where: { $0.isMainWindow }), window.styleMask.contains(.fullScreen) {
+            window.toggleFullScreen(nil)
+        }
+    }
+
+    func enterLive() {
+        guard let selected = selectedDisplay else {
+            enterFullscreenOnMainWindow()
+            return
+        }
+        if selected.isMain {
+            enterFullscreenOnMainWindow()
+            return
+        }
+        let screen = selected.screen
+        let window = NSWindow(
+            contentRect: screen.frame,
+            styleMask: [.borderless],
+            backing: .buffered,
+            defer: false,
+            screen: screen
+        )
+        window.level = .mainMenu + 1
+        window.collectionBehavior = [.fullScreenPrimary, .canJoinAllSpaces, .fullScreenAuxiliary]
+        window.isReleasedWhenClosed = false
+        window.backgroundColor = .black
+        window.contentView = NSHostingView(rootView: LiveView(appModel: self))
+        liveWindowDelegate.appModel = self
+        window.delegate = liveWindowDelegate
+        window.makeKeyAndOrderFront(nil)
+        window.toggleFullScreen(nil)
+        liveWindow = window
+        state = .live
+        liveOnExternal = true
+    }
+
+    func exitLive() {
+        if let w = liveWindow {
+            w.close()
+            liveWindow = nil
+        } else {
+            exitFullscreenOnMainWindow()
+        }
+        liveOnExternal = false
+        state = .setup
+    }
+
+    /// Called when the external Live window closes (e.g. system or user).
+    func externalLiveWindowDidClose() {
+        liveWindow = nil
+        liveOnExternal = false
+        state = .setup
+    }
+
+    func setSelectedDisplayID(_ id: UUID?) {
+        guard selectedDisplayID != id else { return }
+        selectedDisplayID = id
+        if let uuid = id {
+            UserDefaults.standard.set(uuid.uuidString, forKey: Self.userDefaultsSelectedDisplayIDKey)
+        } else {
+            UserDefaults.standard.removeObject(forKey: Self.userDefaultsSelectedDisplayIDKey)
+        }
+    }
+
+    /// Enumerate devices on demand. No listeners. Call on appear + refresh button.
+    func refreshAudioDevices() {
+        audioDevices = AudioDevice.enumerate(includeAdvanced: showAdvancedDevices)
+        if selectedDeviceID == nil, let defaultID = systemDefaultInputDeviceID(), audioDevices.contains(where: { $0.id == defaultID }) {
+            selectedDeviceID = defaultID
+        } else if selectedDeviceID != nil, !audioDevices.contains(where: { $0.id == selectedDeviceID }) {
+            selectedDeviceID = audioDevices.first?.id
+        }
+    }
+
+    private func systemDefaultInputDeviceID() -> AudioDeviceID? {
+        var address = AudioObjectPropertyAddress(
+            mSelector: kAudioHardwarePropertyDefaultInputDevice,
+            mScope: kAudioObjectPropertyScopeGlobal,
+            mElement: kAudioObjectPropertyElementMain
+        )
+        var id: AudioDeviceID = 0
+        var size = UInt32(MemoryLayout<AudioDeviceID>.size)
+        let err = withUnsafeMutablePointer(to: &id) { ptr in
+            AudioObjectGetPropertyData(AudioObjectID(kAudioObjectSystemObject), &address, 0, nil, &size, ptr)
+        }
+        return err == noErr && id != 0 ? id : nil
+    }
+
+    /// Call when app starts or SetupView appears. Requests mic permission; starts engine with selected device.
+    func requestMicrophonePermissionAndStartAudio() {
+        refreshAudioDevices()
+        if selectedDeviceID == nil { selectedDeviceID = audioDevices.first?.id ?? systemDefaultInputDeviceID() }
+        audioManager.selectedChannelPairIndex = selectedChannelPair
         let status = AVCaptureDevice.authorizationStatus(for: .audio)
-
         switch status {
         case .authorized:
             hasMicPermission = true
             audioStatus = .running
-            isUsingFallbackInputDevice = false
-            if let id = selectedDeviceID { audioManager.setSelectedDevice(id: id) }
-            audioManager.selectedChannelPairIndex = selectedChannelPair
-            audioManager.restartEngine()
+            audioManager.restart(withDeviceID: selectedDeviceID)
             pushSnapshot()
-
         case .denied:
             hasMicPermission = false
             audioStatus = .noPermission
             pushSnapshot()
-
         case .notDetermined:
-            // This is the only path that triggers the system permission dialog and
-            // adds the app to System Settings → Privacy & Security → Microphone.
             AVCaptureDevice.requestAccess(for: .audio) { [weak self] granted in
                 DispatchQueue.main.async {
                     guard let self = self else { return }
                     self.hasMicPermission = granted
                     if granted {
                         self.audioStatus = .running
-                        self.isUsingFallbackInputDevice = false
-                        if let id = self.selectedDeviceID { self.audioManager.setSelectedDevice(id: id) }
-                        self.audioManager.selectedChannelPairIndex = self.selectedChannelPair
-                        self.audioManager.restartEngine()
+                        self.audioManager.restart(withDeviceID: self.selectedDeviceID)
                     } else {
                         self.audioStatus = .noPermission
                     }
                     self.pushSnapshot()
                 }
             }
-
         @unknown default:
             hasMicPermission = false
             audioStatus = .noPermission
@@ -187,12 +321,26 @@ final class AppModel: ObservableObject {
         }
     }
 
-    func enterLive() {
-        state = .live
+    func selectDevice(id: AudioDeviceID) {
+        setSelectedDeviceID(id)
     }
 
-    func exitLive() {
-        state = .setup
+    /// Set device (nil = Automatic / use default when starting).
+    func setSelectedDeviceID(_ id: AudioDeviceID?) {
+        if selectedDeviceID == id { return }
+        selectedDeviceID = id
+        if let id = id {
+            audioManager.setChannelPairIndex(selectedChannelPair)
+            if hasMicPermission { audioManager.restart(withDeviceID: id) }
+        }
+        pushSnapshot()
+    }
+
+    func selectChannelPair(_ index: Int) {
+        selectedChannelPair = max(0, index)
+        audioManager.setChannelPairIndex(selectedChannelPair)
+        if hasMicPermission { audioManager.restart(withDeviceID: selectedDeviceID) }
+        pushSnapshot()
     }
 
     func randomize() {
@@ -200,37 +348,15 @@ final class AppModel: ObservableObject {
         pushSnapshot()
     }
 
-    /// Preferred default: MacBook mic by name, else system default input, else first supported device.
-    private func preferredDefaultDeviceID() -> AudioDeviceID? {
-        let defaultID = AudioManager.defaultInputDeviceID()
-        if let macBook = audioDevices.first(where: { $0.name.localizedCaseInsensitiveContains("MacBook") && $0.isSupportedForAUHAL }) {
-            return macBook.id
-        }
-        if defaultID != 0, audioDevices.contains(where: { $0.id == defaultID }) {
-            return defaultID
-        }
-        if let supported = audioDevices.first(where: { $0.isSupportedForAUHAL }) {
-            return supported.id
-        }
-        return audioDevices.first?.id
-    }
-
-    func selectDevice(id: AudioDeviceID) {
-        selectedDeviceID = id
-        isUnsupportedDeviceSelected = audioDevices.first(where: { $0.id == id }).map { !$0.isSupportedForAUHAL } ?? false
-        audioManager.setSelectedDevice(id: id)
-        if hasMicPermission {
-            audioManager.restartEngine()
-        }
-    }
-
-    func selectChannelPair(_ index: Int) {
-        selectedChannelPair = max(0, index)
-        audioManager.setChannelPairIndex(selectedChannelPair)
-    }
-
     func openMicrophoneSettings() {
         if let url = URL(string: "x-apple.systempreferences:com.apple.preference.security?Privacy_Microphone") {
+            NSWorkspace.shared.open(url)
+        }
+    }
+
+    /// Opens System Settings → Sound (user can switch to Input tab).
+    func openAudioSettings() {
+        if let url = URL(string: "x-apple.systempreferences:com.apple.preference.sound") {
             NSWorkspace.shared.open(url)
         }
     }
@@ -247,6 +373,41 @@ final class AppModel: ObservableObject {
 
     func setAbstraction(_ value: Float) {
         abstraction = max(0, min(1, value))
+        pushSnapshot()
+    }
+
+    func setShapeStyle(_ style: VisualShapeStyle) {
+        selectedShapeStyle = style
+        UserDefaults.standard.set(style.rawValue, forKey: Self.userDefaultsShapeStyleKey)
+        pushSnapshot()
+    }
+
+    func setScene(_ scene: SceneType) {
+        selectedScene = scene
+        UserDefaults.standard.set(scene.rawValue, forKey: Self.userDefaultsSceneKey)
+        pushSnapshot()
+    }
+
+    func setEnergyBias(_ value: Float) {
+        energyBias = max(0, min(1, value))
+        pushSnapshot()
+    }
+
+    func setMotion(_ value: Float) {
+        motion = max(0, min(1, value))
+        UserDefaults.standard.set(Double(motion), forKey: Self.userDefaultsMotionKey)
+        pushSnapshot()
+    }
+
+    func setNoise(_ value: Float) {
+        noise = max(0, min(1, value))
+        UserDefaults.standard.set(Double(noise), forKey: Self.userDefaultsNoiseKey)
+        pushSnapshot()
+    }
+
+    func setGlitch(_ value: Float) {
+        glitch = max(0, min(1, value))
+        UserDefaults.standard.set(Double(glitch), forKey: Self.userDefaultsGlitchKey)
         pushSnapshot()
     }
 }

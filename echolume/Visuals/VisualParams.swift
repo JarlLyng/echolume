@@ -9,17 +9,34 @@ import simd
 struct VisualParams {
     var time: Float
     var resolution: SIMD2<Float>
-    var level: Float      // rms 0…1
-    var peak: Float       // 0…1
-    var low: Float        // low band 0…1
+    var level: Float
+    var peak: Float
+    var low: Float
     var mid: Float
     var high: Float
     var abstraction: Float
     var seed: UInt32
     var themeID: UInt32
-    /// 3–5 colors as RGBA float; pad to 5 for fixed Metal layout.
     var palette: (SIMD4<Float>, SIMD4<Float>, SIMD4<Float>, SIMD4<Float>, SIMD4<Float>)
-    /// Derived for shader: warp amount, trail persistence, etc.
     var warpAmount: Float
     var trailPersistence: Float
+    var shapeStyleIndex: Int
+    var shapeCount: Float
+    var noiseStrength: Float
+    var motionSpeed: Float
+    var reactivity: Float
+    var smoothedLow: Float
+    var smoothedMid: Float
+    var smoothedHigh: Float
+    var impact: Float
+    var impulse: Float
+    var sceneType: Int
+    var motion: Float
+    var noise: Float
+    var glitch: Float
+    var lfo1: Float
+    var lfo2: Float
+    var lfo3: Float
+    var speedMul: Float
+    var glitchPhase: Float
 }

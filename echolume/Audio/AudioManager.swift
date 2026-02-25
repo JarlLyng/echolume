@@ -2,267 +2,288 @@
 //  AudioManager.swift
 //  echolume
 //
-//  Uses AVAudioEngine for input. Enumerates devices via CoreAudio.
-//  Device switching: set system default input, then restart engine.
+//  Real in-app device switching via public API: inputNode.audioUnit + AudioUnitSetProperty.
+//  Never changes system default. Tap stays realtime-safe.
 //
 
 import AVFoundation
+import AudioToolbox
 import Combine
 import CoreAudio
 import Foundation
+#if canImport(Darwin)
+import Darwin
+#endif
 
 private let kTapBufferSize: UInt32 = 512
+private let kRingCapacity = 4096
+private let kFFTWindowSize = 2048
+private let kFFTBacklogLimit = kFFTWindowSize * 2
+private let kRestartDebounceMs: Int = 250
 
 final class AudioManager {
+    /// Serial queue: all stop → create → set device → tap → start run here. No overlapping restarts.
+    private let audioManagerQueue = DispatchQueue(label: "echolume.audio.manager", qos: .userInitiated)
+    private var isRestarting = false
+    private var debounceWorkItem: DispatchWorkItem?
+    private let pendingLock = NSLock()
+    /// Latest requested device for debounce; main thread sets, queue reads.
+    private var _pendingRestartDeviceID: AudioDeviceID?
+
+    /// New engine per start; nil after tear down.
+    private var engine: AVAudioEngine?
     private let analyzer = AudioAnalyzer()
-    private var cancellables = Set<AnyCancellable>()
 
-    private let engine = AVAudioEngine()
-    private var tapInstallFormat: AVAudioFormat?
-    private var selectedDeviceID: AudioDeviceID?
-    private var sampleRate: Float = 48000
+    private var _rms: Float = 0
+    private var _peak: Float = 0
+    private var _frameCount: UInt32 = 0
+    private var _channelCount: Int = 0
 
-    /// Pre-allocated mono buffer for tap (no allocation in tap).
-    private var monoBuffer: [Float]
-    private let monoBufferCapacity = 2048
+#if DEBUG
+    private var _lastTapDurationNs: Float = 0
+    private var _timebaseNumer: UInt32 = 1
+    private var _timebaseDenom: UInt32 = 1
+#endif
+    var lastTapDurationNs: Float {
+#if DEBUG
+        _lastTapDurationNs
+#else
+        0
+#endif
+    }
 
-    var rmsPublisher: AnyPublisher<Float, Never> { analyzer.rmsPublisher.eraseToAnyPublisher() }
-    var peakPublisher: AnyPublisher<Float, Never> { analyzer.peakPublisher.eraseToAnyPublisher() }
+    private var ringBuffer: [Float]
+    private var ringWriteIndex: Int = 0
+    private var ringReadIndex: Int = 0
+    private let ringLock = NSLock()
+    private var processBuffer: [Float]
+
+    private(set) var lastError: String?
+    private(set) var formatSampleRate: Double = 0
+    private(set) var formatChannelCount: AVAudioChannelCount = 0
+
+    /// Channel pair for downmix: 0 = ch 1–2, 1 = ch 3–4, …
+    var selectedChannelPairIndex: Int = 0
+
+    private let fftQueue = DispatchQueue(label: "echolume.fft", qos: .userInitiated)
+    private var fftWorkItem: DispatchWorkItem?
+
+    var engineRunning: Bool { engine?.isRunning ?? false }
+    var debugLastRMS: Float { _rms }
+    var debugLastPeak: Float { _peak }
+    var debugLastFrames: UInt32 { _frameCount }
+    var debugChannelCount: Int { _channelCount }
+
     var lowPublisher: AnyPublisher<Float, Never> { analyzer.lowPublisher.eraseToAnyPublisher() }
     var midPublisher: AnyPublisher<Float, Never> { analyzer.midPublisher.eraseToAnyPublisher() }
     var highPublisher: AnyPublisher<Float, Never> { analyzer.highPublisher.eraseToAnyPublisher() }
-
-    var selectedChannelPairIndex: Int = 0
-
-    /// No longer used (AUHAL removed); kept for DEBUG UI compatibility.
-    private(set) var isUsingFallbackDevice: Bool = false
-    var onFallbackToDefaultDevice: (() -> Void)?
-
-    // Lock-free: written in tap, read by main-thread Timer.
-    private var _debugLastRMS: Float = 0
-    private var _debugLastPeak: Float = 0
-    private var _debugLastFrames: UInt32 = 0
-    private var _debugMaxAbs: Float = 0
-    var isAUHALActive: Bool { false }
-    var debugLastRMS: Float { _debugLastRMS }
-    var debugLastPeak: Float { _debugLastPeak }
-    var debugLastRenderStatus: OSStatus { noErr }
-    var debugLastFrames: UInt32 { _debugLastFrames }
-    var debugFirstSample: Float { 0 }
-    var debugChannelCount: Int { 0 }
-    var debugMaxAbs: Float { _debugMaxAbs }
-    var debugFormatFlags: UInt32 = 0
-    var debugBytesPerFrame: UInt32 = 0
-    var debugInterleaved: Bool { true }
+    var impactPublisher: AnyPublisher<Float, Never> { analyzer.impactPublisher.eraseToAnyPublisher() }
 
     init() {
-        monoBuffer = [Float](repeating: 0, count: monoBufferCapacity)
+        ringBuffer = [Float](repeating: 0, count: kRingCapacity)
+        processBuffer = [Float](repeating: 0, count: kFFTWindowSize)
+#if DEBUG
+        var info = mach_timebase_info_data_t()
+        if mach_timebase_info(&info) == 0 {
+            _timebaseNumer = info.numer
+            _timebaseDenom = info.denom
+        }
+#endif
     }
 
     deinit {
-        stop()
+        stopAndTearDownEngine()
     }
 
-    // MARK: - Device enumeration (CoreAudio)
-
-    static func enumerateInputDevices() -> [AudioDevice] {
-        var devices = [AudioDevice]()
-        var propertyAddress = AudioObjectPropertyAddress(
-            mSelector: kAudioHardwarePropertyDevices,
-            mScope: kAudioObjectPropertyScopeGlobal,
-            mElement: kAudioObjectPropertyElementMain
-        )
-        var size: UInt32 = 0
-        let systemObjectID = AudioObjectID(kAudioObjectSystemObject)
-        var err = AudioObjectGetPropertyDataSize(systemObjectID, &propertyAddress, 0, nil, &size)
-        guard err == noErr, size > 0 else {
-            Log.debug("AudioObjectGetPropertyDataSize devices failed: \(err)")
-            return devices
+    /// Full tear down: remove tap, stop, discard engine. No logging in hot path.
+    func stopAndTearDownEngine() {
+        fftWorkItem?.cancel()
+        fftWorkItem = nil
+        guard let eng = engine else { return }
+        if eng.isRunning {
+            eng.inputNode.removeTap(onBus: 0)
+            eng.stop()
         }
-        let count = Int(size) / MemoryLayout<AudioDeviceID>.size
-        var deviceIDs = [AudioDeviceID](repeating: 0, count: count)
-        err = withUnsafeMutablePointer(to: &deviceIDs[0]) { ptr in
-            AudioObjectGetPropertyData(systemObjectID, &propertyAddress, 0, nil, &size, ptr)
-        }
-        guard err == noErr else {
-            Log.debug("AudioObjectGetPropertyData devices failed: \(err)")
-            return devices
-        }
-        for id in deviceIDs where id != 0 {
-            let inputChannels = Self.inputChannelCount(deviceID: id)
-            guard inputChannels > 0 else { continue }
-            let name = Self.deviceName(deviceID: id)
-            devices.append(AudioDevice(id: id, name: name, inputChannelCount: inputChannels))
-        }
-        return devices
+        engine = nil
     }
 
-    private static func deviceName(deviceID: AudioDeviceID) -> String {
-        var address = AudioObjectPropertyAddress(
-            mSelector: kAudioDevicePropertyDeviceNameCFString,
-            mScope: kAudioObjectPropertyScopeGlobal,
-            mElement: kAudioObjectPropertyElementMain
-        )
-        var name: CFString?
-        var size = UInt32(MemoryLayout<CFString?>.size)
-        let err = withUnsafeMutablePointer(to: &name) { ptr in
-            AudioObjectGetPropertyData(deviceID, &address, 0, nil, &size, ptr)
-        }
-        guard err == noErr, let n = name as String? else { return "Device \(deviceID)" }
-        return n
-    }
+    /// Called on audioManagerQueue only. One consolidated log line per failure.
+    private func startEngine(withDeviceID deviceID: AudioDeviceID?) {
+        lastError = nil
+        stopAndTearDownEngine()
 
-    private static func inputChannelCount(deviceID: AudioDeviceID) -> Int {
-        var address = AudioObjectPropertyAddress(
-            mSelector: kAudioDevicePropertyStreamConfiguration,
-            mScope: kAudioDevicePropertyScopeInput,
-            mElement: kAudioObjectPropertyElementMain
-        )
-        var size: UInt32 = 0
-        var err = AudioObjectGetPropertyDataSize(deviceID, &address, 0, nil, &size)
-        guard err == noErr, size > 0 else { return 0 }
-        let bufferListPtr = UnsafeMutablePointer<AudioBufferList>.allocate(capacity: 1)
-        defer { bufferListPtr.deallocate() }
-        err = AudioObjectGetPropertyData(deviceID, &address, 0, nil, &size, bufferListPtr)
-        guard err == noErr else { return 0 }
-        let list = UnsafeMutableAudioBufferListPointer(bufferListPtr)
-        return list.reduce(0) { $0 + Int($1.mNumberChannels) }
-    }
+        let eng = AVAudioEngine()
+        self.engine = eng
+        let input = eng.inputNode
 
-    static func defaultInputDeviceID() -> AudioDeviceID {
-        var address = AudioObjectPropertyAddress(
-            mSelector: kAudioHardwarePropertyDefaultInputDevice,
-            mScope: kAudioObjectPropertyScopeGlobal,
-            mElement: kAudioObjectPropertyElementMain
-        )
-        var id: AudioDeviceID = 0
-        var size = UInt32(MemoryLayout<AudioDeviceID>.size)
-        let err = withUnsafeMutablePointer(to: &id) { ptr in
-            AudioObjectGetPropertyData(AudioObjectID(kAudioObjectSystemObject), &address, 0, nil, &size, ptr)
-        }
-        return err == noErr ? id : 0
-    }
-
-    /// Set system default input device (used before starting engine for device switching).
-    static func setSystemDefaultInputDevice(id: AudioDeviceID) -> Bool {
-        var address = AudioObjectPropertyAddress(
-            mSelector: kAudioHardwarePropertyDefaultInputDevice,
-            mScope: kAudioObjectPropertyScopeGlobal,
-            mElement: kAudioObjectPropertyElementMain
-        )
-        var deviceID = id
-        let size = UInt32(MemoryLayout<AudioDeviceID>.size)
-        let err = withUnsafeMutablePointer(to: &deviceID) { ptr in
-            AudioObjectSetPropertyData(AudioObjectID(kAudioObjectSystemObject), &address, 0, nil, size, ptr)
-        }
-        return err == noErr
-    }
-
-    static func isDeviceSupportedForAUHAL(deviceID: AudioDeviceID) -> Bool {
-        let name = deviceName(deviceID: deviceID)
-        let lower = name.lowercased()
-        return !lower.contains("iphone") && !lower.contains("ipad")
-    }
-
-    // MARK: - Device selection
-
-    func setSelectedDevice(id: AudioDeviceID) {
-        selectedDeviceID = id
-        Log.info("AudioManager: selected device \"\(Self.deviceName(deviceID: id))\" (ID \(id))")
-    }
-
-    // MARK: - Capture (AVAudioEngine only)
-
-    private func startEngine() {
-        let deviceID = selectedDeviceID ?? Self.defaultInputDeviceID()
-        if deviceID != 0, Self.isDeviceSupportedForAUHAL(deviceID: deviceID) {
-            let ok = Self.setSystemDefaultInputDevice(id: deviceID)
-            if ok {
-                Log.info("AudioManager: system default input set to \"\(Self.deviceName(deviceID: deviceID))\"")
-            } else {
-                Log.debug("AudioManager: could not set default input to device \(deviceID)")
+        var didLogThisRestart = false
+        if let id = deviceID, id != 0, let unit = input.audioUnit {
+            var idCopy = id
+            let size = UInt32(MemoryLayout<AudioDeviceID>.size)
+            let err = AudioUnitSetProperty(
+                unit,
+                kAudioOutputUnitProperty_CurrentDevice,
+                kAudioUnitScope_Global,
+                0,
+                &idCopy,
+                size
+            )
+            if err != noErr {
+                lastError = "Could not use selected input device; using current/default input."
+                if !didLogThisRestart {
+                    Log.warn("AudioManager: AudioUnitSetProperty(CurrentDevice) failed: \(err)")
+                    didLogThisRestart = true
+                }
+            }
+        } else if let id = deviceID, id != 0, input.audioUnit == nil {
+            lastError = "Could not use selected input device; using current/default input."
+            if !didLogThisRestart {
+                Log.warn("AudioManager: inputNode.audioUnit is nil")
+                didLogThisRestart = true
             }
         }
-        startAVEngine()
-    }
 
-    private func startAVEngine() {
-        let input = engine.inputNode
         let format = input.inputFormat(forBus: 0)
         guard format.sampleRate > 0, format.channelCount > 0 else {
-            Log.error("AudioManager: Invalid input format")
+            lastError = lastError ?? "Invalid input format: \(format.sampleRate) Hz, \(format.channelCount) ch"
+            engine = nil
             return
         }
-        tapInstallFormat = format
-        sampleRate = Float(format.sampleRate)
-        analyzer.setSampleRate(sampleRate)
 
-        let pairIdx = selectedChannelPairIndex
-        let totalChannels = Int(format.channelCount)
-        let ch0 = min(pairIdx * 2, totalChannels - 1)
-        let ch1 = min(pairIdx * 2 + 1, totalChannels - 1)
+        input.removeTap(onBus: 0)
+        let chCount = Int(format.channelCount)
+        _channelCount = chCount
+        ringWriteIndex = 0
+        ringReadIndex = 0
+        analyzer.setSampleRate(Float(format.sampleRate))
 
-        engine.inputNode.installTap(onBus: 0, bufferSize: kTapBufferSize, format: nil) { [weak self] buffer, _ in
+        let pairIdx = min(selectedChannelPairIndex, max(0, chCount / 2 - 1))
+        let ch0 = min(pairIdx * 2, chCount - 1)
+        let ch1 = chCount > 1 ? min(pairIdx * 2 + 1, chCount - 1) : ch0
+        let cap = kRingCapacity
+
+        input.installTap(onBus: 0, bufferSize: kTapBufferSize, format: format) { [weak self] buffer, _ in
             guard let self = self else { return }
-            let frameLength = Int(buffer.frameLength)
-            guard let channelData = buffer.floatChannelData, frameLength > 0, frameLength <= self.monoBufferCapacity else { return }
-
-            for i in 0 ..< frameLength {
-                let l = channelData[ch0][i]
-                let r = totalChannels > 1 ? channelData[ch1][i] : l
-                self.monoBuffer[i] = (l + r) * 0.5
-            }
+#if DEBUG
+            let t0 = mach_absolute_time()
+#endif
+            let n = Int(buffer.frameLength)
+            guard let channelData = buffer.floatChannelData, n > 0 else { return }
 
             var sumSq: Float = 0
             var peak: Float = 0
-            for i in 0 ..< frameLength {
-                let s = self.monoBuffer[i]
-                sumSq += s * s
-                let a = abs(s)
-                if a > peak { peak = a }
+            var w = self.ringWriteIndex
+            if chCount == 1 {
+                let ptr = channelData[0]
+                for i in 0 ..< n {
+                    let s = ptr[i]
+                    sumSq += s * s
+                    if abs(s) > peak { peak = abs(s) }
+                    self.ringBuffer[w % cap] = s
+                    w += 1
+                }
+            } else {
+                let ptr0 = channelData[ch0]
+                let ptr1 = channelData[ch1]
+                for i in 0 ..< n {
+                    let s = (ptr0[i] + ptr1[i]) * 0.5
+                    sumSq += s * s
+                    if abs(s) > peak { peak = abs(s) }
+                    self.ringBuffer[w % cap] = s
+                    w += 1
+                }
             }
-            let rms = sqrt(sumSq / Float(frameLength))
-            self._debugLastRMS = rms
-            self._debugLastPeak = peak
-            self._debugMaxAbs = peak
-            self._debugLastFrames = UInt32(frameLength)
-
-            self.monoBuffer.withUnsafeBufferPointer { ptr in
-                guard let base = ptr.baseAddress else { return }
-                let slice = UnsafeBufferPointer(start: base, count: frameLength)
-                self.analyzer.process(buffer: slice)
+            self._rms = sqrt(sumSq / Float(n))
+            self._peak = peak
+            self._frameCount = UInt32(n)
+            self.ringWriteIndex = w
+            if w - self.ringReadIndex > cap {
+                self.ringReadIndex = w - cap
             }
+            if self.ringWriteIndex - self.ringReadIndex >= kFFTWindowSize {
+                self.scheduleFFT()
+            }
+#if DEBUG
+            let t1 = mach_absolute_time()
+            self._lastTapDurationNs = Float((t1 - t0) * UInt64(self._timebaseNumer) / UInt64(self._timebaseDenom))
+#endif
         }
 
+        eng.prepare()
         do {
-            try engine.start()
-            Log.info("AudioManager: AVAudioEngine started, \(format.sampleRate) Hz, \(format.channelCount) ch")
+            try eng.start()
+            formatSampleRate = format.sampleRate
+            formatChannelCount = format.channelCount
+            if !didLogThisRestart { Log.info("AudioManager: started \(format.sampleRate) Hz \(format.channelCount) ch") }
         } catch {
-            Log.error("AudioManager: AVAudioEngine start failed: \(error.localizedDescription)")
+            lastError = "Could not use selected input device; using current/default input."
+            formatSampleRate = 0
+            formatChannelCount = 0
+            if !didLogThisRestart { Log.warn("AudioManager: engine.start failed: \(error.localizedDescription)") }
         }
     }
 
-    func stop() {
-        if tapInstallFormat != nil {
-            engine.inputNode.removeTap(onBus: 0)
-            tapInstallFormat = nil
-        }
-        engine.stop()
-        Log.debug("AudioManager: stopped")
+    private func scheduleFFT() {
+        fftWorkItem?.cancel()
+        let work = DispatchWorkItem { [weak self] in self?.runFFT() }
+        fftWorkItem = work
+        fftQueue.async(execute: work)
     }
 
-    func restartEngine() {
+    private func runFFT() {
+        ringLock.lock()
+        let w = ringWriteIndex
+        var r = ringReadIndex
+        var available = w - r
+        guard available >= kFFTWindowSize else {
+            ringLock.unlock()
+            return
+        }
+        if available > kFFTBacklogLimit {
+            r = w - kFFTWindowSize
+        }
+        let cap = kRingCapacity
+        for i in 0 ..< kFFTWindowSize {
+            processBuffer[i] = ringBuffer[(r + i) % cap]
+        }
+        ringReadIndex = r + kFFTWindowSize
+        ringLock.unlock()
+        analyzer.process(buffer: processBuffer)
+    }
+
+    /// Debounced and serialized. Same device ID selected again does nothing (caller checks). Rapid changes → one restart after ~250ms.
+    func restart(withDeviceID deviceID: AudioDeviceID?) {
         guard AudioManager.microphonePermissionGranted else { return }
-        Log.info("AudioManager: restart requested")
-        stop()
-        startEngine()
+        pendingLock.lock()
+        _pendingRestartDeviceID = deviceID
+        pendingLock.unlock()
+        debounceWorkItem?.cancel()
+        let item = DispatchWorkItem { [weak self] in
+            self?.performRestartDebounced()
+        }
+        debounceWorkItem = item
+        audioManagerQueue.asyncAfter(deadline: .now() + .milliseconds(kRestartDebounceMs), execute: item)
+    }
+
+    /// Runs on audioManagerQueue. Prevents overlapping restarts; drains pending until none.
+    private func performRestartDebounced() {
+        guard !isRestarting else { return }
+        pendingLock.lock()
+        let deviceID = _pendingRestartDeviceID
+        _pendingRestartDeviceID = nil
+        pendingLock.unlock()
+        debounceWorkItem = nil
+        isRestarting = true
+        startEngine(withDeviceID: deviceID)
+        isRestarting = false
+        pendingLock.lock()
+        let hasMore = _pendingRestartDeviceID != nil
+        pendingLock.unlock()
+        if hasMore { performRestartDebounced() }
     }
 
     func setChannelPairIndex(_ index: Int) {
         selectedChannelPairIndex = max(0, index)
-        if engine.isRunning {
-            restartEngine()
-        }
     }
 
     static var microphonePermissionGranted: Bool {

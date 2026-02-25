@@ -36,8 +36,27 @@ struct LiveView: View {
                 .padding(DesignTokens.Spacing.lg)
                 Spacer()
             }
+
+            VStack {
+                Spacer()
+                VStack(alignment: .leading, spacing: 4) {
+                    Text("Motion: \(String(format: "%.2f", appModel.motion))  Noise: \(String(format: "%.2f", appModel.noise))  Glitch: \(String(format: "%.2f", appModel.glitch))")
+                    Text("Impact: \(String(format: "%.2f", appModel.impact))  Peak: \(String(format: "%.2f", appModel.peak))")
+                }
+                .font(.system(size: 11, weight: .medium))
+                .foregroundStyle(.white.opacity(0.9))
+                .padding(8)
+                .background(Color.black.opacity(0.5))
+                .clipShape(RoundedRectangle(cornerRadius: 6))
+                .padding(.bottom, 16)
+            }
         }
         .background(DesignTokens.Common.Background.app(colorScheme))
+        .onExitCommand { appModel.exitLive() }
+        .onKeyPress(.escape) {
+            appModel.exitLive()
+            return .handled
+        }
     }
 }
 

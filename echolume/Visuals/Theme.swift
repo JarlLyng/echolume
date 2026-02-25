@@ -5,7 +5,7 @@
 
 import simd
 
-/// Theme: name + palette (3–5 colors) + base motion settings.
+/// Theme: name + palette + mood (default shape style, allowed styles).
 struct Theme: Identifiable {
     let id: UInt32
     let name: String
@@ -15,13 +15,19 @@ struct Theme: Identifiable {
     var baseSpeed: Float
     /// Rotation speed multiplier.
     var rotationSpeed: Float
+    /// Default shape style for this theme.
+    var defaultShapeStyle: VisualShapeStyle
+    /// Shape styles this theme allows (empty = all).
+    var allowedShapeStyles: [VisualShapeStyle]
 
-    init(id: UInt32, name: String, palette: [SIMD4<Float>], baseSpeed: Float = 0.3, rotationSpeed: Float = 0.2) {
+    init(id: UInt32, name: String, palette: [SIMD4<Float>], baseSpeed: Float = 0.3, rotationSpeed: Float = 0.2, defaultShapeStyle: VisualShapeStyle = .blobs, allowedShapeStyles: [VisualShapeStyle] = []) {
         self.id = id
         self.name = name
         self.palette = palette
         self.baseSpeed = baseSpeed
         self.rotationSpeed = rotationSpeed
+        self.defaultShapeStyle = defaultShapeStyle
+        self.allowedShapeStyles = allowedShapeStyles.isEmpty ? VisualShapeStyle.allCases : allowedShapeStyles
     }
 
     /// Nudge palette within theme (e.g. for Randomize): slight hue/saturation shift.

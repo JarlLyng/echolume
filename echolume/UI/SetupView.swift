@@ -2,16 +2,30 @@
 //  SetupView.swift
 //  echolume
 //
+//  Centered control stack: Audio → Look → Play → Actions. Instrument-style hierarchy.
+//
 
+import AppKit
+import CoreAudio
 import SwiftUI
+
+private let controlStackWidth: CGFloat = 380
+private let sectionSpacing: CGFloat = DesignTokens.Spacing.md
 
 struct SetupView: View {
     @ObservedObject var appModel: AppModel
     @Environment(\.colorScheme) private var colorScheme
+    #if DEBUG
+    @State private var debugExpanded: Bool = false
+    #endif
+
+    private var hasSignal: Bool {
+        appModel.rms > 0.01 || appModel.peak > 0.02
+    }
 
     var body: some View {
         ScrollView {
-            VStack(spacing: DesignTokens.Spacing.xl) {
+            VStack(spacing: DesignTokens.Spacing.lg) {
                 Text("Echolume")
                     .font(.system(
                         size: DesignTokens.Typography.Size.xxl,
@@ -19,192 +33,330 @@ struct SetupView: View {
                     ))
                     .foregroundStyle(DesignTokens.Common.Text.primary(colorScheme))
 
-                // Microphone permission denied
                 if !appModel.hasMicPermission && appModel.audioStatus == .noPermission {
-                    VStack(alignment: .leading, spacing: DesignTokens.Spacing.sm) {
-                        Text("Microphone access is required for audio-reactive visuals.")
-                            .font(.system(size: DesignTokens.Typography.Size.sm))
-                            .foregroundStyle(DesignTokens.Common.Text.primary(colorScheme))
-                        Button(action: { appModel.openMicrophoneSettings() }) {
-                            Text("Open System Settings")
-                                .font(.system(size: DesignTokens.Typography.Size.sm, weight: DesignTokens.Typography.Weight.semibold))
-                                .foregroundStyle(DesignTokens.Common.OnPrimary.text(colorScheme))
-                                .padding(.horizontal, DesignTokens.Spacing.md)
-                                .padding(.vertical, DesignTokens.Spacing.sm)
-                                .background(DesignTokens.Common.primary(colorScheme))
-                                .clipShape(RoundedRectangle(cornerRadius: DesignTokens.Radius.sm))
-                        }
-                        .buttonStyle(.plain)
-                    }
-                    .padding(DesignTokens.Spacing.md)
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                    .background(DesignTokens.Common.Background.card(colorScheme))
-                    .clipShape(RoundedRectangle(cornerRadius: DesignTokens.Radius.md))
+                    permissionDeniedCard
                 }
 
-                // Audio Source picker
-                VStack(alignment: .leading, spacing: DesignTokens.Spacing.xs) {
-                    Text("Audio Source")
-                        .font(.system(size: DesignTokens.Typography.Size.sm, weight: DesignTokens.Typography.Weight.semibold))
-                        .foregroundStyle(DesignTokens.Common.Text.secondary(colorScheme))
-                    if appModel.audioDevices.isEmpty {
-                        Text("No input devices found")
-                            .font(.system(size: DesignTokens.Typography.Size.sm))
-                            .foregroundStyle(DesignTokens.Common.Text.tertiary(colorScheme))
-                            .frame(maxWidth: .infinity, alignment: .leading)
-                    } else {
-                        Picker("", selection: Binding(
-                            get: { appModel.selectedDeviceID },
-                            set: { if let id = $0 { appModel.selectDevice(id: id) } }
-                        )) {
-                            ForEach(appModel.audioDevices) { device in
-                                Text(device.name).tag(Optional(device.id))
-                            }
-                        }
-                        .pickerStyle(.menu)
-                        .tint(DesignTokens.Common.primary(colorScheme))
-                    }
-                    if appModel.isUnsupportedDeviceSelected {
-                        Text("This device is not supported yet.")
-                            .font(.system(size: DesignTokens.Typography.Size.xs))
-                            .foregroundStyle(DesignTokens.Common.Text.tertiary(colorScheme))
-                            .frame(maxWidth: .infinity, alignment: .leading)
-                    } else if appModel.isUsingFallbackInputDevice {
-                        Text("Using system default input — selected device could not be used.")
-                            .font(.system(size: DesignTokens.Typography.Size.xs))
-                            .foregroundStyle(DesignTokens.Common.Text.tertiary(colorScheme))
-                            .frame(maxWidth: .infinity, alignment: .leading)
-                    }
-                }
-                .padding(DesignTokens.Spacing.md)
-                .background(DesignTokens.Common.Background.card(colorScheme))
-                .clipShape(RoundedRectangle(cornerRadius: DesignTokens.Radius.md))
+                VStack(alignment: .leading, spacing: sectionSpacing) {
+                    // A) Audio
+                    audioSection
 
-                // Channel pair picker (stereo pairs for selected device)
-                if let device = appModel.audioDevices.first(where: { $0.id == appModel.selectedDeviceID }), !device.channelPairs.isEmpty {
-                    VStack(alignment: .leading, spacing: DesignTokens.Spacing.xs) {
-                        Text("Channel pair")
-                            .font(.system(size: DesignTokens.Typography.Size.sm, weight: DesignTokens.Typography.Weight.semibold))
-                            .foregroundStyle(DesignTokens.Common.Text.secondary(colorScheme))
-                        Picker("", selection: Binding(
-                            get: { min(appModel.selectedChannelPair, device.channelPairs.count - 1) },
-                            set: { appModel.selectChannelPair($0) }
-                        )) {
-                            ForEach(device.channelPairs, id: \.self) { idx in
-                                Text(AudioDevice.channelPairLabel(pairIndex: idx)).tag(idx)
-                            }
-                        }
-                        .pickerStyle(.menu)
-                        .tint(DesignTokens.Common.primary(colorScheme))
-                    }
-                    .padding(DesignTokens.Spacing.md)
-                    .background(DesignTokens.Common.Background.card(colorScheme))
-                    .clipShape(RoundedRectangle(cornerRadius: DesignTokens.Radius.md))
-                }
+                    // B) Look
+                    lookSection
 
-                // Live level meter
-                if appModel.hasMicPermission {
-                    LevelMeterView(rms: appModel.rms, peak: appModel.peak)
-                        .frame(height: 36)
-                    #if DEBUG
-                    HStack(spacing: DesignTokens.Spacing.sm) {
-                        Text("L: \(String(format: "%.2f", appModel.low))")
-                        Text("M: \(String(format: "%.2f", appModel.mid))")
-                        Text("H: \(String(format: "%.2f", appModel.high))")
-                    }
-                    .font(.system(size: DesignTokens.Typography.Size.xs, weight: .medium))
+                    // Output Display
+                    outputDisplaySection
+
+                    // C) Play
+                    playSection
+
+                    // D) Actions
+                    actionsSection
+                }
+                .frame(width: controlStackWidth)
+
+                #if DEBUG
+                debugSection
+                #endif
+            }
+            .padding(DesignTokens.Spacing.xxl)
+            .frame(maxWidth: .infinity)
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .background(DesignTokens.Common.Background.app(colorScheme))
+        .onAppear {
+            appModel.requestMicrophonePermissionAndStartAudio()
+            appModel.refreshDisplays()
+        }
+        .onReceive(NotificationCenter.default.publisher(for: NSApplication.didChangeScreenParametersNotification)) { _ in
+            appModel.refreshDisplays()
+        }
+    }
+
+    // MARK: - A) Audio
+    private var audioSection: some View {
+        VStack(alignment: .leading, spacing: DesignTokens.Spacing.sm) {
+            Text("Audio")
+                .font(.system(size: DesignTokens.Typography.Size.sm, weight: DesignTokens.Typography.Weight.semibold))
+                .foregroundStyle(DesignTokens.Common.Text.secondary(colorScheme))
+
+            if appModel.audioDevices.isEmpty {
+                Text("No input devices")
+                    .font(.system(size: DesignTokens.Typography.Size.sm))
                     .foregroundStyle(DesignTokens.Common.Text.tertiary(colorScheme))
-                    VStack(alignment: .leading, spacing: DesignTokens.Spacing.xs) {
-                        Text("DEBUG AUHAL")
-                            .font(.system(size: DesignTokens.Typography.Size.xs, weight: .semibold))
-                            .foregroundStyle(DesignTokens.Common.Text.tertiary(colorScheme))
-                        Text("Format flags: 0x\(String(format: "%X", appModel.debugFormatFlags))")
-                            .font(.system(size: DesignTokens.Typography.Size.xs))
-                            .foregroundStyle(DesignTokens.Common.Text.tertiary(colorScheme))
-                        Text("Interleaved: \(appModel.debugInterleaved ? "true" : "false")")
-                            .font(.system(size: DesignTokens.Typography.Size.xs))
-                            .foregroundStyle(DesignTokens.Common.Text.tertiary(colorScheme))
-                        Text("BytesPerFrame: \(appModel.debugBytesPerFrame)")
-                            .font(.system(size: DesignTokens.Typography.Size.xs))
-                            .foregroundStyle(DesignTokens.Common.Text.tertiary(colorScheme))
-                        Text("Channels: \(appModel.debugChannelCount)")
-                            .font(.system(size: DesignTokens.Typography.Size.xs))
-                            .foregroundStyle(DesignTokens.Common.Text.tertiary(colorScheme))
-                        Text("Frames: \(appModel.debugLastFrames)")
-                            .font(.system(size: DesignTokens.Typography.Size.xs))
-                            .foregroundStyle(DesignTokens.Common.Text.tertiary(colorScheme))
-                        Text("RMS: \(String(format: "%.4f", appModel.debugLastRMS))")
-                            .font(.system(size: DesignTokens.Typography.Size.xs))
-                            .foregroundStyle(DesignTokens.Common.Text.tertiary(colorScheme))
-                        Text("MaxAbs: \(String(format: "%.4f", appModel.debugMaxAbs))")
-                            .font(.system(size: DesignTokens.Typography.Size.xs))
-                            .foregroundStyle(DesignTokens.Common.Text.tertiary(colorScheme))
-                        Text("First sample (ch0): \(String(format: "%.6f", appModel.debugFirstSample))")
-                            .font(.system(size: DesignTokens.Typography.Size.xs))
-                            .foregroundStyle(DesignTokens.Common.Text.tertiary(colorScheme))
-                        Text("Last render status: \(appModel.debugLastRenderStatus)")
-                            .font(.system(size: DesignTokens.Typography.Size.xs))
-                            .foregroundStyle(DesignTokens.Common.Text.tertiary(colorScheme))
+                Button("Refresh", action: { appModel.refreshAudioDevices() })
+                    .font(.system(size: DesignTokens.Typography.Size.sm, weight: DesignTokens.Typography.Weight.regular))
+                    .foregroundStyle(DesignTokens.Common.primary(colorScheme))
+            } else {
+                Picker("", selection: Binding(
+                    get: { appModel.selectedDeviceID },
+                    set: { appModel.setSelectedDeviceID($0) }
+                )) {
+                    Text("Automatic").tag(nil as AudioDeviceID?)
+                    ForEach(appModel.audioDevices) { device in
+                        Text(device.name).tag(Optional(device.id))
                     }
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                    .padding(DesignTokens.Spacing.sm)
-                    .background(DesignTokens.Common.Background.card(colorScheme).opacity(0.7))
-                    .clipShape(RoundedRectangle(cornerRadius: DesignTokens.Radius.sm))
-                    #endif
+                }
+                .pickerStyle(.menu)
+                .tint(DesignTokens.Common.primary(colorScheme))
+
+                HStack(spacing: DesignTokens.Spacing.sm) {
+                    Button("Refresh", action: { appModel.refreshAudioDevices() })
+                        .font(.system(size: DesignTokens.Typography.Size.xs, weight: DesignTokens.Typography.Weight.regular))
+                        .foregroundStyle(DesignTokens.Common.primary(colorScheme))
+                    Toggle("Show advanced devices", isOn: Binding(
+                        get: { appModel.showAdvancedDevices },
+                        set: { appModel.showAdvancedDevices = $0; appModel.refreshAudioDevices() }
+                    ))
+                    .toggleStyle(.switch)
+                    .font(.system(size: DesignTokens.Typography.Size.xs))
                 }
 
-                // Theme picker
-            VStack(alignment: .leading, spacing: DesignTokens.Spacing.xs) {
-                Text("Theme")
-                    .font(.system(size: DesignTokens.Typography.Size.sm, weight: DesignTokens.Typography.Weight.semibold))
-                    .foregroundStyle(DesignTokens.Common.Text.secondary(colorScheme))
+                if appModel.debugChannelCount >= 2 {
+                    let pairCount = appModel.debugChannelCount / 2
+                    Picker("Channel pair", selection: Binding(
+                        get: { min(appModel.selectedChannelPair, max(0, pairCount - 1)) },
+                        set: { appModel.selectChannelPair($0) }
+                    )) {
+                        ForEach(0 ..< pairCount, id: \.self) { idx in
+                            Text(AudioDevice.channelPairLabel(pairIndex: idx)).tag(idx)
+                        }
+                    }
+                    .pickerStyle(.menu)
+                    .tint(DesignTokens.Common.primary(colorScheme))
+                }
+
+                if let err = appModel.debugLastError, !err.isEmpty {
+                    Text(err)
+                        .font(.system(size: DesignTokens.Typography.Size.xs))
+                        .foregroundStyle(DesignTokens.Common.Text.tertiary(colorScheme))
+                }
+
+                Button(action: { appModel.openAudioSettings() }) {
+                    Text("Open Sound Settings")
+                        .font(.system(size: DesignTokens.Typography.Size.xs, weight: DesignTokens.Typography.Weight.regular))
+                        .foregroundStyle(DesignTokens.Common.primary(colorScheme))
+                }
+                .buttonStyle(.plain)
+            }
+
+            if appModel.hasMicPermission {
+                HStack(spacing: DesignTokens.Spacing.sm) {
+                    Image(systemName: hasSignal ? "checkmark.circle.fill" : "exclamationmark.triangle.fill")
+                        .font(.system(size: DesignTokens.Typography.Size.sm))
+                        .foregroundStyle(hasSignal ? DesignTokens.Common.primary(colorScheme) : DesignTokens.ColorToken.State.warning)
+                    Text(hasSignal ? "Signal" : "No signal")
+                        .font(.system(size: DesignTokens.Typography.Size.xs, weight: DesignTokens.Typography.Weight.regular))
+                        .foregroundStyle(DesignTokens.Common.Text.tertiary(colorScheme))
+                    Spacer()
+                    LevelMeterView(rms: appModel.rms, peak: appModel.peak, compact: true)
+                        .frame(width: 60, height: 14)
+                }
+            }
+        }
+        .padding(DesignTokens.Spacing.md)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(DesignTokens.Common.Background.card(colorScheme))
+        .clipShape(RoundedRectangle(cornerRadius: DesignTokens.Radius.md))
+    }
+
+    // MARK: - B) Look
+    private var lookSection: some View {
+        VStack(alignment: .leading, spacing: DesignTokens.Spacing.sm) {
+            Text("Look")
+                .font(.system(size: DesignTokens.Typography.Size.sm, weight: DesignTokens.Typography.Weight.semibold))
+                .foregroundStyle(DesignTokens.Common.Text.secondary(colorScheme))
+
+            HStack(spacing: DesignTokens.Spacing.md) {
+                VStack(alignment: .leading, spacing: DesignTokens.Spacing.xs) {
+                    Text("Theme")
+                        .font(.system(size: DesignTokens.Typography.Size.xs, weight: DesignTokens.Typography.Weight.semibold))
+                        .foregroundStyle(DesignTokens.Common.Text.tertiary(colorScheme))
+                    Picker("", selection: Binding(
+                        get: { appModel.selectedThemeIndex },
+                        set: { appModel.setThemeIndex($0) }
+                    )) {
+                        ForEach(Array(ThemeLibrary.themes.enumerated()), id: \.offset) { index, theme in
+                            Text(theme.name).tag(index)
+                        }
+                    }
+                    .pickerStyle(.menu)
+                    .tint(DesignTokens.Common.primary(colorScheme))
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
+
+                VStack(alignment: .leading, spacing: DesignTokens.Spacing.xs) {
+                    Text("Shape")
+                        .font(.system(size: DesignTokens.Typography.Size.xs, weight: DesignTokens.Typography.Weight.semibold))
+                        .foregroundStyle(DesignTokens.Common.Text.tertiary(colorScheme))
+                    let theme = ThemeLibrary.theme(byIndex: appModel.selectedThemeIndex)
+                    Picker("", selection: Binding(
+                        get: { appModel.selectedShapeStyle },
+                        set: { appModel.setShapeStyle($0) }
+                    )) {
+                        ForEach(theme.allowedShapeStyles) { style in
+                            Text(style.displayName).tag(style)
+                        }
+                    }
+                    .pickerStyle(.menu)
+                    .tint(DesignTokens.Common.primary(colorScheme))
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
+
+                VStack(alignment: .leading, spacing: DesignTokens.Spacing.xs) {
+                    Text("Scene")
+                        .font(.system(size: DesignTokens.Typography.Size.xs, weight: DesignTokens.Typography.Weight.semibold))
+                        .foregroundStyle(DesignTokens.Common.Text.tertiary(colorScheme))
+                    Picker("", selection: Binding(
+                        get: { appModel.selectedScene },
+                        set: { appModel.setScene($0) }
+                    )) {
+                        ForEach(SceneType.allCases) { scene in
+                            Text(scene.displayName).tag(scene)
+                        }
+                    }
+                    .pickerStyle(.menu)
+                    .tint(DesignTokens.Common.primary(colorScheme))
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
+            }
+        }
+        .padding(DesignTokens.Spacing.md)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(DesignTokens.Common.Background.card(colorScheme))
+        .clipShape(RoundedRectangle(cornerRadius: DesignTokens.Radius.md))
+    }
+
+    // MARK: - Output Display
+    private var outputDisplaySection: some View {
+        VStack(alignment: .leading, spacing: DesignTokens.Spacing.sm) {
+            Text("Output Display")
+                .font(.system(size: DesignTokens.Typography.Size.sm, weight: DesignTokens.Typography.Weight.semibold))
+                .foregroundStyle(DesignTokens.Common.Text.secondary(colorScheme))
+
+            if appModel.availableDisplays.isEmpty {
+                Text("No displays")
+                    .font(.system(size: DesignTokens.Typography.Size.sm))
+                    .foregroundStyle(DesignTokens.Common.Text.tertiary(colorScheme))
+            } else if appModel.availableDisplays.count <= 1 {
                 Picker("", selection: Binding(
-                    get: { appModel.selectedThemeIndex },
-                    set: { appModel.setThemeIndex($0) }
+                    get: { appModel.selectedDisplayID },
+                    set: { appModel.setSelectedDisplayID($0) }
                 )) {
-                    ForEach(Array(ThemeLibrary.themes.enumerated()), id: \.offset) { index, theme in
-                        Text(theme.name).tag(index)
+                    Text("Automatic (Main Display)").tag(nil as UUID?)
+                    ForEach(appModel.availableDisplays) { display in
+                        Text("\(display.name) — \(display.resolution)")
+                            .tag(display.id as UUID?)
+                    }
+                }
+                .pickerStyle(.menu)
+                .tint(DesignTokens.Common.primary(colorScheme))
+                .disabled(true)
+                Text("Connect external display for dual-screen mode.")
+                    .font(.system(size: DesignTokens.Typography.Size.xs))
+                    .foregroundStyle(DesignTokens.Common.Text.tertiary(colorScheme))
+            } else {
+                Picker("", selection: Binding(
+                    get: { appModel.selectedDisplayID },
+                    set: { appModel.setSelectedDisplayID($0) }
+                )) {
+                    Text("Automatic (Main Display)").tag(nil as UUID?)
+                    ForEach(appModel.availableDisplays) { display in
+                        Text("\(display.name) — \(display.resolution)")
+                            .tag(display.id as UUID?)
                     }
                 }
                 .pickerStyle(.menu)
                 .tint(DesignTokens.Common.primary(colorScheme))
             }
-            .padding(DesignTokens.Spacing.md)
-            .background(DesignTokens.Common.Background.card(colorScheme))
-            .clipShape(RoundedRectangle(cornerRadius: DesignTokens.Radius.md))
+        }
+        .padding(DesignTokens.Spacing.md)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(DesignTokens.Common.Background.card(colorScheme))
+        .clipShape(RoundedRectangle(cornerRadius: DesignTokens.Radius.md))
+    }
 
-            // Abstraction slider
-            VStack(alignment: .leading, spacing: DesignTokens.Spacing.xs) {
-                Text("Abstraction")
-                    .font(.system(size: DesignTokens.Typography.Size.sm, weight: DesignTokens.Typography.Weight.semibold))
-                    .foregroundStyle(DesignTokens.Common.Text.secondary(colorScheme))
-                Slider(value: Binding(
-                    get: { Double(appModel.abstraction) },
-                    set: { appModel.setAbstraction(Float($0)) }
-                ), in: 0 ... 1)
-                .tint(DesignTokens.Common.primary(colorScheme))
+    // MARK: - C) Play
+    private var playSection: some View {
+        VStack(alignment: .leading, spacing: DesignTokens.Spacing.sm) {
+            Text("Play")
+                .font(.system(size: DesignTokens.Typography.Size.sm, weight: DesignTokens.Typography.Weight.semibold))
+                .foregroundStyle(DesignTokens.Common.Text.secondary(colorScheme))
+
+            VStack(spacing: DesignTokens.Spacing.xl) {
+                HStack(spacing: DesignTokens.Spacing.xl) {
+                    KnobView(
+                        title: "Abstraction",
+                        value: Binding(
+                            get: { Double(appModel.abstraction) },
+                            set: { appModel.setAbstraction(Float($0)) }
+                        ),
+                        defaultValue: 0.5,
+                        size: .hero,
+                        isEnabled: true
+                    )
+                    KnobView(
+                        title: "Energy Bias",
+                        value: Binding(
+                            get: { Double(appModel.energyBias) },
+                            set: { appModel.setEnergyBias(Float($0)) }
+                        ),
+                        defaultValue: 0.5,
+                        size: .hero,
+                        isEnabled: true
+                    )
+                }
+                HStack(spacing: DesignTokens.Spacing.xl) {
+                    KnobView(
+                        title: "Motion",
+                        value: Binding(
+                            get: { Double(appModel.motion) },
+                            set: { appModel.setMotion(Float($0)) }
+                        ),
+                        defaultValue: 0.5,
+                        size: .hero,
+                        isEnabled: true
+                    )
+                    KnobView(
+                        title: "Noise",
+                        value: Binding(
+                            get: { Double(appModel.noise) },
+                            set: { appModel.setNoise(Float($0)) }
+                        ),
+                        defaultValue: 0.5,
+                        size: .hero,
+                        isEnabled: true
+                    )
+                    KnobView(
+                        title: "Glitch",
+                        value: Binding(
+                            get: { Double(appModel.glitch) },
+                            set: { appModel.setGlitch(Float($0)) }
+                        ),
+                        defaultValue: 0.2,
+                        size: .hero,
+                        isEnabled: true
+                    )
+                }
             }
+            .frame(maxWidth: .infinity)
+        }
+        .padding(DesignTokens.Spacing.md)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(DesignTokens.Common.Background.card(colorScheme))
+        .clipShape(RoundedRectangle(cornerRadius: DesignTokens.Radius.md))
+    }
 
-            // Randomize button placeholder
+    // MARK: - D) Actions
+    private var actionsSection: some View {
+        VStack(spacing: DesignTokens.Spacing.sm) {
             Button(action: { appModel.randomize() }) {
                 Text("Randomize")
-                    .font(.system(size: DesignTokens.Typography.Size.base, weight: DesignTokens.Typography.Weight.semibold))
-                    .foregroundStyle(DesignTokens.Common.Text.primary(colorScheme))
-                    .frame(maxWidth: .infinity)
-                    .padding(.vertical, DesignTokens.Spacing.md)
-                    .padding(.horizontal, DesignTokens.Spacing.xl)
-                    .background(DesignTokens.Common.Background.card(colorScheme))
-                    .clipShape(RoundedRectangle(cornerRadius: DesignTokens.Radius.md))
-                    .overlay(
-                        RoundedRectangle(cornerRadius: DesignTokens.Radius.md)
-                            .stroke(DesignTokens.Common.Border.subtle(colorScheme), lineWidth: 1)
-                    )
+                    .font(.system(size: DesignTokens.Typography.Size.sm, weight: DesignTokens.Typography.Weight.semibold))
+                    .foregroundStyle(DesignTokens.Common.Text.secondary(colorScheme))
             }
             .buttonStyle(.plain)
 
-            Spacer()
-
-            // Ready button (primary CTA)
             Button(action: { appModel.enterLive() }) {
                 Text("Ready")
                     .font(.system(size: DesignTokens.Typography.Size.base, weight: DesignTokens.Typography.Weight.semibold))
@@ -217,15 +369,82 @@ struct SetupView: View {
             }
             .buttonStyle(.plain)
         }
-        .padding(DesignTokens.Spacing.xxl)
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .background(DesignTokens.Common.Background.app(colorScheme))
-        .onAppear { appModel.requestMicrophonePermissionAndStartAudio() }
-        }
+        .frame(maxWidth: .infinity)
     }
+
+    // MARK: - Permission denied
+    private var permissionDeniedCard: some View {
+        VStack(alignment: .leading, spacing: DesignTokens.Spacing.sm) {
+            Text("Microphone access is required for audio-reactive visuals.")
+                .font(.system(size: DesignTokens.Typography.Size.sm))
+                .foregroundStyle(DesignTokens.Common.Text.primary(colorScheme))
+            Button(action: { appModel.openMicrophoneSettings() }) {
+                Text("Open System Settings")
+                    .font(.system(size: DesignTokens.Typography.Size.sm, weight: DesignTokens.Typography.Weight.semibold))
+                    .foregroundStyle(DesignTokens.Common.OnPrimary.text(colorScheme))
+                    .padding(.horizontal, DesignTokens.Spacing.md)
+                    .padding(.vertical, DesignTokens.Spacing.sm)
+                    .background(DesignTokens.Common.primary(colorScheme))
+                    .clipShape(RoundedRectangle(cornerRadius: DesignTokens.Radius.sm))
+            }
+            .buttonStyle(.plain)
+        }
+        .padding(DesignTokens.Spacing.md)
+        .frame(width: controlStackWidth, alignment: .leading)
+        .background(DesignTokens.Common.Background.card(colorScheme))
+        .clipShape(RoundedRectangle(cornerRadius: DesignTokens.Radius.md))
+    }
+
+    // MARK: - Debug (DEBUG only, collapsed by default)
+    #if DEBUG
+    private var debugSection: some View {
+        DisclosureGroup(isExpanded: $debugExpanded) {
+            VStack(alignment: .leading, spacing: DesignTokens.Spacing.xs) {
+                HStack(spacing: DesignTokens.Spacing.sm) {
+                    Text("L: \(String(format: "%.2f", appModel.low))")
+                    Text("M: \(String(format: "%.2f", appModel.mid))")
+                    Text("H: \(String(format: "%.2f", appModel.high))")
+                }
+                .font(.system(size: DesignTokens.Typography.Size.xs))
+                .foregroundStyle(DesignTokens.Common.Text.tertiary(colorScheme))
+
+                Text("engineRunning: \(appModel.debugEngineRunning ? "true" : "false")")
+                    .font(.system(size: DesignTokens.Typography.Size.xs))
+                    .foregroundStyle(DesignTokens.Common.Text.tertiary(colorScheme))
+                if let err = appModel.debugLastError {
+                    Text("lastError: \(err)")
+                        .font(.system(size: DesignTokens.Typography.Size.xs))
+                        .foregroundStyle(DesignTokens.Common.Text.tertiary(colorScheme))
+                }
+                Text("format: \(String(format: "%.0f", appModel.debugFormatSampleRate)) Hz, \(appModel.debugFormatChannelCount) ch")
+                    .font(.system(size: DesignTokens.Typography.Size.xs))
+                    .foregroundStyle(DesignTokens.Common.Text.tertiary(colorScheme))
+                Text("rms: \(String(format: "%.4f", appModel.debugLastRMS))  peak: \(String(format: "%.4f", appModel.debugLastPeak))")
+                    .font(.system(size: DesignTokens.Typography.Size.xs))
+                    .foregroundStyle(DesignTokens.Common.Text.tertiary(colorScheme))
+                Text("frames: \(appModel.debugLastFrames)")
+                    .font(.system(size: DesignTokens.Typography.Size.xs))
+                    .foregroundStyle(DesignTokens.Common.Text.tertiary(colorScheme))
+                Text("tap max (2s): \(String(format: "%.3f", appModel.debugMaxTapTimeMs)) ms")
+                    .font(.system(size: DesignTokens.Typography.Size.xs))
+                    .foregroundStyle(DesignTokens.Common.Text.tertiary(colorScheme))
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .padding(DesignTokens.Spacing.sm)
+        } label: {
+            Text("Debug")
+                .font(.system(size: DesignTokens.Typography.Size.xs, weight: DesignTokens.Typography.Weight.semibold))
+                .foregroundStyle(DesignTokens.Common.Text.tertiary(colorScheme))
+        }
+        .padding(DesignTokens.Spacing.sm)
+        .frame(width: controlStackWidth, alignment: .leading)
+        .background(DesignTokens.Common.Background.card(colorScheme).opacity(0.7))
+        .clipShape(RoundedRectangle(cornerRadius: DesignTokens.Radius.sm))
+    }
+    #endif
 }
 
 #Preview {
     SetupView(appModel: AppModel())
-        .frame(width: 400, height: 500)
+        .frame(width: 420, height: 700)
 }
