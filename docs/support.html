@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="da">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Support — Echolume</title>
+  <meta name="description" content="Get help with Echolume. FAQ and contact.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <header class="header">
+    <a href="index.html" class="logo">Echolume</a>
+    <nav class="nav">
+      <a href="index.html">Home</a>
+      <a href="privacy.html">Privacy</a>
+      <a href="https://github.com/JarlLyng/echolume" target="_blank" rel="noopener">GitHub</a>
+    </nav>
+  </header>
+
+  <main class="page-main">
+    <article class="legal">
+      <h1>Support</h1>
+
+      <section>
+        <h2>FAQ</h2>
+        <dl class="faq">
+          <dt>Echolume needs microphone permission — why?</dt>
+          <dd>On macOS, access to audio inputs (including audio interfaces) is granted via the same “microphone” permission. Echolume only uses this to read the audio stream for the visuals. It does not record or send audio anywhere.</dd>
+
+          <dt>No sound / no signal?</dt>
+          <dd>Check that you’ve selected the correct <strong>Audio Input Device</strong> and, if applicable, the right <strong>channel pair</strong>. Ensure the input is not muted and that the level is sufficient. If you use an audio interface, make sure it’s connected and chosen in Echolume.</dd>
+
+          <dt>Can I use system audio (e.g. Spotify) as input?</dt>
+          <dd>Echolume does not capture “system output” directly. You can use a loopback or virtual device (e.g. BlackHole, Soundflower) that routes system audio into an input, then select that input in Echolume.</dd>
+
+          <dt>Which macOS version is required?</dt>
+          <dd>Echolume requires macOS 26.2 or later.</dd>
+        </dl>
+      </section>
+
+      <section>
+        <h2>Contact</h2>
+        <p>For bugs, feature ideas, or questions:</p>
+        <ul>
+          <li><strong>GitHub:</strong> <a href="https://github.com/JarlLyng/echolume/issues" target="_blank" rel="noopener">Open an issue</a> (preferred for bugs and requests).</li>
+          <li>You can also use the contact email you provide in the Mac App Store listing, if you add one there.</li>
+        </ul>
+      </section>
+    </article>
+  </main>
+
+  <footer class="footer">
+    <p><a href="index.html">Echolume</a> — <a href="privacy.html">Privacy</a> · <a href="support.html">Support</a> · <a href="https://github.com/JarlLyng/echolume">GitHub</a></p>
+  </footer>
+</body>
+</html>

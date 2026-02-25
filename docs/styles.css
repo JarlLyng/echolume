@@ -1,0 +1,267 @@
+/* Echolume marketing site — matches app tokens: mint #00FF7B, lime #D0FF00 */
+:root {
+  --bg: #0a0a0a;
+  --bg-card: rgba(255, 255, 255, 0.04);
+  --text: #f5f5f5;
+  --text-muted: rgba(255, 255, 255, 0.65);
+  --accent: #00ff7b;
+  --accent-dim: rgba(0, 255, 123, 0.85);
+  --border: rgba(255, 255, 255, 0.1);
+  --radius: 12px;
+  --font: "DM Sans", -apple-system, BlinkMacSystemFont, sans-serif;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  margin: 0;
+  font-family: var(--font);
+  font-size: 18px;
+  line-height: 1.55;
+  color: var(--text);
+  background: var(--bg);
+  -webkit-font-smoothing: antialiased;
+}
+
+a {
+  color: var(--accent);
+  text-decoration: none;
+}
+
+a:hover {
+  text-decoration: underline;
+}
+
+/* Header */
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1.25rem 2rem;
+  border-bottom: 1px solid var(--border);
+}
+
+.logo {
+  font-weight: 700;
+  font-size: 1.25rem;
+  color: var(--text);
+}
+
+.logo:hover {
+  color: var(--accent);
+  text-decoration: none;
+}
+
+.nav {
+  display: flex;
+  gap: 2rem;
+}
+
+.nav a {
+  color: var(--text-muted);
+  font-size: 0.95rem;
+}
+
+.nav a:hover {
+  color: var(--text);
+}
+
+/* Hero */
+.hero {
+  max-width: 42rem;
+  margin: 0 auto;
+  padding: 5rem 2rem 4rem;
+  text-align: center;
+}
+
+.hero-tagline {
+  font-size: 0.9rem;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: var(--accent);
+  margin: 0 0 0.75rem;
+}
+
+.hero-title {
+  font-size: clamp(2rem, 5vw, 2.75rem);
+  font-weight: 700;
+  line-height: 1.2;
+  margin: 0 0 1.25rem;
+  letter-spacing: -0.02em;
+}
+
+.hero-desc {
+  color: var(--text-muted);
+  margin: 0 0 2rem;
+  font-size: 1.1rem;
+}
+
+.cta {
+  display: inline-block;
+  padding: 0.85rem 1.75rem;
+  background: var(--accent);
+  color: #000;
+  font-weight: 600;
+  font-size: 1rem;
+  border-radius: var(--radius);
+  transition: background 0.2s, transform 0.15s;
+}
+
+.cta:hover {
+  background: var(--accent-dim);
+  text-decoration: none;
+  transform: translateY(-1px);
+}
+
+/* Features */
+.features {
+  max-width: 56rem;
+  margin: 0 auto;
+  padding: 4rem 2rem;
+}
+
+.section-title {
+  font-size: 1.5rem;
+  font-weight: 600;
+  margin: 0 0 2rem;
+  text-align: center;
+  color: var(--text-muted);
+}
+
+.feature-grid {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 1.5rem;
+}
+
+.feature {
+  padding: 1.5rem;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+}
+
+.feature-accent {
+  display: block;
+  font-size: 0.8rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--accent);
+  margin-bottom: 0.5rem;
+}
+
+.feature p {
+  margin: 0;
+  color: var(--text-muted);
+  font-size: 0.95rem;
+}
+
+/* Download */
+.download {
+  max-width: 36rem;
+  margin: 0 auto;
+  padding: 4rem 2rem;
+  text-align: center;
+}
+
+.download-desc {
+  color: var(--text-muted);
+  margin: 0 0 1.5rem;
+}
+
+.cta-store {
+  margin-bottom: 1rem;
+}
+
+.download-note {
+  font-size: 0.9rem;
+  color: var(--text-muted);
+}
+
+/* Footer */
+.footer {
+  padding: 3rem 2rem;
+  border-top: 1px solid var(--border);
+  text-align: center;
+  color: var(--text-muted);
+  font-size: 0.9rem;
+}
+
+.footer p {
+  margin: 0.25rem 0;
+}
+
+.footer a:hover {
+  color: var(--accent-dim);
+}
+
+/* Subpages: Privacy, Support */
+.page-main {
+  max-width: 40rem;
+  margin: 0 auto;
+  padding: 3rem 2rem 4rem;
+}
+
+.legal h1 {
+  font-size: 1.75rem;
+  font-weight: 700;
+  margin: 0 0 0.25rem;
+}
+
+.legal-updated {
+  font-size: 0.9rem;
+  color: var(--text-muted);
+  margin: 0 0 2rem;
+}
+
+.legal section {
+  margin-bottom: 2rem;
+}
+
+.legal h2 {
+  font-size: 1.1rem;
+  font-weight: 600;
+  margin: 0 0 0.75rem;
+  color: var(--text);
+}
+
+.legal p,
+.legal li {
+  color: var(--text-muted);
+  margin: 0 0 0.5rem;
+}
+
+.legal ul {
+  padding-left: 1.5rem;
+  margin: 0 0 1rem;
+}
+
+.faq {
+  margin: 0;
+}
+
+.faq dt {
+  font-weight: 600;
+  color: var(--text);
+  margin: 1.25rem 0 0.35rem;
+}
+
+.faq dt:first-child {
+  margin-top: 0;
+}
+
+.faq dd {
+  margin: 0 0 0 1rem;
+  color: var(--text-muted);
+}

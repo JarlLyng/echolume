@@ -378,6 +378,27 @@ Before external review / TestFlight:
 
 ---
 
+## Marketing site (GitHub Pages)
+
+A one-page marketing site lives in **`docs/`** and can be hosted on GitHub Pages:
+
+1. **GitHub** → repo **Settings** → **Pages**.
+2. Under **Build and deployment**, **Source**: *Deploy from a branch*.
+3. **Branch**: `main`, **Folder**: `/docs`. Save.
+
+The site will be available at `https://<username>.github.io/echolume/` (or your custom domain if configured).
+
+- **`docs/index.html`** — landing page (hero, features, download).
+- **`docs/styles.css`** — styles (Echolume accent colors, dark theme).
+- **`docs/.nojekyll`** — disables Jekyll so static files are served as-is.
+
+When the app is on the Mac App Store, replace the download CTA in `docs/index.html` with the App Store link.
+
+- **Privacy policy:** `docs/privacy.html` → e.g. `https://JarlLyng.github.io/echolume/privacy.html` (use this URL in App Store Connect).
+- **Support:** `docs/support.html` — FAQ and contact (GitHub Issues). Link from the App Store listing if you want.
+
+---
+
 ## License
 
 TBD.
