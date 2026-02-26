@@ -171,7 +171,7 @@ final class AppModel: ObservableObject {
             AudioObjectAddPropertyListenerBlock(AudioObjectID(kAudioObjectSystemObject), &addr, nil, block)
         }
         screenParamsObserver = NotificationCenter.default.addObserver(forName: NSApplication.didChangeScreenParametersNotification, object: nil, queue: .main) { [weak self] _ in
-            Task { @MainActor in self?.refreshDisplays() }
+            DispatchQueue.main.async { self?.refreshDisplays() }
         }
         audioManager.lowPublisher
             .receive(on: DispatchQueue.main)

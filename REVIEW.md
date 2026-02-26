@@ -1,64 +1,29 @@
-# Echolume – teknisk review (macOS)
+# Review af Echolume (26. feb 2026)
 
-Dato: 25. februar 2026
+**Kort opsummering**
+Appen har en solid grundstruktur (audio → mapping → render), men der er flere funktionelle huller og et par performance‑risici i audio‑pathen, som kan give dropouts eller uventet adfærd i UI’et. Der mangler også tests for de mest kritiske dele.
 
-## Overordnet vurdering
-Arkitekturen er tydeligt opdelt i Audio → Mapping → Scene → Render, hvilket er godt og gør systemet udvideligt. UI-laget er slankt, og parametre sendes via en tråd-sikker provider til renderer. Der er dog nogle alvorlige samtidigheds- og performance‑risici i audio‑pipen, samt et test‑gap som gør regressioner svære at opdage.
+**Findings (Høj)**
+- **Real‑time‑kritiske operationer i audio‑callback**: I tap‑callbacken tages locks og der oprettes en `DispatchWorkItem` pr. tap. Det kan give dropouts under belastning. Se `echolume/Audio/AudioManager.swift:178-225` og `echolume/Audio/AudioManager.swift:250-255`.
+- **“Automatic” device skifter ikke faktisk input**: Når brugeren vælger “Automatic”, restartes audio‑engine ikke, så den bliver stående på sidste valgte device. Se `echolume/App/AppModel.swift:397-405`.
 
-## Fund (prioriteret)
+**Findings (Mellem)**
+- **Flere UI‑kontroller påvirker ikke shaderen**: `shapeStyleIndex`, `shapeCount`, `warpAmount`, `trailPersistence` og `reactivity` beregnes og sendes til shaderen, men bruges ikke i rendering. Det betyder at “Shape”, “Abstraction” og “Energy Bias” i praksis har minimal eller ingen effekt. Se `echolume/Visuals/ParamMapping.swift:97-134` og `echolume/Renderer/Shaders.metal:20-33`.
+- **Debug‑tint er aktiv i produktion**: Shaderen tinter output, når `motion/noise/glitch > 0.8`, hvilket ændrer visuals i normal brug. Se `echolume/Renderer/Shaders.metal:311-314`.
 
-### Kritisk / Høj risiko
-1. Datakapløb i ringbuffer og indeksere (audio callback vs. FFT‑thread)
-   - I `echolume/Audio/AudioManager.swift` skrives `ringBuffer`, `ringWriteIndex` og `ringReadIndex` i audio‑tappen uden lås, mens `runFFT()` læser dem under `ringLock`. Det er ikke tråd‑sikkert og kan give corrupted data eller crash.
-   - Forslag: Brug en lock/atomic rundt om både write og read, eller implementér en lock‑fri ringbuffer med atomiske indeksere (fx `ManagedAtomic<Int>`). Hvis lock bruges i tap‑callback, hold den ultrakort og undgå allokeringer.
+**Findings (Lav)**
+- **Ubrugte filer**: `ContentView.swift` bruges ikke, hvilket skaber støj i projektet. Se `echolume/ContentView.swift`.
+- **Tema‑defaults bliver ikke anvendt ved themeskift**: `Theme.defaultShapeStyle` anvendes aldrig, så themespecificerede defaults slår ikke igennem. Se `echolume/Visuals/Theme.swift:15-24` og `echolume/App/AppModel.swift:437-451`.
 
-2. Delte værdier læses uden synkronisering
-   - `_rms`, `_peak`, `_frameCount`, `_channelCount` opdateres i tap‑callback og læses fra main thread (timer). Det er datakapløb i Swift og ikke garanteret sikkert.
-   - Forslag: Brug atomics, en lock eller kopier disse værdier via en tråd‑sikker queue.
+**Testmangler**
+- Ingen tests for `AudioManager` (device‑skift, restart‑debounce, FFT‑pipeline) eller `ParamMapping` (glitch/impulse/abstraction). Se `echolumeTests/echolumeTests.swift`.
 
-### Medium risiko
-1. FFT‑processen allokerer for hvert kald
-   - `FFTProcessor.process(samples:)` opretter `windowed` som en ny array for hvert kald (i `echolume/Audio/FFT.swift`). Det er imod kommentaren om “no allocations” og kan give GC‑/ARC‑overhead og stutter under load.
-   - Forslag: Gem `windowed` som et genbrugeligt buffer‑array i `FFTProcessor`.
+**Åbne spørgsmål/antagelser**
+- Jeg antager at “Randomize” kun skal ændre seed, men README beskriver randomize af theme/parametre. Hvis produktkravet er bredere, bør `randomize()` udvides.
 
-2. Audio status kan være misvisende
-   - `AppModel.requestMicrophonePermissionAndStartAudio()` sætter `audioStatus = .running`, men der er ingen reel feedback fra `AudioManager` om start‑success. Hvis engine start fejler, UI kan stadig vise “running”.
-   - Forslag: Tilføj en callback/publisher fra `AudioManager` for start‑status og fejl, og opdatér `audioStatus` baseret på faktisk start.
-
-3. Renderer og MTKView bruger potentielt forskellige `MTLDevice`
-   - `MetalView.makeNSView()` og `Coordinator` laver hver sin `MTLCreateSystemDefaultDevice()`. Det giver normalt samme device, men det er ikke garanteret (f.eks. eGPU/Multiple GPUs).
-   - Forslag: Brug `view.device` til at bygge `Renderer`, og init kun én gang.
-
-### Lav risiko / polish
-1. AudioAnalyzer har publishers for RMS/peak som ikke bruges
-   - `AudioAnalyzer` sender `rmsPublisher` og `peakPublisher`, men UI læser i stedet `AudioManager.debugLastRMS`. Overvej at konsolidere for at undgå dobbelt‑beregning og kompleksitet.
-
-2. `Theme.nudgedPalette` har ubrugte beregninger
-   - Variablen `hueShift` beregnes men bruges ikke i `echolume/Visuals/Theme.swift`.
-
-## Anbefalinger (konkrete)
-1. Fix samtidighed i audio‑pipen først
-   - Implementér en tråd‑sikker ringbuffer med atomiske indeksere, eller brug en kort lock både i tap og `runFFT()`.
-   - Løs også data‑race på `_rms/_peak/_frameCount`.
-
-2. Reducér FFT‑allokeringer
-   - Gør `windowed` til en genbrugsbuffer i `FFTProcessor`.
-
-3. Giv `AudioManager` klar status og fejl‑kanal
-   - Et simpelt `@Published`/Combine‑publisher for `engineRunning` og `lastError` (eller en callback) vil gøre UI‑status mere korrekt.
-
-4. Saml Metal device‑init
-   - Brug `MTKView.device` i `MetalView` til at oprette `Renderer`.
-
-5. Test‑strategi (minimalt men værdifuldt)
-   - Unit tests for `ParamMapping` (deterministiske outputs for kendte inputs og seed).
-   - Unit tests for `FFTProcessor`/`magnitudeSpectrumToBands` (små syntetiske signaler, forventede band‑levels).
-
-## Test‑gap
-Der er i praksis ingen tests (kun en tom testfil). Det øger risikoen for regressions i mapping, audio‑routing og rendering.
-
-## Residual risiko
-Selv med ovenstående fixes vil audio‑pipeline være følsom overfor specifikke CoreAudio‑enheder og sample‑rate‑mismatch. Det er normalt, men bør profileres på mindst 2‑3 forskellige interfaces.
-
----
-Hvis du vil, kan jeg implementere de konkrete fixes (ringbuffer‑synkronisering + FFT‑buffer + status‑publisher) i en næste iteration.
+**Anbefalinger (prioriteret)**
+1. Gør audio‑callback realtime‑sikker: undgå `DispatchWorkItem`‑allokeringer og locks i tap; brug fx en lock‑free ringbuffer + atomisk flag til FFT‑arbejde på baggrundstråd.
+2. Fix “Automatic” device: restart audio med `nil` deviceID når brugeren vælger Automatic.
+3. Wire UI‑kontroller til shaderen: brug `shapeStyleIndex` og `shapeCount` til at vælge/forke shape‑funktioner, og brug `warpAmount`, `trailPersistence` og `reactivity` i scene‑logikken.
+4. Fjern eller debug‑guard shader‑tint (kun i DEBUG eller bag feature‑flag).
+5. Tilføj tests for `AudioManager` og `ParamMapping`, især edge cases for device‑skift og glitch/impulse‑logik.

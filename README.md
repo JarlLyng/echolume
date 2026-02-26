@@ -421,6 +421,8 @@ When the app is on the Mac App Store, replace the download CTA in `docs/index.ht
 
 Without `SENTRY_DSN`, the app runs as before; Sentry is simply not started.
 
+**Archive / TestFlight:** If you see "Upload Symbols Failed" (missing dSYM for some UUIDs), the upload can still succeed — click **Done**. The missing symbols are often from the Sentry framework (SPM); App Store Connect may still accept the build. For full symbolication of all binaries, you’d need to ensure SPM framework dSYMs are included (e.g. via a Run Script phase) or remove Sentry from the archive build.
+
 ---
 
 ## License

@@ -88,10 +88,6 @@ float shapeBlobs(float2 uv, float t, float count, float motionSpeed, float warp,
     for (float i = 0.0; i < 8.0; i += 1.0) {
         if (i >= n) break;
         float fi = i + 0.5;
-        float2 off = float2(
-            fract(sin(fi * 12.9898 + float(seed)) * 43758.5453),
-            fract(sin(fi * 78.233 + float(seed + 1u)) * 43758.5453)
-        );
         float2 center = 0.5 + 0.4 * float2(sin(t * motionSpeed + fi), cos(t * motionSpeed * 0.7 + fi * 1.3));
         float d = length(uv - center);
         float r = 0.15 + 0.12 * fract(sin(fi * 97.1) * 43758.5453);
@@ -221,7 +217,6 @@ float4 renderFlow(constant Uniforms& u, float2 uv) {
     float impact = clamp(u.impact, 0.0, 1.0);
     float impulse = clamp(u.impulse, 0.0, 1.0);
     float level = clamp(u.level, 0.0, 1.0);
-    float motionSpd = clamp(u.motionSpeed, 0.1, 2.0);
     float noi = clamp(u.noise, 0.0, 1.0);
     float lfo1 = u.lfo1, lfo2 = u.lfo2, lfo3 = u.lfo3;
     float warp = mix(0.0, 2.0, noi);
@@ -272,7 +267,6 @@ float4 renderGrid(constant Uniforms& u, float2 uv) {
 
     float tileCountA = 4.0 + (1.0 - impact) * 6.0 + lfo1 * 1.5;
     float2 uvA = uvWob * tileCountA;
-    float2 idA = floor(uvA);
     float2 gvA = fract(uvA) - 0.5;
     gvA += 0.06 * low * sin(t + lfo1) + 0.06 * cos(t * 0.8 + lfo1);
     float layerA = 0.5 + 0.5 * sin(gvA.x * 6.28) * cos(gvA.y * 6.28);
