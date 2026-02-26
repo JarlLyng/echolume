@@ -258,7 +258,7 @@ final class AudioManager {
         ringLock.lock()
         let w = ringWriteIndex
         var r = ringReadIndex
-        var available = w - r
+        let available = w - r
         guard available >= kFFTWindowSize else {
             ringLock.unlock()
             return

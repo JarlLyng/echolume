@@ -37,6 +37,7 @@ Echolume turns sound into light.
 - **Setup screen** (SwiftUI):
   - Audio input device picker (in-app switching)
   - Channel pair picker (when available)
+  - Signal indicator + tiny level meter
   - Theme picker
   - Scene picker
   - Shape style picker
@@ -125,6 +126,7 @@ Implementation notes:
 - Prefer **CoreAudio / AVAudioEngine**.
 - Use a tap (or AudioUnit input callback) to pull PCM frames.
 - Keep latency low (buffer size target 128–256 frames where stable).
+- Update device enumeration automatically (e.g., listen for device change notifications) rather than requiring a manual refresh UI.
 
 #### `AudioAnalyzer`
 Responsibilities:
@@ -221,6 +223,9 @@ A theme defines:
 - Show a clear “Signal detected” indicator.
 - Keep controls minimal; avoid adding settings that don’t directly improve live performance.
 - Expose a small secondary action for **Panic Reset** (visuals only).
+- No manual Refresh button — the app should update device lists automatically.
+- No "Show advanced devices" toggle in V1 — keep the device list focused and friendly.
+- Layout: use a Mac-optimized two-column layout (Audio on the left, Visuals on the right) with knobs arranged horizontally to reduce vertical scrolling.
 
 ### LiveView
 - Fullscreen (toggle) with minimal chrome.
@@ -399,6 +404,22 @@ When the app is on the Mac App Store, replace the download CTA in `docs/index.ht
 
 - **Privacy policy:** `docs/privacy.html` → e.g. `https://JarlLyng.github.io/echolume/privacy.html` (use this URL in App Store Connect).
 - **Support:** `docs/support.html` — FAQ and contact. Link from the App Store listing if you want.
+
+---
+
+## Sentry (error monitoring)
+
+**Note:** Sentry is **on** for the test phase. Set `SENTRY_DSN` (and optionally `SENTRY_ENVIRONMENT`) in the scheme’s Environment Variables. Consider removing or disabling Sentry before App Store release. If the build fails with "Missing package product 'Sentry'", open the project in Xcode and run **File → Packages → Resolve Package Versions** (or **Reset Package Caches** first, then resolve).
+
+**Setup:**
+
+1. In [Sentry](https://sentry.io), create a project (e.g. **macOS** or **echolume**) and copy the DSN.
+2. Run the app with the DSN set:
+   - **Environment variable:** `SENTRY_DSN=https://…@….ingest.sentry.io/…`
+   - Or in Xcode: **Edit Scheme** → **Run** → **Arguments** → **Environment Variables** → add `SENTRY_DSN`.
+3. Optional: `SENTRY_ENVIRONMENT` (default `development`) to separate test/production.
+
+Without `SENTRY_DSN`, the app runs as before; Sentry is simply not started.
 
 ---
 

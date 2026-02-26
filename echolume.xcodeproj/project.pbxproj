@@ -29,6 +29,10 @@
 		2F0891682F4F27880017269C /* echolumeUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = echolumeUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
+/* Begin PBXBuildFile section */
+		2F0891822F4F27880017269C /* Sentry in Frameworks */ = {isa = PBXBuildFile; productRef = 2F0891812F4F27880017269C /* Sentry */; };
+/* End PBXBuildFile section */
+
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		2F0891532F4F27820017269C /* echolume */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
@@ -52,6 +56,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				2F0891822F4F27880017269C /* Sentry in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -94,6 +99,25 @@
 		};
 /* End PBXGroup section */
 
+/* Begin XCRemoteSwiftPackageReference section */
+		2F0891802F4F27880017269C /* XCRemoteSwiftPackageReference "sentry-cocoa" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/getsentry/sentry-cocoa";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 9.0.0;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		2F0891812F4F27880017269C /* Sentry */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 2F0891802F4F27880017269C /* XCRemoteSwiftPackageReference "sentry-cocoa" */;
+			productName = Sentry;
+		};
+/* End XCSwiftPackageProductDependency section */
+
 /* Begin PBXNativeTarget section */
 		2F0891502F4F27820017269C /* echolume */ = {
 			isa = PBXNativeTarget;
@@ -112,6 +136,7 @@
 			);
 			name = echolume;
 			packageProductDependencies = (
+				2F0891812F4F27880017269C /* Sentry */,
 			);
 			productName = echolume;
 			productReference = 2F0891512F4F27820017269C /* echolume.app */;
@@ -196,6 +221,9 @@
 			mainGroup = 2F0891482F4F27820017269C;
 			minimizedProjectReferenceProxies = 1;
 			preferredProjectObjectVersion = 77;
+			packageReferences = (
+				2F0891802F4F27880017269C /* XCRemoteSwiftPackageReference "sentry-cocoa" */,
+			);
 			productRefGroup = 2F0891522F4F27820017269C /* Products */;
 			projectDirPath = "";
 			projectRoot = "";

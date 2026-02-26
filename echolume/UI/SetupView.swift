@@ -2,15 +2,15 @@
 //  SetupView.swift
 //  echolume
 //
-//  Centered control stack: Audio → Look → Play → Actions. Instrument-style hierarchy.
+//  Two-column Mac-native layout: Audio (left), Visuals (right). Ready at bottom.
 //
 
 import AppKit
 import CoreAudio
 import SwiftUI
 
-private let controlStackWidth: CGFloat = 380
 private let sectionSpacing: CGFloat = DesignTokens.Spacing.md
+private let twoColumnBreakpoint: CGFloat = 700
 
 struct SetupView: View {
     @ObservedObject var appModel: AppModel
@@ -21,42 +21,45 @@ struct SetupView: View {
 
     var body: some View {
         ScrollView {
-            VStack(spacing: DesignTokens.Spacing.lg) {
-                Text("Echolume")
-                    .font(.system(
-                        size: DesignTokens.Typography.Size.xxl,
-                        weight: DesignTokens.Typography.Weight.bold
-                    ))
-                    .foregroundStyle(DesignTokens.Common.Text.primary(colorScheme))
+            GeometryReader { geo in
+                let narrow = geo.size.width < twoColumnBreakpoint
+                VStack(spacing: DesignTokens.Spacing.lg) {
+                    Text("Echolume")
+                        .font(.system(
+                            size: DesignTokens.Typography.Size.xxl,
+                            weight: DesignTokens.Typography.Weight.bold
+                        ))
+                        .foregroundStyle(DesignTokens.Common.Text.primary(colorScheme))
 
-                if !appModel.hasMicPermission && appModel.audioStatus == .noPermission {
-                    permissionDeniedCard
+                    if !appModel.hasMicPermission && appModel.audioStatus == .noPermission {
+                        permissionDeniedCard
+                    }
+
+                    if narrow {
+                        VStack(alignment: .leading, spacing: sectionSpacing) {
+                            audioSection
+                            visualsColumn
+                        }
+                    } else {
+                        HStack(alignment: .top, spacing: DesignTokens.Spacing.xl) {
+                            audioSection
+                                .frame(maxWidth: 320, alignment: .leading)
+                            visualsColumn
+                                .frame(maxWidth: .infinity, alignment: .leading)
+                        }
+                        .frame(maxWidth: .infinity)
+                    }
+
+                    readySection
+
+                    #if DEBUG
+                    debugSection
+                    #endif
                 }
-
-                VStack(alignment: .leading, spacing: sectionSpacing) {
-                    // A) Audio
-                    audioSection
-
-                    // B) Look
-                    lookSection
-
-                    // Output Display
-                    outputDisplaySection
-
-                    // C) Play
-                    playSection
-
-                    // D) Actions
-                    actionsSection
-                }
-                .frame(width: controlStackWidth)
-
-                #if DEBUG
-                debugSection
-                #endif
+                .padding(DesignTokens.Spacing.xxl)
+                .frame(maxWidth: .infinity)
             }
-            .padding(DesignTokens.Spacing.xxl)
-            .frame(maxWidth: .infinity)
+            .frame(maxWidth: .infinity, minHeight: 400)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .background(DesignTokens.Common.Background.app(colorScheme))
@@ -69,7 +72,7 @@ struct SetupView: View {
         }
     }
 
-    // MARK: - A) Audio
+    // MARK: - Audio (left column)
     private var audioSection: some View {
         VStack(alignment: .leading, spacing: DesignTokens.Spacing.sm) {
             Text("Audio")
@@ -80,9 +83,6 @@ struct SetupView: View {
                 Text("No input devices")
                     .font(.system(size: DesignTokens.Typography.Size.sm))
                     .foregroundStyle(DesignTokens.Common.Text.tertiary(colorScheme))
-                Button("Refresh", action: { appModel.refreshAudioDevices() })
-                    .font(.system(size: DesignTokens.Typography.Size.sm, weight: DesignTokens.Typography.Weight.regular))
-                    .foregroundStyle(DesignTokens.Common.primary(colorScheme))
             } else {
                 Picker("", selection: Binding(
                     get: { appModel.selectedDeviceID },
@@ -95,18 +95,6 @@ struct SetupView: View {
                 }
                 .pickerStyle(.menu)
                 .tint(DesignTokens.Common.primary(colorScheme))
-
-                HStack(spacing: DesignTokens.Spacing.sm) {
-                    Button("Refresh", action: { appModel.refreshAudioDevices() })
-                        .font(.system(size: DesignTokens.Typography.Size.xs, weight: DesignTokens.Typography.Weight.regular))
-                        .foregroundStyle(DesignTokens.Common.primary(colorScheme))
-                    Toggle("Show advanced devices", isOn: Binding(
-                        get: { appModel.showAdvancedDevices },
-                        set: { appModel.showAdvancedDevices = $0; appModel.refreshAudioDevices() }
-                    ))
-                    .toggleStyle(.switch)
-                    .font(.system(size: DesignTokens.Typography.Size.xs))
-                }
 
                 if appModel.debugChannelCount >= 2 {
                     let pairCount = appModel.debugChannelCount / 2
@@ -141,7 +129,7 @@ struct SetupView: View {
                     Image(systemName: appModel.hasSignal ? "checkmark.circle.fill" : "exclamationmark.triangle.fill")
                         .font(.system(size: DesignTokens.Typography.Size.sm))
                         .foregroundStyle(appModel.hasSignal ? DesignTokens.Common.primary(colorScheme) : DesignTokens.ColorToken.State.warning)
-                    Text(appModel.hasSignal ? "Signal detected ✅" : "No signal ⚠️")
+                    Text(appModel.hasSignal ? "Signal" : "No signal")
                         .font(.system(size: DesignTokens.Typography.Size.xs, weight: DesignTokens.Typography.Weight.regular))
                         .foregroundStyle(DesignTokens.Common.Text.tertiary(colorScheme))
                     Spacer()
@@ -173,10 +161,10 @@ struct SetupView: View {
         .clipShape(RoundedRectangle(cornerRadius: DesignTokens.Radius.md))
     }
 
-    // MARK: - B) Look
-    private var lookSection: some View {
-        VStack(alignment: .leading, spacing: DesignTokens.Spacing.sm) {
-            Text("Look")
+    // MARK: - Visuals (right column)
+    private var visualsColumn: some View {
+        VStack(alignment: .leading, spacing: sectionSpacing) {
+            Text("Visuals")
                 .font(.system(size: DesignTokens.Typography.Size.sm, weight: DesignTokens.Typography.Weight.semibold))
                 .foregroundStyle(DesignTokens.Common.Text.secondary(colorScheme))
 
@@ -233,6 +221,82 @@ struct SetupView: View {
                 }
                 .frame(maxWidth: .infinity, alignment: .leading)
             }
+
+            outputDisplaySection
+
+            // Knobs: 2 rows horizontal
+            HStack(spacing: DesignTokens.Spacing.lg) {
+                KnobView(
+                    title: "Abstraction",
+                    value: Binding(
+                        get: { Double(appModel.abstraction) },
+                        set: { appModel.setAbstraction(Float($0)) }
+                    ),
+                    defaultValue: 0.5,
+                    size: .standard,
+                    isEnabled: true
+                )
+                KnobView(
+                    title: "Energy Bias",
+                    value: Binding(
+                        get: { Double(appModel.energyBias) },
+                        set: { appModel.setEnergyBias(Float($0)) }
+                    ),
+                    defaultValue: 0.5,
+                    size: .standard,
+                    isEnabled: true
+                )
+            }
+            HStack(spacing: DesignTokens.Spacing.lg) {
+                KnobView(
+                    title: "Motion",
+                    value: Binding(
+                        get: { Double(appModel.motion) },
+                        set: { appModel.setMotion(Float($0)) }
+                    ),
+                    defaultValue: 0.5,
+                    size: .standard,
+                    isEnabled: true
+                )
+                KnobView(
+                    title: "Noise",
+                    value: Binding(
+                        get: { Double(appModel.noise) },
+                        set: { appModel.setNoise(Float($0)) }
+                    ),
+                    defaultValue: 0.5,
+                    size: .standard,
+                    isEnabled: true
+                )
+                KnobView(
+                    title: "Glitch",
+                    value: Binding(
+                        get: { Double(appModel.glitch) },
+                        set: { appModel.setGlitch(Float($0)) }
+                    ),
+                    defaultValue: 0.2,
+                    size: .standard,
+                    isEnabled: true
+                )
+            }
+
+            HStack(spacing: DesignTokens.Spacing.md) {
+                Button(action: { appModel.randomize() }) {
+                    Text("Randomize")
+                        .font(.system(size: DesignTokens.Typography.Size.sm, weight: DesignTokens.Typography.Weight.semibold))
+                        .foregroundStyle(DesignTokens.Common.Text.secondary(colorScheme))
+                }
+                .buttonStyle(.plain)
+                .keyboardShortcut(.space, modifiers: [])
+
+                Button(action: { appModel.panicReset() }) {
+                    Text("Panic")
+                        .font(.system(size: DesignTokens.Typography.Size.sm, weight: DesignTokens.Typography.Weight.regular))
+                        .foregroundStyle(DesignTokens.Common.Text.secondary(colorScheme))
+                }
+                .buttonStyle(.bordered)
+                .keyboardShortcut("r", modifiers: [])
+            }
         }
         .padding(DesignTokens.Spacing.md)
         .frame(maxWidth: .infinity, alignment: .leading)
@@ -240,159 +304,58 @@ struct SetupView: View {
         .clipShape(RoundedRectangle(cornerRadius: DesignTokens.Radius.md))
     }
 
-    // MARK: - Output Display
     private var outputDisplaySection: some View {
-        VStack(alignment: .leading, spacing: DesignTokens.Spacing.sm) {
-            Text("Output Display")
-                .font(.system(size: DesignTokens.Typography.Size.sm, weight: DesignTokens.Typography.Weight.semibold))
-                .foregroundStyle(DesignTokens.Common.Text.secondary(colorScheme))
-
-            if appModel.availableDisplays.isEmpty {
-                Text("No displays")
-                    .font(.system(size: DesignTokens.Typography.Size.sm))
-                    .foregroundStyle(DesignTokens.Common.Text.tertiary(colorScheme))
-            } else if appModel.availableDisplays.count <= 1 {
-                Picker("", selection: Binding(
-                    get: { appModel.selectedDisplayID },
-                    set: { appModel.setSelectedDisplayID($0) }
-                )) {
-                    Text("Automatic (Main Display)").tag(nil as UUID?)
-                    ForEach(appModel.availableDisplays) { display in
-                        Text("\(display.name) — \(display.resolution)")
-                            .tag(display.id as UUID?)
+        Group {
+            if !appModel.availableDisplays.isEmpty {
+                VStack(alignment: .leading, spacing: DesignTokens.Spacing.xs) {
+                    Text("Output")
+                        .font(.system(size: DesignTokens.Typography.Size.xs, weight: DesignTokens.Typography.Weight.semibold))
+                        .foregroundStyle(DesignTokens.Common.Text.tertiary(colorScheme))
+                    if appModel.availableDisplays.count <= 1 {
+                        Picker("", selection: Binding(
+                            get: { appModel.selectedDisplayID },
+                            set: { appModel.setSelectedDisplayID($0) }
+                        )) {
+                            Text("Main Display").tag(nil as UUID?)
+                            ForEach(appModel.availableDisplays) { display in
+                                Text(display.name).tag(display.id as UUID?)
+                            }
+                        }
+                        .pickerStyle(.menu)
+                        .tint(DesignTokens.Common.primary(colorScheme))
+                        .disabled(true)
+                    } else {
+                        Picker("", selection: Binding(
+                            get: { appModel.selectedDisplayID },
+                            set: { appModel.setSelectedDisplayID($0) }
+                        )) {
+                            Text("Automatic (Main)").tag(nil as UUID?)
+                            ForEach(appModel.availableDisplays) { display in
+                                Text("\(display.name) — \(display.resolution)")
+                                    .tag(display.id as UUID?)
+                            }
+                        }
+                        .pickerStyle(.menu)
+                        .tint(DesignTokens.Common.primary(colorScheme))
                     }
                 }
-                .pickerStyle(.menu)
-                .tint(DesignTokens.Common.primary(colorScheme))
-                .disabled(true)
-                Text("Connect external display for dual-screen mode.")
-                    .font(.system(size: DesignTokens.Typography.Size.xs))
-                    .foregroundStyle(DesignTokens.Common.Text.tertiary(colorScheme))
-            } else {
-                Picker("", selection: Binding(
-                    get: { appModel.selectedDisplayID },
-                    set: { appModel.setSelectedDisplayID($0) }
-                )) {
-                    Text("Automatic (Main Display)").tag(nil as UUID?)
-                    ForEach(appModel.availableDisplays) { display in
-                        Text("\(display.name) — \(display.resolution)")
-                            .tag(display.id as UUID?)
-                    }
-                }
-                .pickerStyle(.menu)
-                .tint(DesignTokens.Common.primary(colorScheme))
             }
         }
-        .padding(DesignTokens.Spacing.md)
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .background(DesignTokens.Common.Background.card(colorScheme))
-        .clipShape(RoundedRectangle(cornerRadius: DesignTokens.Radius.md))
     }
 
-    // MARK: - C) Play
-    private var playSection: some View {
-        VStack(alignment: .leading, spacing: DesignTokens.Spacing.sm) {
-            Text("Play")
-                .font(.system(size: DesignTokens.Typography.Size.sm, weight: DesignTokens.Typography.Weight.semibold))
-                .foregroundStyle(DesignTokens.Common.Text.secondary(colorScheme))
-
-            VStack(spacing: DesignTokens.Spacing.xl) {
-                HStack(spacing: DesignTokens.Spacing.xl) {
-                    KnobView(
-                        title: "Abstraction",
-                        value: Binding(
-                            get: { Double(appModel.abstraction) },
-                            set: { appModel.setAbstraction(Float($0)) }
-                        ),
-                        defaultValue: 0.5,
-                        size: .hero,
-                        isEnabled: true
-                    )
-                    KnobView(
-                        title: "Energy Bias",
-                        value: Binding(
-                            get: { Double(appModel.energyBias) },
-                            set: { appModel.setEnergyBias(Float($0)) }
-                        ),
-                        defaultValue: 0.5,
-                        size: .hero,
-                        isEnabled: true
-                    )
-                }
-                HStack(spacing: DesignTokens.Spacing.xl) {
-                    KnobView(
-                        title: "Motion",
-                        value: Binding(
-                            get: { Double(appModel.motion) },
-                            set: { appModel.setMotion(Float($0)) }
-                        ),
-                        defaultValue: 0.5,
-                        size: .hero,
-                        isEnabled: true
-                    )
-                    KnobView(
-                        title: "Noise",
-                        value: Binding(
-                            get: { Double(appModel.noise) },
-                            set: { appModel.setNoise(Float($0)) }
-                        ),
-                        defaultValue: 0.5,
-                        size: .hero,
-                        isEnabled: true
-                    )
-                    KnobView(
-                        title: "Glitch",
-                        value: Binding(
-                            get: { Double(appModel.glitch) },
-                            set: { appModel.setGlitch(Float($0)) }
-                        ),
-                        defaultValue: 0.2,
-                        size: .hero,
-                        isEnabled: true
-                    )
-                }
-            }
-            .frame(maxWidth: .infinity)
+    private var readySection: some View {
+        Button(action: { appModel.enterLive() }) {
+            Text("Ready")
+                .font(.system(size: DesignTokens.Typography.Size.base, weight: DesignTokens.Typography.Weight.semibold))
+                .foregroundStyle(DesignTokens.Common.OnPrimary.text(colorScheme))
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, DesignTokens.Spacing.md)
+                .padding(.horizontal, DesignTokens.Spacing.xl)
+                .background(DesignTokens.Common.primary(colorScheme))
+                .clipShape(RoundedRectangle(cornerRadius: DesignTokens.Radius.md))
         }
-        .padding(DesignTokens.Spacing.md)
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .background(DesignTokens.Common.Background.card(colorScheme))
-        .clipShape(RoundedRectangle(cornerRadius: DesignTokens.Radius.md))
-    }
-
-    // MARK: - D) Actions
-    private var actionsSection: some View {
-        VStack(spacing: DesignTokens.Spacing.sm) {
-            Button(action: { appModel.randomize() }) {
-                Text("Randomize")
-                    .font(.system(size: DesignTokens.Typography.Size.sm, weight: DesignTokens.Typography.Weight.semibold))
-                    .foregroundStyle(DesignTokens.Common.Text.secondary(colorScheme))
-            }
-            .buttonStyle(.plain)
-            .keyboardShortcut(.space, modifiers: [])
-
-            Button(action: { appModel.panicReset() }) {
-                Text("Panic")
-                    .font(.system(size: DesignTokens.Typography.Size.sm, weight: DesignTokens.Typography.Weight.regular))
-                    .foregroundStyle(DesignTokens.Common.Text.secondary(colorScheme))
-            }
-            .buttonStyle(.bordered)
-            .keyboardShortcut("r", modifiers: [])
-
-            Button(action: { appModel.enterLive() }) {
-                Text("Ready")
-                    .font(.system(size: DesignTokens.Typography.Size.base, weight: DesignTokens.Typography.Weight.semibold))
-                    .foregroundStyle(DesignTokens.Common.OnPrimary.text(colorScheme))
-                    .frame(maxWidth: .infinity)
-                    .padding(.vertical, DesignTokens.Spacing.md)
-                    .padding(.horizontal, DesignTokens.Spacing.xl)
-                    .background(DesignTokens.Common.primary(colorScheme))
-                    .clipShape(RoundedRectangle(cornerRadius: DesignTokens.Radius.md))
-            }
-            .buttonStyle(.plain)
-            .keyboardShortcut(.return, modifiers: [])
-        }
-        .frame(maxWidth: .infinity)
+        .buttonStyle(.plain)
+        .keyboardShortcut(.return, modifiers: [])
     }
 
     // MARK: - Permission denied
@@ -413,12 +376,12 @@ struct SetupView: View {
             .buttonStyle(.plain)
         }
         .padding(DesignTokens.Spacing.md)
-        .frame(width: controlStackWidth, alignment: .leading)
+        .frame(maxWidth: .infinity, alignment: .leading)
         .background(DesignTokens.Common.Background.card(colorScheme))
         .clipShape(RoundedRectangle(cornerRadius: DesignTokens.Radius.md))
     }
 
-    // MARK: - Debug (DEBUG only, collapsed by default)
+    // MARK: - Debug (DEBUG only)
     #if DEBUG
     private var debugSection: some View {
         DisclosureGroup(isExpanded: $debugExpanded) {
@@ -460,7 +423,7 @@ struct SetupView: View {
                 .foregroundStyle(DesignTokens.Common.Text.tertiary(colorScheme))
         }
         .padding(DesignTokens.Spacing.sm)
-        .frame(width: controlStackWidth, alignment: .leading)
+        .frame(maxWidth: .infinity, alignment: .leading)
         .background(DesignTokens.Common.Background.card(colorScheme).opacity(0.7))
         .clipShape(RoundedRectangle(cornerRadius: DesignTokens.Radius.sm))
     }
@@ -469,5 +432,5 @@ struct SetupView: View {
 
 #Preview {
     SetupView(appModel: AppModel())
-        .frame(width: 420, height: 700)
+        .frame(width: 900, height: 700)
 }

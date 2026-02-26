@@ -96,6 +96,12 @@ final class AppModel: ObservableObject {
     private var cancellables = Set<AnyCancellable>()
     private var debugTimer: Timer?
     private var screenParamsObserver: NSObjectProtocol?
+    private var deviceListChangeBlock: AudioObjectPropertyListenerBlock?
+    private var deviceListPropertyAddress = AudioObjectPropertyAddress(
+        mSelector: kAudioHardwarePropertyDevices,
+        mScope: kAudioObjectPropertyScopeGlobal,
+        mElement: kAudioObjectPropertyElementMain
+    )
 
     init() {
         debugTimer = Timer.scheduledTimer(withTimeInterval: 0.1, repeats: true) { [weak self] _ in
@@ -156,9 +162,16 @@ final class AppModel: ObservableObject {
            let uuid = UUID(uuidString: uuidString) {
             selectedDisplayID = uuid
         }
-        refreshDisplays()
+        Task { @MainActor in self.refreshDisplays() }
+        deviceListChangeBlock = { [weak self] _, _ in
+            DispatchQueue.main.async { self?.refreshAudioDevices() }
+        }
+        if let block = deviceListChangeBlock {
+            var addr = deviceListPropertyAddress
+            AudioObjectAddPropertyListenerBlock(AudioObjectID(kAudioObjectSystemObject), &addr, nil, block)
+        }
         screenParamsObserver = NotificationCenter.default.addObserver(forName: NSApplication.didChangeScreenParametersNotification, object: nil, queue: .main) { [weak self] _ in
-            self?.refreshDisplays()
+            Task { @MainActor in self?.refreshDisplays() }
         }
         audioManager.lowPublisher
             .receive(on: DispatchQueue.main)
@@ -176,6 +189,13 @@ final class AppModel: ObservableObject {
             .receive(on: DispatchQueue.main)
             .sink { [weak self] v in self?.impact = v; self?.pushSnapshot() }
             .store(in: &cancellables)
+    }
+
+    deinit {
+        if let block = deviceListChangeBlock {
+            var addr = deviceListPropertyAddress
+            AudioObjectRemovePropertyListenerBlock(AudioObjectID(kAudioObjectSystemObject), &addr, nil, block)
+        }
     }
 
     private func pushSnapshot() {
@@ -305,7 +325,7 @@ final class AppModel: ObservableObject {
         }
     }
 
-    /// Enumerate devices on demand. No listeners. Call on appear + refresh button.
+    /// Enumerate devices. Updates automatically when hardware changes (CoreAudio listener).
     func refreshAudioDevices() {
         audioDevices = AudioDevice.enumerate(includeAdvanced: showAdvancedDevices)
         if selectedDeviceID == nil, let defaultID = systemDefaultInputDeviceID(), audioDevices.contains(where: { $0.id == defaultID }) {
@@ -359,6 +379,10 @@ final class AppModel: ObservableObject {
                     self.pushSnapshot()
                 }
             }
+        case .restricted:
+            hasMicPermission = false
+            audioStatus = .noPermission
+            pushSnapshot()
         @unknown default:
             hasMicPermission = false
             audioStatus = .noPermission

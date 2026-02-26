@@ -4,10 +4,24 @@
 //
 
 import SwiftUI
+import Sentry
 
 @main
 struct EcholumeApp: App {
     @StateObject private var appModel = AppModel()
+
+    init() {
+        if let dsn = ProcessInfo.processInfo.environment["SENTRY_DSN"] ?? Bundle.main.object(forInfoDictionaryKey: "SentryDSN") as? String, !dsn.isEmpty {
+            SentrySDK.start { options in
+                options.dsn = dsn
+                options.environment = ProcessInfo.processInfo.environment["SENTRY_ENVIRONMENT"] ?? (Bundle.main.object(forInfoDictionaryKey: "SentryEnvironment") as? String) ?? "development"
+                #if DEBUG
+                options.debug = true
+                #endif
+                options.tracesSampleRate = 1.0
+            }
+        }
+    }
 
     var body: some Scene {
         WindowGroup {
