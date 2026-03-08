@@ -18,7 +18,11 @@ struct EcholumeApp: App {
                 #if DEBUG
                 options.debug = true
                 #endif
+                #if DEBUG
                 options.tracesSampleRate = 1.0
+                #else
+                options.tracesSampleRate = 0.2
+                #endif
             }
         }
     }

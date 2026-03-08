@@ -137,6 +137,20 @@ float shapeGrid(float2 uv, float t, float count, float motionSpeed, float warp, 
     return 1.0 - smoothstep(0.0, 1.0, line);
 }
 
+// --- Shape dispatcher: selects shape function by shapeStyleIndex ---
+float getShapeValue(float2 uv, float t, constant Uniforms& u) {
+    int style = int(u.shapeStyleIndex);
+    float count = u.shapeCount;
+    float speed = u.motionSpeed;
+    float w = u.warpAmount;
+    uint seed = u.seed;
+    if (style == 1) return shapeCircles(uv, t, count, speed, w, seed);
+    if (style == 2) return shapeLines(uv, t, count, speed, w, seed);
+    if (style == 3) return shapeGrid(uv, t, count, speed, w, seed);
+    if (style == 4) return shapeParticles(uv, t, count, speed, w, seed);
+    return shapeBlobs(uv, t, count, speed, w, seed);
+}
+
 // --- Scene: apply palette to raw rgb (shared) ---
 float4 applyPalette(float4 col, float absVal, constant Uniforms& u) {
     float3 pal0 = u.palette0.rgb;
@@ -200,9 +214,21 @@ float4 renderRadial(constant Uniforms& u, float2 uv) {
     float b = 0.3 + 0.2 * layerA + 0.25 * ring + 0.15 * layerB + 0.15 * layerC + shockwave * 0.4;
 
     float4 col = float4(r, g, b, 1.0);
-    col *= (0.2 + 0.75 * level);
+
+    // Shape pattern modulates brightness (abstraction controls blend amount)
+    float shape = getShapeValue(uv, t, u);
+    float absClamp = clamp(u.abstraction, 0.0, 1.0);
+    col.rgb *= mix(1.0, 0.4 + 0.6 * shape, 0.3 + 0.5 * absClamp);
+
+    // Noise texture detail (noiseStrength adds fine grain)
+    float noiseTex = noise(uv * 12.0 + t * 0.5, t, seed + 20u);
+    col.rgb += (noiseTex - 0.5) * u.noiseStrength * 0.15;
+
+    // Reactivity scales audio level influence
+    float react = clamp(u.reactivity, 0.0, 1.0);
+    col *= (0.2 + 0.75 * level * (0.5 + 0.5 * react));
     col.rgb += impulse * 0.2;
-    col = applyPalette(col, clamp(u.abstraction, 0.0, 1.0), u);
+    col = applyPalette(col, absClamp, u);
     col.rgb = clamp(col.rgb, 0.0, 0.95);
     return applyGlitch(col, uv, t, u);
 }
@@ -241,9 +267,21 @@ float4 renderFlow(constant Uniforms& u, float2 uv) {
     float b = 0.35 + 0.2 * layerA + 0.25 * layerB + 0.15 * layerC + impulse * 0.15;
 
     float4 col = float4(r, g, b, 1.0);
-    col *= (0.2 + 0.75 * level);
+
+    // Shape pattern modulates brightness
+    float shape = getShapeValue(uv, t, u);
+    float absClamp = clamp(u.abstraction, 0.0, 1.0);
+    col.rgb *= mix(1.0, 0.4 + 0.6 * shape, 0.3 + 0.5 * absClamp);
+
+    // Noise texture detail
+    float noiseTex = noise(uv * 10.0 + t * 0.3, t, seed + 20u);
+    col.rgb += (noiseTex - 0.5) * u.noiseStrength * 0.15;
+
+    // Reactivity scales audio level influence
+    float react = clamp(u.reactivity, 0.0, 1.0);
+    col *= (0.2 + 0.75 * level * (0.5 + 0.5 * react));
     col.rgb += impulse * 0.18;
-    col = applyPalette(col, clamp(u.abstraction, 0.0, 1.0), u);
+    col = applyPalette(col, absClamp, u);
     col.rgb = clamp(col.rgb, 0.0, 0.95);
     return applyGlitch(col, uv, t, u);
 }
@@ -291,9 +329,21 @@ float4 renderGrid(constant Uniforms& u, float2 uv) {
     float b = 0.3 + 0.2 * layerA + 0.25 * layerB + 0.15 * layerC + impulse * 0.2;
 
     float4 col = float4(r, g, b, 1.0);
-    col *= (0.2 + 0.75 * level);
+
+    // Shape pattern modulates brightness
+    float shape = getShapeValue(uv, t, u);
+    float absClamp = clamp(u.abstraction, 0.0, 1.0);
+    col.rgb *= mix(1.0, 0.4 + 0.6 * shape, 0.3 + 0.5 * absClamp);
+
+    // Noise texture detail
+    float noiseTex = noise(uv * 8.0 + t * 0.4, t, seed + 20u);
+    col.rgb += (noiseTex - 0.5) * u.noiseStrength * 0.15;
+
+    // Reactivity scales audio level influence
+    float react = clamp(u.reactivity, 0.0, 1.0);
+    col *= (0.2 + 0.75 * level * (0.5 + 0.5 * react));
     col.rgb += impulse * 0.15;
-    col = applyPalette(col, clamp(u.abstraction, 0.0, 1.0), u);
+    col = applyPalette(col, absClamp, u);
     col.rgb = clamp(col.rgb, 0.0, 0.95);
     return applyGlitch(col, uv, t, u);
 }
@@ -308,10 +358,6 @@ fragment float4 fullscreenQuadFragment(
     else if (sceneType == 1) col = renderFlow(u, in.uv);
     else col = renderGrid(u, in.uv);
 
-    // Shader tint probe (temporary): proves GPU receives motion/noise/glitch
-    if (u.motion > 0.8) col.rgb = mix(col.rgb, float3(1.0, 0.2, 0.2), 0.15);
-    if (u.noise > 0.8) col.rgb = mix(col.rgb, float3(0.2, 1.0, 0.2), 0.15);
-    if (u.glitch > 0.8) col.rgb = mix(col.rgb, float3(0.2, 0.2, 1.0), 0.15);
     col.rgb = clamp(col.rgb, 0.0, 1.0);
     return col;
 }

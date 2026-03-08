@@ -394,14 +394,12 @@ final class AppModel: ObservableObject {
         setSelectedDeviceID(id)
     }
 
-    /// Set device (nil = Automatic / use default when starting).
+    /// Set device (nil = Automatic / use system default).
     func setSelectedDeviceID(_ id: AudioDeviceID?) {
         if selectedDeviceID == id { return }
         selectedDeviceID = id
-        if let id = id {
-            audioManager.setChannelPairIndex(selectedChannelPair)
-            if hasMicPermission { audioManager.restart(withDeviceID: id) }
-        }
+        audioManager.setChannelPairIndex(selectedChannelPair)
+        if hasMicPermission { audioManager.restart(withDeviceID: id) }
         pushSnapshot()
     }
 
@@ -434,9 +432,12 @@ final class AppModel: ObservableObject {
         ThemeLibrary.theme(byIndex: selectedThemeIndex)
     }
 
-    /// When user changes theme or abstraction, push to provider.
+    /// When user changes theme, apply its default shape style and push to provider.
     func setThemeIndex(_ index: Int) {
         selectedThemeIndex = max(0, min(index, ThemeLibrary.themes.count - 1))
+        let theme = ThemeLibrary.theme(byIndex: selectedThemeIndex)
+        selectedShapeStyle = theme.defaultShapeStyle
+        UserDefaults.standard.set(selectedShapeStyle.rawValue, forKey: Self.userDefaultsShapeStyleKey)
         pushSnapshot()
     }
 

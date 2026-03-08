@@ -67,7 +67,7 @@ final class AudioManager {
     var selectedChannelPairIndex: Int = 0
 
     private let fftQueue = DispatchQueue(label: "echolume.fft", qos: .userInitiated)
-    private var fftWorkItem: DispatchWorkItem?
+    private var fftSource: DispatchSourceUserDataOr?
 
     var engineRunning: Bool { engine?.isRunning ?? false }
     /// For UI: engine is running.
@@ -94,16 +94,19 @@ final class AudioManager {
             _timebaseDenom = info.denom
         }
 #endif
+        let source = DispatchSource.makeUserDataOrSource(queue: fftQueue)
+        source.setEventHandler { [weak self] in self?.runFFT() }
+        source.resume()
+        fftSource = source
     }
 
     deinit {
+        fftSource?.cancel()
         stopAndTearDownEngine()
     }
 
     /// Full tear down: remove tap, stop, discard engine. No logging in hot path.
     func stopAndTearDownEngine() {
-        fftWorkItem?.cancel()
-        fftWorkItem = nil
         guard let eng = engine else { return }
         if eng.isRunning {
             eng.inputNode.removeTap(onBus: 0)
@@ -247,11 +250,9 @@ final class AudioManager {
         }
     }
 
+    /// Signal FFT source — non-allocating, coalescing, real-time safe.
     private func scheduleFFT() {
-        fftWorkItem?.cancel()
-        let work = DispatchWorkItem { [weak self] in self?.runFFT() }
-        fftWorkItem = work
-        fftQueue.async(execute: work)
+        fftSource?.or(data: 1)
     }
 
     private func runFFT() {
