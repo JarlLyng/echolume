@@ -3,6 +3,7 @@
 //  echolume
 //
 
+import AppKit
 import SwiftUI
 import Sentry
 
@@ -30,6 +31,15 @@ struct EcholumeApp: App {
     var body: some Scene {
         WindowGroup {
             RootView(appModel: appModel)
+                .onAppear {
+                    // Maximize window to fill the screen (not macOS fullscreen mode)
+                    DispatchQueue.main.async {
+                        if let window = NSApplication.shared.windows.first,
+                           let screen = window.screen ?? NSScreen.main {
+                            window.setFrame(screen.visibleFrame, display: true)
+                        }
+                    }
+                }
         }
         .commands {
             CommandGroup(after: .windowArrangement) {

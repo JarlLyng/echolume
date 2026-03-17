@@ -1,0 +1,3 @@
+User-agent: *
+Allow: /
+Sitemap: https://JarlLyng.github.io/echolume/sitemap.xml

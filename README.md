@@ -44,6 +44,7 @@ Echolume turns sound into light.
   - Performance knobs: Abstraction, Energy Bias, Motion, Noise, Glitch
   - Randomize button
   - Output Display picker (Auto/Main or external display)
+  - Twitch Chat toggle + channel name (anonymous IRC, viewer commands)
   - Ready button
 - **Live screen**:
   - Fullscreen Metal output
@@ -53,6 +54,7 @@ Echolume turns sound into light.
 - Presets (save/load theme + abstraction + seed).
 - Additional analysis: onset detection, beat estimation.
 - Multiple scenes.
+- Twitch EventSub (react to follows, subs, bits with visual triggers).
 
 ---
 
@@ -76,6 +78,7 @@ Echolume/
   App/
     EcholumeApp.swift
     AppModel.swift
+    TwitchChatManager.swift
   UI/
     SetupView.swift
     LiveView.swift
@@ -234,6 +237,41 @@ A theme defines:
 
 ---
 
+## Twitch Chat integration
+
+Echolume can connect to a Twitch channel's chat (read-only, anonymous) and react to viewer commands in real time. This turns streams into interactive visual experiences.
+
+### How it works
+
+`TwitchChatManager` connects to Twitch IRC via WebSocket (`wss://irc-ws.chat.twitch.tv:443`) as an anonymous viewer (`justinfan*`). No OAuth or login required — it only reads public chat messages.
+
+### Chat commands
+
+| Command | Effect |
+|---------|--------|
+| `!theme <name>` | Switch theme (e.g. `!theme summer`, `!theme techno club`) |
+| `!scene <name>` | Switch scene type (`radial`, `flow`, `grid`) |
+| `!shape <name>` | Switch shape style (`blobs`, `circles`, `lines`, `grid`, `particles`) |
+| `!randomize` | Random theme + seed |
+| `!glitch` | Toggle glitch intensity |
+| `!abstract <0–100>` | Set abstraction level |
+
+### Rate limiting
+
+Commands are rate-limited to 1 per second to prevent chat spam from thrashing visuals.
+
+### Reconnection
+
+On disconnect, the manager retries up to 3 times with a 5-second delay between attempts.
+
+### Setup (user)
+
+1. In SetupView, enable **Twitch Chat** and enter the channel name.
+2. Echolume connects automatically. Status indicator shows connection state (green/yellow/red/gray).
+3. Settings persist in UserDefaults.
+
+---
+
 ## Permissions
 
 Add this to `Info.plist`:
@@ -264,26 +302,24 @@ Echolume must use the **IAMJARL design system** from:
 - Use design tokens/components from the design system for **all UI** (SetupView, LiveView overlays, pickers, buttons, sliders, etc.).
 - Keep UI minimal, but consistent.
 
-### Integration (V1)
+### Integration
 
-Add the design system as a dependency (preferred: **Swift Package Manager**):
-1. In Xcode: *File → Add Packages…*
-2. Paste the repo URL: `https://github.com/JarlLyng/iamjarl-design`
-3. Add it to the **Echolume** app target.
+The design system is integrated as a **Swift Package Manager** dependency (already added to the Xcode project):
+- **Package:** `IAMJARLDesignTokens` from `https://github.com/JarlLyng/iamjarl-design`
+- **Version:** `upToNextMajorVersion` from 0.1.3
+- **Update:** *File → Packages → Update to Latest Package Versions* in Xcode
+
+There is **no local copy** of `DesignTokens.swift` — tokens come directly from the SPM package.
 
 ### Usage conventions
 
-- Import the module(s) provided by the package in SwiftUI views (exact module name depends on the package).
+- Add `import IAMJARLDesignTokens` in any SwiftUI view that uses design tokens.
 - Use token-based:
-  - Colors (background/foreground/accent)
-  - Typography (title/body/caption)
-  - Spacing scale
-  - Corner radius
-  - Button/slider styles
-
-If the design system exposes ready-made SwiftUI components (buttons, sliders, cards), use those first.
-
-> If Cursor is unsure about module names, inspect the package sources after adding it in Xcode and follow the package’s README as source-of-truth.
+  - Colors: `DesignTokens.Common.primary(colorScheme)`, `DesignTokens.ColorToken.State.success`, etc.
+  - Typography: `DesignTokens.Typography.Size.sm`, `DesignTokens.Typography.Weight.semibold`
+  - Spacing: `DesignTokens.Spacing.md`, `DesignTokens.Spacing.xl`
+  - Corner radius: `DesignTokens.Radius.md`
+- The marketing site (`docs/styles.css`) mirrors the dark-mode tokens as CSS custom properties.
 
 ---
 
@@ -345,7 +381,7 @@ When implementing, follow these rules:
 
 1. **Small, testable steps**. Prefer compiling after each file.
 2. Keep SwiftUI views dumb; most logic goes into `AppModel` and subsystems.
-3. Avoid third‑party deps for V1.
+3. Approved third-party deps: **Sentry** (crash reporting, test phase only) and **IAMJARLDesignTokens** (design system). Avoid adding others without good reason.
 4. Prefer deterministic code (no hidden magic).
 5. Add lightweight logging around audio start/stop and input format (avoid logging inside realtime callbacks).
 6. Device switching must use a deterministic restart model (dispose engine → create new engine → set device → install tap → start). Avoid KVC hacks or private API access.
@@ -380,6 +416,7 @@ Before external review / TestFlight:
 - MIDI input
 - Complex beat grid detection
 - Video recording/export
+- Twitch OAuth / authenticated connections (anonymous read-only is sufficient for V1)
 
 ---
 
@@ -395,6 +432,8 @@ The site will be available at `https://<username>.github.io/echolume/` (or your 
 
 - **`docs/index.html`** — landing page (hero, features, download).
 - **`docs/how-it-works.html`** — setup guide (mic, audio interface, BlackHole, troubleshooting).
+- **`docs/obs-guide.html`** — OBS Studio integration guide (BlackHole routing, monitor output, streaming tips).
+- **`docs/twitch-guide.html`** — Twitch chat integration guide (setup, commands, stream workflow).
 - **`docs/privacy.html`** — privacy policy.
 - **`docs/support.html`** — FAQ and contact (GitHub Issues).
 - **`docs/styles.css`** — styles (Echolume accent colors, dark theme).

@@ -6,6 +6,7 @@
 //  double-click resets to defaultValue. Design system colors.
 //
 
+import IAMJARLDesignTokens
 import SwiftUI
 #if os(macOS)
 import AppKit

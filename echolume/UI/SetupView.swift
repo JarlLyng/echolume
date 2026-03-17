@@ -2,11 +2,13 @@
 //  SetupView.swift
 //  echolume
 //
-//  Two-column Mac-native layout: Audio (left), Visuals (right). Ready at bottom.
+//  Two-column Mac-native layout: Input & Output (left), Style (right).
+//  Performance knobs full-width. Sticky bottom bar with Ready + Panic.
 //
 
 import AppKit
 import CoreAudio
+import IAMJARLDesignTokens
 import SwiftUI
 
 private let sectionSpacing: CGFloat = DesignTokens.Spacing.md
@@ -20,48 +22,54 @@ struct SetupView: View {
     #endif
 
     var body: some View {
-        ScrollView {
-            GeometryReader { geo in
-                let narrow = geo.size.width < twoColumnBreakpoint
-                VStack(spacing: DesignTokens.Spacing.lg) {
-                    Text("Echolume")
-                        .font(.system(
-                            size: DesignTokens.Typography.Size.xxl,
-                            weight: DesignTokens.Typography.Weight.bold
-                        ))
-                        .foregroundStyle(DesignTokens.Common.Text.primary(colorScheme))
+        VStack(spacing: 0) {
+            ScrollView {
+                GeometryReader { geo in
+                    let narrow = geo.size.width < twoColumnBreakpoint
+                    VStack(spacing: DesignTokens.Spacing.lg) {
+                        Text("Echolume")
+                            .font(.system(
+                                size: DesignTokens.Typography.Size.xxl,
+                                weight: DesignTokens.Typography.Weight.bold
+                            ))
+                            .foregroundStyle(DesignTokens.Common.Text.primary(colorScheme))
 
-                    if !appModel.hasMicPermission && appModel.audioStatus == .noPermission {
-                        permissionDeniedCard
-                    }
-
-                    if narrow {
-                        VStack(alignment: .leading, spacing: sectionSpacing) {
-                            audioSection
-                            visualsColumn
+                        if !appModel.hasMicPermission && appModel.audioStatus == .noPermission {
+                            permissionDeniedCard
                         }
-                    } else {
-                        HStack(alignment: .top, spacing: DesignTokens.Spacing.xl) {
-                            audioSection
-                                .frame(maxWidth: 320, alignment: .leading)
-                            visualsColumn
-                                .frame(maxWidth: .infinity, alignment: .leading)
+
+                        if narrow {
+                            VStack(alignment: .leading, spacing: sectionSpacing) {
+                                inputOutputSection
+                                styleSection
+                            }
+                        } else {
+                            HStack(alignment: .top, spacing: DesignTokens.Spacing.xl) {
+                                inputOutputSection
+                                    .frame(maxWidth: 340, alignment: .leading)
+                                styleSection
+                                    .frame(maxWidth: .infinity, alignment: .leading)
+                            }
+                            .frame(maxWidth: .infinity)
                         }
-                        .frame(maxWidth: .infinity)
+
+                        performanceSection
+
+                        #if DEBUG
+                        debugSection
+                        #endif
                     }
-
-                    readySection
-
-                    #if DEBUG
-                    debugSection
-                    #endif
+                    .padding(DesignTokens.Spacing.xxl)
+                    .padding(.bottom, DesignTokens.Spacing.xl)
+                    .frame(maxWidth: .infinity)
                 }
-                .padding(DesignTokens.Spacing.xxl)
-                .frame(maxWidth: .infinity)
+                .frame(maxWidth: .infinity, minHeight: 400)
             }
-            .frame(maxWidth: .infinity, minHeight: 400)
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+
+            // Sticky bottom bar
+            bottomBar
         }
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
         .background(DesignTokens.Common.Background.app(colorScheme))
         .onAppear {
             appModel.requestMicrophonePermissionAndStartAudio()
@@ -72,13 +80,14 @@ struct SetupView: View {
         }
     }
 
-    // MARK: - Audio (left column)
-    private var audioSection: some View {
+    // MARK: - Input & Output (left column)
+    private var inputOutputSection: some View {
         VStack(alignment: .leading, spacing: DesignTokens.Spacing.sm) {
-            Text("Audio")
+            Text("Input & Output")
                 .font(.system(size: DesignTokens.Typography.Size.sm, weight: DesignTokens.Typography.Weight.semibold))
                 .foregroundStyle(DesignTokens.Common.Text.secondary(colorScheme))
 
+            // Audio device
             if appModel.audioDevices.isEmpty {
                 Text("No input devices")
                     .font(.system(size: DesignTokens.Typography.Size.sm))
@@ -115,15 +124,9 @@ struct SetupView: View {
                         .font(.system(size: DesignTokens.Typography.Size.xs))
                         .foregroundStyle(DesignTokens.Common.Text.tertiary(colorScheme))
                 }
-
-                Button(action: { appModel.openAudioSettings() }) {
-                    Text("Open Sound Settings")
-                        .font(.system(size: DesignTokens.Typography.Size.xs, weight: DesignTokens.Typography.Weight.regular))
-                        .foregroundStyle(DesignTokens.Common.primary(colorScheme))
-                }
-                .buttonStyle(.plain)
             }
 
+            // Signal indicator + level meter
             if appModel.hasMicPermission {
                 HStack(spacing: DesignTokens.Spacing.sm) {
                     Image(systemName: appModel.hasSignal ? "checkmark.circle.fill" : "exclamationmark.triangle.fill")
@@ -138,6 +141,18 @@ struct SetupView: View {
                 }
             }
 
+            // Output display
+            outputDisplaySection
+
+            // Sound settings link
+            Button(action: { appModel.openAudioSettings() }) {
+                Text("Open Sound Settings")
+                    .font(.system(size: DesignTokens.Typography.Size.xs, weight: DesignTokens.Typography.Weight.regular))
+                    .foregroundStyle(DesignTokens.Common.primary(colorScheme))
+            }
+            .buttonStyle(.plain)
+
+            // Engine error banner
             if !appModel.debugEngineRunning || appModel.debugLastError != nil {
                 HStack(spacing: DesignTokens.Spacing.sm) {
                     Image(systemName: "exclamationmark.triangle.fill")
@@ -161,10 +176,49 @@ struct SetupView: View {
         .clipShape(RoundedRectangle(cornerRadius: DesignTokens.Radius.md))
     }
 
-    // MARK: - Visuals (right column)
-    private var visualsColumn: some View {
+    private var outputDisplaySection: some View {
+        Group {
+            if !appModel.availableDisplays.isEmpty {
+                VStack(alignment: .leading, spacing: DesignTokens.Spacing.xs) {
+                    Text("Output Display")
+                        .font(.system(size: DesignTokens.Typography.Size.xs, weight: DesignTokens.Typography.Weight.semibold))
+                        .foregroundStyle(DesignTokens.Common.Text.tertiary(colorScheme))
+                    if appModel.availableDisplays.count <= 1 {
+                        Picker("", selection: Binding(
+                            get: { appModel.selectedDisplayID },
+                            set: { appModel.setSelectedDisplayID($0) }
+                        )) {
+                            Text("Main Display").tag(nil as UUID?)
+                            ForEach(appModel.availableDisplays) { display in
+                                Text(display.name).tag(display.id as UUID?)
+                            }
+                        }
+                        .pickerStyle(.menu)
+                        .tint(DesignTokens.Common.primary(colorScheme))
+                        .disabled(true)
+                    } else {
+                        Picker("", selection: Binding(
+                            get: { appModel.selectedDisplayID },
+                            set: { appModel.setSelectedDisplayID($0) }
+                        )) {
+                            Text("Automatic (Main)").tag(nil as UUID?)
+                            ForEach(appModel.availableDisplays) { display in
+                                Text("\(display.name) — \(display.resolution)")
+                                    .tag(display.id as UUID?)
+                            }
+                        }
+                        .pickerStyle(.menu)
+                        .tint(DesignTokens.Common.primary(colorScheme))
+                    }
+                }
+            }
+        }
+    }
+
+    // MARK: - Style (right column)
+    private var styleSection: some View {
         VStack(alignment: .leading, spacing: sectionSpacing) {
-            Text("Visuals")
+            Text("Style")
                 .font(.system(size: DesignTokens.Typography.Size.sm, weight: DesignTokens.Typography.Weight.semibold))
                 .foregroundStyle(DesignTokens.Common.Text.secondary(colorScheme))
 
@@ -222,9 +276,32 @@ struct SetupView: View {
                 .frame(maxWidth: .infinity, alignment: .leading)
             }
 
-            outputDisplaySection
+            // Twitch Chat (compact, inside style card)
+            twitchSection
+        }
+        .padding(DesignTokens.Spacing.md)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(DesignTokens.Common.Background.card(colorScheme))
+        .clipShape(RoundedRectangle(cornerRadius: DesignTokens.Radius.md))
+    }
 
-            // Knobs: 2 rows horizontal
+    // MARK: - Performance (full width)
+    private var performanceSection: some View {
+        VStack(alignment: .leading, spacing: DesignTokens.Spacing.sm) {
+            HStack {
+                Text("Performance")
+                    .font(.system(size: DesignTokens.Typography.Size.sm, weight: DesignTokens.Typography.Weight.semibold))
+                    .foregroundStyle(DesignTokens.Common.Text.secondary(colorScheme))
+                Spacer()
+                Button(action: { appModel.randomize() }) {
+                    Text("Randomize")
+                        .font(.system(size: DesignTokens.Typography.Size.xs, weight: DesignTokens.Typography.Weight.semibold))
+                        .foregroundStyle(DesignTokens.Common.primary(colorScheme))
+                }
+                .buttonStyle(.plain)
+                .keyboardShortcut(.space, modifiers: [])
+            }
+
             HStack(spacing: DesignTokens.Spacing.lg) {
                 KnobView(
                     title: "Abstraction",
@@ -246,8 +323,6 @@ struct SetupView: View {
                     size: .standard,
                     isEnabled: true
                 )
-            }
-            HStack(spacing: DesignTokens.Spacing.lg) {
                 KnobView(
                     title: "Motion",
                     value: Binding(
@@ -279,24 +354,7 @@ struct SetupView: View {
                     isEnabled: true
                 )
             }
-
-            HStack(spacing: DesignTokens.Spacing.md) {
-                Button(action: { appModel.randomize() }) {
-                    Text("Randomize")
-                        .font(.system(size: DesignTokens.Typography.Size.sm, weight: DesignTokens.Typography.Weight.semibold))
-                        .foregroundStyle(DesignTokens.Common.Text.secondary(colorScheme))
-                }
-                .buttonStyle(.plain)
-                .keyboardShortcut(.space, modifiers: [])
-
-                Button(action: { appModel.panicReset() }) {
-                    Text("Panic")
-                        .font(.system(size: DesignTokens.Typography.Size.sm, weight: DesignTokens.Typography.Weight.regular))
-                        .foregroundStyle(DesignTokens.Common.Text.secondary(colorScheme))
-                }
-                .buttonStyle(.bordered)
-                .keyboardShortcut("r", modifiers: [])
-            }
+            .frame(maxWidth: .infinity)
         }
         .padding(DesignTokens.Spacing.md)
         .frame(maxWidth: .infinity, alignment: .leading)
@@ -304,58 +362,139 @@ struct SetupView: View {
         .clipShape(RoundedRectangle(cornerRadius: DesignTokens.Radius.md))
     }
 
-    private var outputDisplaySection: some View {
-        Group {
-            if !appModel.availableDisplays.isEmpty {
-                VStack(alignment: .leading, spacing: DesignTokens.Spacing.xs) {
-                    Text("Output")
-                        .font(.system(size: DesignTokens.Typography.Size.xs, weight: DesignTokens.Typography.Weight.semibold))
-                        .foregroundStyle(DesignTokens.Common.Text.tertiary(colorScheme))
-                    if appModel.availableDisplays.count <= 1 {
-                        Picker("", selection: Binding(
-                            get: { appModel.selectedDisplayID },
-                            set: { appModel.setSelectedDisplayID($0) }
-                        )) {
-                            Text("Main Display").tag(nil as UUID?)
-                            ForEach(appModel.availableDisplays) { display in
-                                Text(display.name).tag(display.id as UUID?)
-                            }
+    // MARK: - Twitch (compact, inside style card)
+    private var twitchSection: some View {
+        VStack(alignment: .leading, spacing: DesignTokens.Spacing.sm) {
+            HStack(spacing: DesignTokens.Spacing.sm) {
+                Text("Twitch Chat")
+                    .font(.system(size: DesignTokens.Typography.Size.xs, weight: DesignTokens.Typography.Weight.semibold))
+                    .foregroundStyle(DesignTokens.Common.Text.tertiary(colorScheme))
+
+                Spacer()
+
+                Toggle(isOn: Binding(
+                    get: { appModel.twitchEnabled },
+                    set: { appModel.setTwitchEnabled($0) }
+                )) {
+                    EmptyView()
+                }
+                .toggleStyle(.switch)
+                .tint(DesignTokens.Common.primary(colorScheme))
+                .labelsHidden()
+
+                twitchStatusIndicator
+            }
+
+            if appModel.twitchEnabled {
+                HStack(spacing: DesignTokens.Spacing.sm) {
+                    TextField("Channel name", text: Binding(
+                        get: { appModel.twitchChannelName },
+                        set: { appModel.setTwitchChannel($0) }
+                    ))
+                    .textFieldStyle(.roundedBorder)
+                    .font(.system(size: DesignTokens.Typography.Size.sm))
+                    .frame(maxWidth: 200)
+                    .onSubmit {
+                        if !appModel.twitchChannelName.isEmpty {
+                            appModel.connectTwitch()
                         }
-                        .pickerStyle(.menu)
-                        .tint(DesignTokens.Common.primary(colorScheme))
-                        .disabled(true)
-                    } else {
-                        Picker("", selection: Binding(
-                            get: { appModel.selectedDisplayID },
-                            set: { appModel.setSelectedDisplayID($0) }
-                        )) {
-                            Text("Automatic (Main)").tag(nil as UUID?)
-                            ForEach(appModel.availableDisplays) { display in
-                                Text("\(display.name) — \(display.resolution)")
-                                    .tag(display.id as UUID?)
-                            }
+                    }
+
+                    if appModel.twitchStatus == .connected {
+                        Button(action: { appModel.disconnectTwitch() }) {
+                            Text("Disconnect")
+                                .font(.system(size: DesignTokens.Typography.Size.xs, weight: DesignTokens.Typography.Weight.regular))
+                                .foregroundStyle(DesignTokens.Common.Text.secondary(colorScheme))
                         }
-                        .pickerStyle(.menu)
-                        .tint(DesignTokens.Common.primary(colorScheme))
+                        .buttonStyle(.plain)
+                    } else if appModel.twitchStatus == .disconnected || appModel.twitchStatus != .connecting {
+                        Button(action: { appModel.connectTwitch() }) {
+                            Text("Connect")
+                                .font(.system(size: DesignTokens.Typography.Size.xs, weight: DesignTokens.Typography.Weight.semibold))
+                                .foregroundStyle(DesignTokens.Common.primary(colorScheme))
+                        }
+                        .buttonStyle(.plain)
+                        .disabled(appModel.twitchChannelName.isEmpty)
                     }
                 }
+
+                if case .error(let msg) = appModel.twitchStatus {
+                    Text(msg)
+                        .font(.system(size: DesignTokens.Typography.Size.xs))
+                        .foregroundStyle(DesignTokens.ColorToken.State.warning)
+                }
+
+                Text("Viewers: !theme, !scene, !shape, !randomize, !glitch, !abstract")
+                    .font(.system(size: DesignTokens.Typography.Size.xs))
+                    .foregroundStyle(DesignTokens.Common.Text.tertiary(colorScheme))
             }
+        }
+        .padding(.top, DesignTokens.Spacing.sm)
+    }
+
+    private var twitchStatusIndicator: some View {
+        HStack(spacing: DesignTokens.Spacing.xs) {
+            Circle()
+                .fill(twitchStatusColor)
+                .frame(width: 8, height: 8)
+            Text(twitchStatusLabel)
+                .font(.system(size: DesignTokens.Typography.Size.xs))
+                .foregroundStyle(DesignTokens.Common.Text.tertiary(colorScheme))
         }
     }
 
-    private var readySection: some View {
-        Button(action: { appModel.enterLive() }) {
-            Text("Ready")
-                .font(.system(size: DesignTokens.Typography.Size.base, weight: DesignTokens.Typography.Weight.semibold))
-                .foregroundStyle(DesignTokens.Common.OnPrimary.text(colorScheme))
-                .frame(maxWidth: .infinity)
-                .padding(.vertical, DesignTokens.Spacing.md)
-                .padding(.horizontal, DesignTokens.Spacing.xl)
-                .background(DesignTokens.Common.primary(colorScheme))
-                .clipShape(RoundedRectangle(cornerRadius: DesignTokens.Radius.md))
+    private var twitchStatusColor: Color {
+        switch appModel.twitchStatus {
+        case .connected: return DesignTokens.ColorToken.State.success
+        case .connecting: return DesignTokens.ColorToken.State.warning
+        case .error: return DesignTokens.ColorToken.State.error
+        case .disconnected: return DesignTokens.Common.Text.tertiary(colorScheme)
         }
-        .buttonStyle(.plain)
-        .keyboardShortcut(.return, modifiers: [])
+    }
+
+    private var twitchStatusLabel: String {
+        switch appModel.twitchStatus {
+        case .connected: return "Connected"
+        case .connecting: return "Connecting..."
+        case .error: return "Error"
+        case .disconnected: return "Off"
+        }
+    }
+
+    // MARK: - Bottom bar (sticky)
+    private var bottomBar: some View {
+        HStack(spacing: DesignTokens.Spacing.md) {
+            Button(action: { appModel.panicReset() }) {
+                Text("Panic Reset")
+                    .font(.system(size: DesignTokens.Typography.Size.sm, weight: DesignTokens.Typography.Weight.regular))
+                    .foregroundStyle(DesignTokens.Common.Text.secondary(colorScheme))
+                    .padding(.horizontal, DesignTokens.Spacing.lg)
+                    .padding(.vertical, DesignTokens.Spacing.md)
+            }
+            .buttonStyle(.plain)
+            .background(DesignTokens.Common.Background.card(colorScheme))
+            .clipShape(RoundedRectangle(cornerRadius: DesignTokens.Radius.md))
+            .keyboardShortcut("r", modifiers: [])
+
+            Button(action: { appModel.enterLive() }) {
+                Text("Ready")
+                    .font(.system(size: DesignTokens.Typography.Size.base, weight: DesignTokens.Typography.Weight.semibold))
+                    .foregroundStyle(DesignTokens.Common.OnPrimary.text(colorScheme))
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, DesignTokens.Spacing.md)
+                    .padding(.horizontal, DesignTokens.Spacing.xl)
+                    .background(DesignTokens.Common.primary(colorScheme))
+                    .clipShape(RoundedRectangle(cornerRadius: DesignTokens.Radius.md))
+            }
+            .buttonStyle(.plain)
+            .keyboardShortcut(.return, modifiers: [])
+        }
+        .padding(.horizontal, DesignTokens.Spacing.xxl)
+        .padding(.vertical, DesignTokens.Spacing.lg)
+        .background(
+            DesignTokens.Common.Background.app(colorScheme)
+                .shadow(color: .black.opacity(0.15), radius: 8, y: -2)
+        )
     }
 
     // MARK: - Permission denied

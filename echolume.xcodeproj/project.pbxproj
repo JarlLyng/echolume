@@ -8,6 +8,7 @@
 
 /* Begin PBXBuildFile section */
 		2F0891822F4F27880017269C /* Sentry in Frameworks */ = {isa = PBXBuildFile; productRef = 2F0891812F4F27880017269C /* Sentry */; };
+		2FA00001300000000017269C /* IAMJARLDesignTokens in Frameworks */ = {isa = PBXBuildFile; productRef = 2FA00002300000000017269C /* IAMJARLDesignTokens */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -57,6 +58,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				2F0891822F4F27880017269C /* Sentry in Frameworks */,
+				2FA00001300000000017269C /* IAMJARLDesignTokens in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -118,6 +120,7 @@
 			name = echolume;
 			packageProductDependencies = (
 				2F0891812F4F27880017269C /* Sentry */,
+				2FA00002300000000017269C /* IAMJARLDesignTokens */,
 			);
 			productName = echolume;
 			productReference = 2F0891512F4F27820017269C /* echolume.app */;
@@ -203,6 +206,7 @@
 			minimizedProjectReferenceProxies = 1;
 			packageReferences = (
 				2F0891802F4F27880017269C /* XCRemoteSwiftPackageReference "sentry-cocoa" */,
+				2FA00003300000000017269C /* XCRemoteSwiftPackageReference "iamjarl-design" */,
 			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 2F0891522F4F27820017269C /* Products */;
@@ -333,7 +337,7 @@
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
 				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
-				MACOSX_DEPLOYMENT_TARGET = 26.2;
+				MACOSX_DEPLOYMENT_TARGET = 14.0;
 				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
 				MTL_FAST_MATH = YES;
 				ONLY_ACTIVE_ARCH = YES;
@@ -393,7 +397,7 @@
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
 				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
-				MACOSX_DEPLOYMENT_TARGET = 26.2;
+				MACOSX_DEPLOYMENT_TARGET = 14.0;
 				MTL_ENABLE_DEBUG_INFO = NO;
 				MTL_FAST_MATH = YES;
 				SDKROOT = macosx;
@@ -409,7 +413,7 @@
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
-				CURRENT_PROJECT_VERSION = 3;
+				CURRENT_PROJECT_VERSION = 4;
 				DEAD_CODE_STRIPPING = YES;
 				DEVELOPMENT_TEAM = KDWZ3WNLDK;
 				ENABLE_APP_SANDBOX = YES;
@@ -456,7 +460,7 @@
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
-				CURRENT_PROJECT_VERSION = 3;
+				CURRENT_PROJECT_VERSION = 4;
 				DEAD_CODE_STRIPPING = YES;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				DEVELOPMENT_TEAM = KDWZ3WNLDK;
@@ -506,7 +510,7 @@
 				DEAD_CODE_STRIPPING = YES;
 				DEVELOPMENT_TEAM = KDWZ3WNLDK;
 				GENERATE_INFOPLIST_FILE = YES;
-				MACOSX_DEPLOYMENT_TARGET = 26.2;
+				MACOSX_DEPLOYMENT_TARGET = 14.0;
 				MARKETING_VERSION = 1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.iamjarl.echolumeTests;
 				PRODUCT_NAME = "$(TARGET_NAME)";
@@ -528,7 +532,7 @@
 				DEAD_CODE_STRIPPING = YES;
 				DEVELOPMENT_TEAM = KDWZ3WNLDK;
 				GENERATE_INFOPLIST_FILE = YES;
-				MACOSX_DEPLOYMENT_TARGET = 26.2;
+				MACOSX_DEPLOYMENT_TARGET = 14.0;
 				MARKETING_VERSION = 1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.iamjarl.echolumeTests;
 				PRODUCT_NAME = "$(TARGET_NAME)";
@@ -631,6 +635,14 @@
 				minimumVersion = 9.0.0;
 			};
 		};
+		2FA00003300000000017269C /* XCRemoteSwiftPackageReference "iamjarl-design" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/JarlLyng/iamjarl-design";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 0.1.3;
+			};
+		};
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
@@ -638,6 +650,11 @@
 			isa = XCSwiftPackageProductDependency;
 			package = 2F0891802F4F27880017269C /* XCRemoteSwiftPackageReference "sentry-cocoa" */;
 			productName = Sentry;
+		};
+		2FA00002300000000017269C /* IAMJARLDesignTokens */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 2FA00003300000000017269C /* XCRemoteSwiftPackageReference "iamjarl-design" */;
+			productName = IAMJARLDesignTokens;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};

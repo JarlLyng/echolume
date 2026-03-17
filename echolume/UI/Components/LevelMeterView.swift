@@ -5,6 +5,7 @@
 //  Live level meter (RMS + peak) using design tokens.
 //
 
+import IAMJARLDesignTokens
 import SwiftUI
 
 struct LevelMeterView: View {

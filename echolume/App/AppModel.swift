@@ -37,12 +37,19 @@ final class AppModel: ObservableObject {
     @Published var noise: Float = 0.5
     @Published var glitch: Float = 0.2
 
+    // Twitch
+    @Published var twitchEnabled: Bool = false
+    @Published var twitchChannelName: String = ""
+    @Published var twitchStatus: TwitchConnectionStatus = .disconnected
+
     private static let userDefaultsShapeStyleKey = "echolume.selectedShapeStyle"
     private static let userDefaultsSceneKey = "echolume.selectedScene"
     private static let userDefaultsMotionKey = "echolume.motion"
     private static let userDefaultsNoiseKey = "echolume.noise"
     private static let userDefaultsGlitchKey = "echolume.glitch"
     private static let userDefaultsSelectedDisplayIDKey = "echolume.selectedDisplayID"
+    private static let userDefaultsTwitchEnabledKey = "echolume.twitchEnabled"
+    private static let userDefaultsTwitchChannelKey = "echolume.twitchChannel"
 
     /// Available displays (main first). Refreshed by refreshDisplays().
     @Published var availableDisplays: [OutputDisplay] = []
@@ -93,6 +100,7 @@ final class AppModel: ObservableObject {
     let visualParamsProvider = VisualParamsProvider()
 
     private let audioManager = AudioManager()
+    private var twitchManager: TwitchChatManager?
     private var cancellables = Set<AnyCancellable>()
     private var debugTimer: Timer?
     private var screenParamsObserver: NSObjectProtocol?
@@ -173,6 +181,12 @@ final class AppModel: ObservableObject {
         screenParamsObserver = NotificationCenter.default.addObserver(forName: NSApplication.didChangeScreenParametersNotification, object: nil, queue: .main) { [weak self] _ in
             DispatchQueue.main.async { self?.refreshDisplays() }
         }
+        twitchEnabled = UserDefaults.standard.bool(forKey: Self.userDefaultsTwitchEnabledKey)
+        twitchChannelName = UserDefaults.standard.string(forKey: Self.userDefaultsTwitchChannelKey) ?? ""
+        if twitchEnabled && !twitchChannelName.isEmpty {
+            connectTwitch()
+        }
+
         audioManager.lowPublisher
             .receive(on: DispatchQueue.main)
             .sink { [weak self] v in self?.low = v; self?.pushSnapshot() }
@@ -479,5 +493,69 @@ final class AppModel: ObservableObject {
         glitch = max(0, min(1, value))
         UserDefaults.standard.set(Double(glitch), forKey: Self.userDefaultsGlitchKey)
         pushSnapshot()
+    }
+
+    // MARK: - Twitch
+
+    func setTwitchEnabled(_ enabled: Bool) {
+        twitchEnabled = enabled
+        UserDefaults.standard.set(enabled, forKey: Self.userDefaultsTwitchEnabledKey)
+        if enabled && !twitchChannelName.isEmpty {
+            connectTwitch()
+        } else if !enabled {
+            disconnectTwitch()
+        }
+    }
+
+    func setTwitchChannel(_ name: String) {
+        twitchChannelName = name
+        UserDefaults.standard.set(name, forKey: Self.userDefaultsTwitchChannelKey)
+        if twitchEnabled && !name.isEmpty {
+            connectTwitch()
+        } else if name.isEmpty {
+            disconnectTwitch()
+        }
+    }
+
+    func connectTwitch() {
+        let manager = TwitchChatManager()
+        manager.onCommand = { [weak self] cmd in
+            self?.handleTwitchCommand(cmd)
+        }
+        manager.$status
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] s in self?.twitchStatus = s }
+            .store(in: &cancellables)
+        twitchManager = manager
+        manager.connect(channel: twitchChannelName)
+    }
+
+    func disconnectTwitch() {
+        twitchManager?.disconnect()
+        twitchManager = nil
+        twitchStatus = .disconnected
+    }
+
+    private func handleTwitchCommand(_ cmd: TwitchCommand) {
+        switch cmd {
+        case .theme(let name):
+            if let idx = ThemeLibrary.themes.firstIndex(where: {
+                $0.name.lowercased() == name.lowercased()
+            }) { setThemeIndex(idx) }
+        case .randomize:
+            randomize()
+        case .scene(let name):
+            if let scene = SceneType.allCases.first(where: {
+                $0.rawValue.lowercased() == name.lowercased()
+            }) { setScene(scene) }
+        case .shape(let name):
+            if let style = VisualShapeStyle.allCases.first(where: {
+                $0.rawValue.lowercased() == name.lowercased()
+            }) { setShapeStyle(style) }
+        case .glitch:
+            setGlitch(glitch > 0.5 ? 0.2 : 1.0)
+        case .abstract(let pct):
+            setAbstraction(Float(pct) / 100.0)
+        }
     }
 }

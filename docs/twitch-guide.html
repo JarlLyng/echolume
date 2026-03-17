@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Twitch chat integration — Echolume</title>
+  <meta name="description" content="Let Twitch viewers control your visuals with chat commands. Set up Echolume's Twitch integration for interactive streams.">
+  <link rel="canonical" href="https://JarlLyng.github.io/echolume/twitch-guide.html">
+  <meta property="og:title" content="Twitch chat integration — Echolume">
+  <meta property="og:description" content="Let Twitch viewers control your visuals with chat commands. Interactive audio-reactive streaming.">
+  <meta property="og:url" content="https://JarlLyng.github.io/echolume/twitch-guide.html">
+  <meta property="og:type" content="article">
+  <meta property="og:image" content="https://JarlLyng.github.io/echolume/og-image.png">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="theme-color" content="#D0FF00">
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "HowTo",
+    "name": "How to set up Twitch chat integration in Echolume",
+    "description": "Let viewers control audio-reactive visuals with Twitch chat commands.",
+    "step": [
+      {
+        "@type": "HowToStep",
+        "name": "Enable Twitch Chat",
+        "text": "Open Echolume, go to Setup, and enable Twitch Chat."
+      },
+      {
+        "@type": "HowToStep",
+        "name": "Enter your channel name",
+        "text": "Type your Twitch channel name (e.g. your_twitch_username). Echolume connects automatically — no login or OAuth required."
+      },
+      {
+        "@type": "HowToStep",
+        "name": "Choose audio and go live",
+        "text": "Select your audio source (e.g. BlackHole 2ch from OBS) and press Ready. Viewers can now control visuals via chat."
+      }
+    ]
+  }
+  </script>
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    "itemListElement": [
+      { "@type": "ListItem", "position": 1, "name": "Echolume", "item": "https://JarlLyng.github.io/echolume/" },
+      { "@type": "ListItem", "position": 2, "name": "Twitch integration", "item": "https://JarlLyng.github.io/echolume/twitch-guide.html" }
+    ]
+  }
+  </script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <header class="header">
+    <a href="index.html" class="logo">Echolume</a>
+    <nav class="nav">
+      <a href="index.html">Home</a>
+      <a href="how-it-works.html">How it works</a>
+      <a href="obs-guide.html">OBS Guide</a>
+      <a href="twitch-guide.html">Twitch</a>
+      <a href="index.html#download">Download</a>
+      <a href="privacy.html">Privacy</a>
+      <a href="support.html">Support</a>
+      <a href="https://github.com/JarlLyng/echolume" target="_blank" rel="noopener">GitHub</a>
+    </nav>
+  </header>
+
+  <main class="page-main">
+    <article class="legal">
+      <h1>Echolume + Twitch</h1>
+      <p class="legal-intro">Make your Twitch stream interactive — let viewers control Echolume's visuals with chat commands while the audio drives the animations.</p>
+
+      <section>
+        <h2>What is the Twitch integration?</h2>
+        <p>Echolume can listen to your Twitch chat in real time. When viewers type commands like <strong>!theme</strong> or <strong>!glitch</strong>, the visuals change live on stream. Combined with audio-reactive effects, it creates a unique, interactive experience.</p>
+      </section>
+
+      <section>
+        <h2>Setup</h2>
+        <ol class="legal-list">
+          <li>Open Echolume and go to Setup.</li>
+          <li>Enable <strong>Twitch Chat</strong> and enter your channel name (e.g. <strong>your_twitch_username</strong>).</li>
+          <li>Echolume connects automatically — no login or OAuth required.</li>
+          <li>Choose your audio source (e.g. BlackHole 2ch from OBS) and press <strong>Ready</strong>.</li>
+        </ol>
+      </section>
+
+      <section>
+        <h2>Chat commands</h2>
+        <p>Viewers can type the following commands in Twitch chat:</p>
+        <dl class="faq">
+          <dt>!theme [name]</dt>
+          <dd>Switch visual theme. Example: <strong>!theme aurora</strong></dd>
+
+          <dt>!scene [name]</dt>
+          <dd>Switch scene type. Example: <strong>!scene radial</strong></dd>
+
+          <dt>!shape [name]</dt>
+          <dd>Switch shape style. Example: <strong>!shape dots</strong></dd>
+
+          <dt>!randomize</dt>
+          <dd>Random combination of theme, scene, and shape.</dd>
+
+          <dt>!glitch</dt>
+          <dd>Trigger a short glitch effect.</dd>
+
+          <dt>!abstract [0–100]</dt>
+          <dd>Adjust the abstraction level. Example: <strong>!abstract 75</strong></dd>
+        </dl>
+      </section>
+
+      <section>
+        <h2>Stream setup with OBS</h2>
+        <p>To include Echolume in your Twitch stream:</p>
+        <ol class="legal-list">
+          <li>Follow the <a href="obs-guide.html">OBS guide</a> to route audio from OBS to Echolume via BlackHole.</li>
+          <li>In OBS, add Echolume's window as a <strong>Window Capture</strong> source.</li>
+          <li>Position it as a background or overlay in your scene.</li>
+          <li>Start your stream — viewers can now control visuals via chat.</li>
+        </ol>
+      </section>
+
+      <section>
+        <h2>Tips</h2>
+        <ul>
+          <li><strong>Cooldown:</strong> Echolume ignores repeated commands within a short interval, so chat spam doesn't disrupt the visuals.</li>
+          <li><strong>External display:</strong> Run Echolume fullscreen on an external display and use Display Capture in OBS for the best quality.</li>
+          <li><strong>Combine with audio:</strong> Twitch commands and audio-reactive effects work together — viewers change the theme while the music drives the motion.</li>
+        </ul>
+      </section>
+
+      <section>
+        <h2>Troubleshooting</h2>
+        <dl class="faq">
+          <dt>Chat commands don't work.</dt>
+          <dd>Check that Twitch Chat is enabled in Setup and the channel name is correct (without #). Make sure Echolume has internet access.</dd>
+
+          <dt>The connection keeps dropping.</dt>
+          <dd>Echolume reconnects automatically. If the problem persists, check your internet connection.</dd>
+
+          <dt>Viewers can't see the effect.</dt>
+          <dd>Make sure Echolume's window is added as a source in OBS and is visible in your scene.</dd>
+        </dl>
+      </section>
+    </article>
+  </main>
+
+  <footer class="footer">
+    <p><a href="index.html">Echolume</a> — <a href="how-it-works.html">How it works</a> · <a href="obs-guide.html">OBS Guide</a> · <a href="privacy.html">Privacy</a> · <a href="support.html">Support</a> · <a href="https://github.com/JarlLyng/echolume">GitHub</a></p>
+  </footer>
+</body>
+</html>
