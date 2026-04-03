@@ -4,20 +4,13 @@ A macOS app for **live, audio‑reactive 2D visuals** rendered with **Metal**. E
 
 > Design goals: **stable**, **low‑latency**, **minimal UI**, **beautiful results with few controls**, and a **clean architecture** that Cursor can extend deterministically.
 
+**Other repo docs:** `SEO_STRATEGY.md` (Danish) covers SEO for the GitHub Pages site in `docs/` only — not app architecture.
+
 ---
 
 ## Product vision
 
-Echolume turns sound into light.
-
-**User flow (V1):**
-1. Open the app.
-2. Choose **Audio Input Device** and channel pair directly inside Echolume.
-3. Choose a **Theme** (or press **Randomize**).
-4. Set **Abstraction** (single slider controlling multiple internal parameters).
-5. Press **Ready** → visuals go fullscreen (optionally on a selected external display) and react to audio.
-
-**Important constraints (App Store friendly):**
+Echolume turns sound into light. **Constraints (App Store friendly):**
 - Echolume captures **audio input** only (via CoreAudio/AVAudioEngine). It does **not** capture “system audio” directly.
 - Requires **Microphone** permission (even for audio interfaces on macOS in practice).
 
@@ -71,20 +64,21 @@ SwiftUI should be **thin** and mostly wire views to an `AppModel`.
 
 ### Modules / folders
 
-Create these groups/folders in the Xcode project:
+Current layout in the Xcode project (keep new files in these groups):
 
 ```
-Echolume/
+echolume/
   App/
     EcholumeApp.swift
     AppModel.swift
     TwitchChatManager.swift
+    ExternalDisplaySupport.swift
   UI/
     SetupView.swift
     LiveView.swift
     Components/
       LevelMeterView.swift
-      ThemePicker.swift
+      KnobView.swift
   Audio/
     AudioManager.swift
     AudioDevice.swift
@@ -92,16 +86,17 @@ Echolume/
     FFT.swift
   Visuals/
     VisualParams.swift
+    VisualParamsProvider.swift
     Theme.swift
     ThemeLibrary.swift
     ParamMapping.swift
     SceneType.swift
+    ShapeStyle.swift
   Renderer/
     MetalView.swift
     Renderer.swift
     Shaders.metal
   Utilities/
-    RingBuffer.swift
     SmoothValue.swift
     Log.swift
 ```
