@@ -18,13 +18,28 @@ struct EcholumeApp: App {
                 options.environment = ProcessInfo.processInfo.environment["SENTRY_ENVIRONMENT"] ?? (Bundle.main.object(forInfoDictionaryKey: "SentryEnvironment") as? String) ?? "development"
                 #if DEBUG
                 options.debug = true
-                #endif
-                #if DEBUG
                 options.tracesSampleRate = 1.0
                 #else
                 options.tracesSampleRate = 0.2
                 #endif
+                options.enableAutoSessionTracking = true
+                options.attachScreenshot = true
+                options.attachViewHierarchy = true
             }
+
+            let version = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "unknown"
+            let build = Bundle.main.infoDictionary?["CFBundleVersion"] as? String ?? "unknown"
+            SentrySDK.configureScope { scope in
+                scope.setTag(value: "\(version) (\(build))", key: "app_version")
+            }
+
+            #if DEBUG
+            print("[Sentry] Initialized for Echolume v\(version)")
+            #endif
+        } else {
+            #if DEBUG
+            print("[Sentry] No DSN: set SENTRY_DSN env var or SentryDSN in Info.plist")
+            #endif
         }
     }
 

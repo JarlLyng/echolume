@@ -11,6 +11,7 @@ import AudioToolbox
 import Combine
 import CoreAudio
 import Foundation
+import Sentry
 #if canImport(Darwin)
 import Darwin
 #endif
@@ -244,6 +245,9 @@ final class AudioManager {
             lastError = "Could not use selected input device; using current/default input."
             formatSampleRate = 0
             formatChannelCount = 0
+            SentrySDK.capture(error: error) { scope in
+                scope.setTag(value: "audio_engine_start", key: "failure_point")
+            }
             #if DEBUG
             if !didLogThisRestart { Log.warn("AudioManager: engine.start failed: \(error.localizedDescription) (once per restart)") }
             #endif
