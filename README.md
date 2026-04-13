@@ -280,7 +280,7 @@ If using external display APIs later, ensure no unnecessary entitlements.
 
 ## Technical requirements
 
-- macOS 13+ (can be adjusted, but pick a stable baseline)
+- macOS 14+ (Sonoma)
 - SwiftUI for UI
 - Metal / MetalKit for rendering
 - AVFoundation (AVAudioEngine) + Accelerate for FFT
