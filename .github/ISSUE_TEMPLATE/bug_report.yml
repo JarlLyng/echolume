@@ -1,0 +1,88 @@
+name: Bug report
+description: Report something that's broken or behaving unexpectedly
+title: "[Bug]: "
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time to report a bug. The more detail you provide, the faster it gets fixed.
+
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened?
+      description: A clear description of the bug.
+      placeholder: When I clicked Ready, the visuals didn't start…
+    validations:
+      required: true
+
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      description: How can we reproduce this?
+      placeholder: |
+        1. Open Echolume
+        2. Select BlackHole 2ch
+        3. Press Ready
+        4. …
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behaviour
+      description: What did you expect to happen?
+    validations:
+      required: true
+
+  - type: input
+    id: macos-version
+    attributes:
+      label: macOS version
+      placeholder: e.g. 14.5 (Sonoma)
+    validations:
+      required: true
+
+  - type: input
+    id: echolume-version
+    attributes:
+      label: Echolume version
+      description: Found in the About menu or App Store
+      placeholder: e.g. 1.0.0 (4)
+    validations:
+      required: true
+
+  - type: dropdown
+    id: audio-source
+    attributes:
+      label: Audio source
+      description: What audio input were you using?
+      options:
+        - Built-in microphone
+        - External audio interface
+        - BlackHole (virtual)
+        - Other
+        - Not relevant
+    validations:
+      required: true
+
+  - type: textarea
+    id: logs
+    attributes:
+      label: Logs or screenshots
+      description: Drag-drop screenshots, or paste any error messages you saw.
+    validations:
+      required: false
+
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Before submitting
+      options:
+        - label: I checked existing issues and this isn't a duplicate
+          required: true
+        - label: I'm on the latest version of Echolume
+          required: true

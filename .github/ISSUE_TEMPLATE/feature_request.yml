@@ -1,0 +1,61 @@
+name: Feature request
+description: Suggest a new feature or improvement
+title: "[Feature]: "
+labels: ["enhancement"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for suggesting an improvement. Describe the problem first — the solution is often easier once we understand the need.
+
+  - type: textarea
+    id: problem
+    attributes:
+      label: What problem does this solve?
+      description: Describe the situation where you'd want this. What's frustrating today?
+      placeholder: When I'm live-performing, I have to switch back to the laptop to…
+    validations:
+      required: true
+
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed solution
+      description: How do you imagine it working?
+    validations:
+      required: true
+
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives considered
+      description: Are there other ways to solve this? Any tools or apps that do it well?
+    validations:
+      required: false
+
+  - type: dropdown
+    id: area
+    attributes:
+      label: Area
+      description: Which part of Echolume does this touch?
+      options:
+        - Audio input / analysis
+        - Visuals / rendering / themes
+        - Performance controls (knobs, presets)
+        - Setup / onboarding
+        - Live mode / fullscreen
+        - Twitch integration
+        - OBS / streaming workflow
+        - External display / output
+        - Documentation
+        - Other
+    validations:
+      required: true
+
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Before submitting
+      options:
+        - label: I checked existing issues and this isn't a duplicate
+          required: true
