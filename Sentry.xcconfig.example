@@ -1,0 +1,3 @@
+// Copy this file to Sentry.xcconfig and replace the placeholder with your real DSN.
+// Sentry.xcconfig is gitignored — it will NOT be committed.
+SENTRY_DSN = https://examplePublicKey@o0.ingest.sentry.io/0
