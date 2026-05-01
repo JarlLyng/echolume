@@ -1,5 +1,9 @@
 # Echolume
 
+[![Build and Test](https://github.com/JarlLyng/echolume/actions/workflows/build.yml/badge.svg)](https://github.com/JarlLyng/echolume/actions/workflows/build.yml)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+[![macOS 14+](https://img.shields.io/badge/macOS-14%2B-blue.svg)](https://www.apple.com/macos/)
+[![Swift 5.9+](https://img.shields.io/badge/Swift-5.9%2B-orange.svg)](https://swift.org)
 [![Co-created with AI](https://madebyhuman.iamjarl.com/badges/co-created-white.svg)](https://madebyhuman.iamjarl.com)
 
 A macOS app for **live, audio‑reactive 2D visuals** rendered with **Metal**. Echolume is meant as a **performance tool**: choose an **audio input device** (audio interface inputs, loopback inputs, mic, etc.), pick a visual theme/scene, tweak a few performance knobs, hit **Ready**, and perform.
@@ -463,4 +467,12 @@ Without `SENTRY_DSN`, the app runs as before; Sentry is simply not started.
 
 ## License
 
-TBD.
+MIT — see [LICENSE](LICENSE) for full text.
+
+## Contributing
+
+See [CONTRIBUTING.md](CONTRIBUTING.md) for development setup, code style, and how to submit pull requests.
+
+## Security
+
+Found a vulnerability? Please see [SECURITY.md](SECURITY.md) for the reporting process.
