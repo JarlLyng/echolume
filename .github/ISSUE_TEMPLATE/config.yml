@@ -1,11 +1,11 @@
 blank_issues_enabled: false
 contact_links:
   - name: Support and FAQ
-    url: https://JarlLyng.github.io/echolume/support.html
+    url: https://echolume.iamjarl.com/support.html
     about: Common questions, troubleshooting, and setup help.
   - name: OBS Studio guide
-    url: https://JarlLyng.github.io/echolume/obs-guide.html
+    url: https://echolume.iamjarl.com/obs-guide.html
     about: How to route OBS audio into Echolume.
   - name: Twitch integration guide
-    url: https://JarlLyng.github.io/echolume/twitch-guide.html
+    url: https://echolume.iamjarl.com/twitch-guide.html
     about: Chat commands and setup for Twitch.

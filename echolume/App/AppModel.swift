@@ -101,6 +101,8 @@ final class AppModel: ObservableObject {
 
     private let audioManager = AudioManager()
     private var twitchManager: TwitchChatManager?
+    private var twitchStatusCancellable: AnyCancellable?
+    private var lastConnectedChannel: String = ""
     private var cancellables = Set<AnyCancellable>()
     private var debugTimer: Timer?
     private var screenParamsObserver: NSObjectProtocol?
@@ -507,33 +509,57 @@ final class AppModel: ObservableObject {
         }
     }
 
+    /// Updates the channel name and persists it. Connection is managed via the
+    /// Connect button (or Enable toggle) — not on every keystroke.
     func setTwitchChannel(_ name: String) {
         twitchChannelName = name
         UserDefaults.standard.set(name, forKey: Self.userDefaultsTwitchChannelKey)
-        if twitchEnabled && !name.isEmpty {
-            connectTwitch()
-        } else if name.isEmpty {
+        if name.isEmpty {
             disconnectTwitch()
         }
     }
 
     func connectTwitch() {
+        let target = twitchChannelName
+            .lowercased()
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+            .replacingOccurrences(of: "#", with: "")
+        guard !target.isEmpty else { return }
+
+        // No-op if already connecting/connected to the same channel.
+        if target == lastConnectedChannel {
+            switch twitchStatus {
+            case .connected, .connecting: return
+            default: break
+            }
+        }
+
+        // Tear down any existing manager and its status subscription before
+        // creating a new one to avoid subscription leaks on reconnect.
+        twitchStatusCancellable?.cancel()
+        twitchStatusCancellable = nil
+        twitchManager?.disconnect()
+
         let manager = TwitchChatManager()
         manager.onCommand = { [weak self] cmd in
             self?.handleTwitchCommand(cmd)
         }
-        manager.$status
+        twitchStatusCancellable = manager.$status
             .receive(on: DispatchQueue.main)
             .sink { [weak self] s in self?.twitchStatus = s }
-            .store(in: &cancellables)
+
         twitchManager = manager
-        manager.connect(channel: twitchChannelName)
+        lastConnectedChannel = target
+        manager.connect(channel: target)
     }
 
     func disconnectTwitch() {
+        twitchStatusCancellable?.cancel()
+        twitchStatusCancellable = nil
         twitchManager?.disconnect()
         twitchManager = nil
         twitchStatus = .disconnected
+        lastConnectedChannel = ""
     }
 
     private func handleTwitchCommand(_ cmd: TwitchCommand) {

@@ -6,11 +6,22 @@ on:
   pull_request:
     branches: [main]
 
+# Cancel in-progress runs for the same ref when new commits arrive.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+# Read-only token by default; specific jobs can elevate if ever needed.
+permissions:
+  contents: read
+
 jobs:
   build:
     name: Build (macOS)
     runs-on: macos-15
-
+    defaults:
+      run:
+        shell: bash
     steps:
       - name: Checkout
         uses: actions/checkout@v5
@@ -34,21 +45,32 @@ jobs:
 
       - name: Build
         run: |
+          set -o pipefail
           xcodebuild build \
             -project echolume.xcodeproj \
             -scheme echolume \
             -destination 'platform=macOS' \
             -configuration Debug \
+            -resultBundlePath build.xcresult \
             CODE_SIGN_IDENTITY="" \
             CODE_SIGNING_REQUIRED=NO \
             CODE_SIGNING_ALLOWED=NO \
             | xcpretty
-        shell: bash
+
+      - name: Upload build result bundle on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: build.xcresult
+          path: build.xcresult
+          retention-days: 7
 
   test:
     name: Test (macOS)
     runs-on: macos-15
-
+    defaults:
+      run:
+        shell: bash
     steps:
       - name: Checkout
         uses: actions/checkout@v5
@@ -61,13 +83,22 @@ jobs:
 
       - name: Run unit tests
         run: |
+          set -o pipefail
           xcodebuild test \
             -project echolume.xcodeproj \
             -scheme echolume \
             -destination 'platform=macOS' \
             -only-testing:echolumeTests \
+            -resultBundlePath test.xcresult \
             CODE_SIGN_IDENTITY="" \
             CODE_SIGNING_REQUIRED=NO \
             CODE_SIGNING_ALLOWED=NO \
             | xcpretty
-        shell: bash
+
+      - name: Upload test result bundle on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test.xcresult
+          path: test.xcresult
+          retention-days: 7

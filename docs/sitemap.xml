@@ -1,37 +1,37 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url>
-    <loc>https://JarlLyng.github.io/echolume/</loc>
+    <loc>https://echolume.iamjarl.com/</loc>
     <lastmod>2026-04-04</lastmod>
     <changefreq>weekly</changefreq>
     <priority>1.0</priority>
   </url>
   <url>
-    <loc>https://JarlLyng.github.io/echolume/how-it-works.html</loc>
+    <loc>https://echolume.iamjarl.com/how-it-works.html</loc>
     <lastmod>2026-04-04</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://JarlLyng.github.io/echolume/obs-guide.html</loc>
+    <loc>https://echolume.iamjarl.com/obs-guide.html</loc>
     <lastmod>2026-04-04</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://JarlLyng.github.io/echolume/twitch-guide.html</loc>
+    <loc>https://echolume.iamjarl.com/twitch-guide.html</loc>
     <lastmod>2026-04-04</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://JarlLyng.github.io/echolume/support.html</loc>
+    <loc>https://echolume.iamjarl.com/support.html</loc>
     <lastmod>2026-04-04</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
   </url>
   <url>
-    <loc>https://JarlLyng.github.io/echolume/privacy.html</loc>
+    <loc>https://echolume.iamjarl.com/privacy.html</loc>
     <lastmod>2026-04-04</lastmod>
     <changefreq>yearly</changefreq>
     <priority>0.3</priority>

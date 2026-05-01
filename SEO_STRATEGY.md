@@ -1,6 +1,6 @@
 # SEO-strategi for Echolume
 
-Dette dokument beskriver en SEO-strategi for Echolumes marketing-site på GitHub Pages (`https://JarlLyng.github.io/echolume/`). Projektet er en macOS-app til live, lydreaktive 2D-visuals med Metal, målrettet streaming (OBS, Twitch) og performance.
+Dette dokument beskriver en SEO-strategi for Echolumes marketing-site på GitHub Pages (`https://echolume.iamjarl.com/`). Projektet er en macOS-app til live, lydreaktive 2D-visuals med Metal, målrettet streaming (OBS, Twitch) og performance.
 
 ---
 
@@ -139,7 +139,7 @@ Tilføj som ekstra `application/ld+json`-blokke i `<head>` uden at fjerne eksist
 - **Fil:** Opret `docs/og-image.png`.
 - **Anbefalet størrelse:** 1200×630 px (Open Graph standard).
 - **Indhold:** App-navn (Echolume), tagline ("Sound into light") og evt. et stilbillede fra appen (uden for meget tekst).
-- Alle sider der har `og:image` peger i dag på `https://JarlLyng.github.io/echolume/og-image.png` — sørg for at filen ligger i `docs/` så den serveres korrekt.
+- Alle sider der har `og:image` peger i dag på `https://echolume.iamjarl.com/og-image.png` — sørg for at filen ligger i `docs/` så den serveres korrekt.
 
 ### 6.2 Sociale meta på alle sider
 

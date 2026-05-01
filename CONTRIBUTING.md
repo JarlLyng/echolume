@@ -53,7 +53,7 @@ xcodebuild -project echolume.xcodeproj -scheme echolume test
 See [README.md](README.md#architecture) for the layered architecture (Audio → Analysis → State → Rendering). When adding features:
 
 - **Audio changes** → `echolume/Audio/`
-- **Visual themes / shaders** → `echolume/Rendering/`, `echolume/Themes/`
+- **Visual themes / shaders** → `echolume/Renderer/`, `echolume/Visuals/`
 - **State / parameters** → `echolume/App/AppModel.swift`
 - **UI** → `echolume/UI/`
 - **Twitch / external input** → `echolume/App/TwitchChatManager.swift`

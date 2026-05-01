@@ -74,13 +74,6 @@
             ReferencedContainer = "container:echolume.xcodeproj">
          </BuildableReference>
       </BuildableProductRunnable>
-      <EnvironmentVariables>
-         <EnvironmentVariable
-            key = "SENTRY_DNS"
-            value = "https://ad4a9e4e72770366176a78925c59281d@o4510472891334656.ingest.de.sentry.io/4510951426621520"
-            isEnabled = "YES">
-         </EnvironmentVariable>
-      </EnvironmentVariables>
    </LaunchAction>
    <ProfileAction
       buildConfiguration = "Release"
