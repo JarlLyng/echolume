@@ -131,7 +131,7 @@ final class TwitchChatManager: ObservableObject {
         }
     }
 
-    static func parseCommand(_ message: String) -> TwitchCommand? {
+    nonisolated static func parseCommand(_ message: String) -> TwitchCommand? {
         let trimmed = message.trimmingCharacters(in: .whitespaces)
         guard trimmed.hasPrefix("!") else { return nil }
         let parts = trimmed.dropFirst().split(separator: " ", maxSplits: 1)
