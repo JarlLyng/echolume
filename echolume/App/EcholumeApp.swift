@@ -23,8 +23,6 @@ struct EcholumeApp: App {
                 options.tracesSampleRate = 0.2
                 #endif
                 options.enableAutoSessionTracking = true
-                options.attachScreenshot = true
-                options.attachViewHierarchy = true
             }
 
             let version = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "unknown"
