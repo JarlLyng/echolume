@@ -13,10 +13,13 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Select Xcode
         run: sudo xcode-select -s /Applications/Xcode_16.app
+
+      - name: Set up Sentry config (no DSN — keeps Sentry inactive in CI)
+        run: cp Sentry.xcconfig.example Sentry.xcconfig
 
       - name: Show versions
         run: |
@@ -48,10 +51,13 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Select Xcode
         run: sudo xcode-select -s /Applications/Xcode_16.app
+
+      - name: Set up Sentry config (no DSN — keeps Sentry inactive in CI)
+        run: cp Sentry.xcconfig.example Sentry.xcconfig
 
       - name: Run unit tests
         run: |
