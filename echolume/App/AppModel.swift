@@ -50,6 +50,11 @@ final class AppModel: ObservableObject {
     private static let userDefaultsSelectedDisplayIDKey = "echolume.selectedDisplayID"
     private static let userDefaultsTwitchEnabledKey = "echolume.twitchEnabled"
     private static let userDefaultsTwitchChannelKey = "echolume.twitchChannel"
+    private static let userDefaultsThemeIndexKey = "echolume.themeIndex"
+    private static let userDefaultsAbstractionKey = "echolume.abstraction"
+    private static let userDefaultsEnergyBiasKey = "echolume.energyBias"
+    private static let userDefaultsSelectedDeviceIDKey = "echolume.selectedDeviceID"
+    private static let userDefaultsSelectedChannelPairKey = "echolume.selectedChannelPair"
 
     /// Available displays (main first). Refreshed by refreshDisplays().
     @Published var availableDisplays: [OutputDisplay] = []
@@ -168,6 +173,19 @@ final class AppModel: ObservableObject {
         if let v = UserDefaults.standard.object(forKey: Self.userDefaultsMotionKey) as? Double { motion = Float(v) }
         if let v = UserDefaults.standard.object(forKey: Self.userDefaultsNoiseKey) as? Double { noise = Float(v) }
         if let v = UserDefaults.standard.object(forKey: Self.userDefaultsGlitchKey) as? Double { glitch = Float(v) }
+        if let v = UserDefaults.standard.object(forKey: Self.userDefaultsAbstractionKey) as? Double { abstraction = Float(v) }
+        if let v = UserDefaults.standard.object(forKey: Self.userDefaultsEnergyBiasKey) as? Double { energyBias = Float(v) }
+        if let v = UserDefaults.standard.object(forKey: Self.userDefaultsThemeIndexKey) as? Int {
+            selectedThemeIndex = max(0, min(v, ThemeLibrary.themes.count - 1))
+        }
+        if let v = UserDefaults.standard.object(forKey: Self.userDefaultsSelectedDeviceIDKey) as? Int, v > 0 {
+            // Restore as nil-ish hint; actual device existence is verified once
+            // the device list is refreshed below.
+            selectedDeviceID = AudioDeviceID(v)
+        }
+        if let v = UserDefaults.standard.object(forKey: Self.userDefaultsSelectedChannelPairKey) as? Int {
+            selectedChannelPair = max(0, v)
+        }
         if let uuidString = UserDefaults.standard.string(forKey: Self.userDefaultsSelectedDisplayIDKey),
            let uuid = UUID(uuidString: uuidString) {
             selectedDisplayID = uuid
@@ -414,6 +432,11 @@ final class AppModel: ObservableObject {
     func setSelectedDeviceID(_ id: AudioDeviceID?) {
         if selectedDeviceID == id { return }
         selectedDeviceID = id
+        if let id {
+            UserDefaults.standard.set(Int(id), forKey: Self.userDefaultsSelectedDeviceIDKey)
+        } else {
+            UserDefaults.standard.removeObject(forKey: Self.userDefaultsSelectedDeviceIDKey)
+        }
         audioManager.setChannelPairIndex(selectedChannelPair)
         if hasMicPermission { audioManager.restart(withDeviceID: id) }
         pushSnapshot()
@@ -421,6 +444,7 @@ final class AppModel: ObservableObject {
 
     func selectChannelPair(_ index: Int) {
         selectedChannelPair = max(0, index)
+        UserDefaults.standard.set(selectedChannelPair, forKey: Self.userDefaultsSelectedChannelPairKey)
         audioManager.setChannelPairIndex(selectedChannelPair)
         if hasMicPermission { audioManager.restart(withDeviceID: selectedDeviceID) }
         pushSnapshot()
@@ -451,6 +475,7 @@ final class AppModel: ObservableObject {
     /// When user changes theme, apply its default shape style and push to provider.
     func setThemeIndex(_ index: Int) {
         selectedThemeIndex = max(0, min(index, ThemeLibrary.themes.count - 1))
+        UserDefaults.standard.set(selectedThemeIndex, forKey: Self.userDefaultsThemeIndexKey)
         let theme = ThemeLibrary.theme(byIndex: selectedThemeIndex)
         selectedShapeStyle = theme.defaultShapeStyle
         UserDefaults.standard.set(selectedShapeStyle.rawValue, forKey: Self.userDefaultsShapeStyleKey)
@@ -459,6 +484,7 @@ final class AppModel: ObservableObject {
 
     func setAbstraction(_ value: Float) {
         abstraction = max(0, min(1, value))
+        UserDefaults.standard.set(Double(abstraction), forKey: Self.userDefaultsAbstractionKey)
         pushSnapshot()
     }
 
@@ -476,6 +502,7 @@ final class AppModel: ObservableObject {
 
     func setEnergyBias(_ value: Float) {
         energyBias = max(0, min(1, value))
+        UserDefaults.standard.set(Double(energyBias), forKey: Self.userDefaultsEnergyBiasKey)
         pushSnapshot()
     }
 

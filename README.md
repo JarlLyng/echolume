@@ -223,7 +223,7 @@ A theme defines:
 ## UX / Interaction
 
 ### SetupView
-- Persist last used **input device/channel pair/theme/abstraction/seed** in `UserDefaults`.
+- Persist user setup in `UserDefaults`: input device, channel pair, theme, shape style, scene, abstraction, energy bias, motion, noise, glitch, output display, and Twitch settings. Seed is intentionally not persisted — Randomize generates a new seed each launch.
 - Show a clear “Signal detected” indicator.
 - Keep controls minimal; avoid adding settings that don’t directly improve live performance.
 - Expose a small secondary action for **Panic Reset** (visuals only).
