@@ -12,8 +12,15 @@ struct LiveView: View {
 
     var body: some View {
         ZStack {
-            MetalView(visualParamsProvider: appModel.visualParamsProvider)
+            MetalView(
+                visualParamsProvider: appModel.visualParamsProvider,
+                onError: { [weak appModel] msg in appModel?.setRendererError(msg) }
+            )
                 .ignoresSafeArea()
+
+            if let err = appModel.rendererError {
+                rendererErrorOverlay(err)
+            }
 
             // Overlay: Back + Panic hint + meter
             VStack {
@@ -104,6 +111,39 @@ struct LiveView: View {
             appModel.exitLive()
             return .handled
         }
+    }
+
+    private func rendererErrorOverlay(_ message: String) -> some View {
+        VStack(spacing: DesignTokens.Spacing.md) {
+            Image(systemName: "exclamationmark.triangle.fill")
+                .font(.system(size: 40))
+                .foregroundStyle(DesignTokens.ColorToken.State.warning)
+            Text("Renderer error")
+                .font(.system(size: DesignTokens.Typography.Size.lg, weight: DesignTokens.Typography.Weight.bold))
+                .foregroundStyle(DesignTokens.Common.Text.primary(colorScheme))
+            Text(message)
+                .font(.system(size: DesignTokens.Typography.Size.sm))
+                .foregroundStyle(DesignTokens.Common.Text.secondary(colorScheme))
+                .multilineTextAlignment(.center)
+                .padding(.horizontal, DesignTokens.Spacing.xl)
+            Button(action: {
+                appModel.setRendererError(nil)
+                appModel.exitLive()
+            }) {
+                Text("Back to Setup")
+                    .font(.system(size: DesignTokens.Typography.Size.sm, weight: DesignTokens.Typography.Weight.semibold))
+                    .foregroundStyle(DesignTokens.Common.OnPrimary.text(colorScheme))
+                    .padding(.horizontal, DesignTokens.Spacing.lg)
+                    .padding(.vertical, DesignTokens.Spacing.sm)
+                    .background(DesignTokens.Common.primary(colorScheme))
+                    .clipShape(RoundedRectangle(cornerRadius: DesignTokens.Radius.sm))
+            }
+            .buttonStyle(.plain)
+        }
+        .padding(DesignTokens.Spacing.xxl)
+        .background(DesignTokens.Common.Background.card(colorScheme))
+        .clipShape(RoundedRectangle(cornerRadius: DesignTokens.Radius.lg))
+        .shadow(radius: 16)
     }
 }
 

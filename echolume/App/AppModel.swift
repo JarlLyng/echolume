@@ -42,6 +42,15 @@ final class AppModel: ObservableObject {
     @Published var twitchChannelName: String = ""
     @Published var twitchStatus: TwitchConnectionStatus = .disconnected
 
+    /// Set when MetalView reports a Metal device or Renderer init failure.
+    /// Surfaced in LiveView so users see a clear message instead of a black screen.
+    @Published var rendererError: String?
+
+    /// Called from MetalView. Updates rendererError on the main thread.
+    func setRendererError(_ message: String?) {
+        rendererError = message
+    }
+
     private static let userDefaultsShapeStyleKey = "echolume.selectedShapeStyle"
     private static let userDefaultsSceneKey = "echolume.selectedScene"
     private static let userDefaultsMotionKey = "echolume.motion"
