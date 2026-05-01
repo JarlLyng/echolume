@@ -22,6 +22,24 @@ private let kFFTWindowSize = 2048
 private let kFFTBacklogLimit = kFFTWindowSize * 2
 private let kRestartDebounceMs: Int = 250
 
+/// Wrapper around os_unfair_lock. Faster than NSLock and supports try_lock,
+/// which lets the realtime audio callback skip a buffer instead of blocking.
+final class UnfairLock {
+    private let lockPointer: UnsafeMutablePointer<os_unfair_lock_s>
+    init() {
+        lockPointer = .allocate(capacity: 1)
+        lockPointer.initialize(to: os_unfair_lock_s())
+    }
+    deinit {
+        lockPointer.deinitialize(count: 1)
+        lockPointer.deallocate()
+    }
+    @inline(__always) func lock() { os_unfair_lock_lock(lockPointer) }
+    @inline(__always) func unlock() { os_unfair_lock_unlock(lockPointer) }
+    /// Returns true if the lock was acquired.
+    @inline(__always) func tryLock() -> Bool { os_unfair_lock_trylock(lockPointer) }
+}
+
 /// Atomic, race-free view of AudioManager state for cross-thread reads.
 /// All fields are value-typed and copied under a single lock so the UI
 /// layer always observes a coherent moment in time.
@@ -58,20 +76,23 @@ final class AudioManager {
     private var ringBuffer: [Float]
     private var ringWriteIndex: Int = 0
     private var ringReadIndex: Int = 0
-    private let ringLock = NSLock()
+    /// Producer (audio tap) uses tryLock to never block on realtime path.
+    /// Consumer (FFT queue) uses regular lock — it's fine for it to wait.
+    private let ringLock = UnfairLock()
     private var processBuffer: [Float]
 
     /// Single source of truth for cross-thread state. Always accessed under stateLock.
-    private let stateLock = NSLock()
+    private let stateLock = UnfairLock()
     private var _snapshot = AudioManagerSnapshot()
 
     /// Selected channel pair for downmix; mutated from main, read on audioManagerQueue.
-    private let channelPairLock = NSLock()
+    private let channelPairLock = UnfairLock()
     private var _selectedChannelPairIndex: Int = 0
     var selectedChannelPairIndex: Int {
         get { channelPairLock.lock(); defer { channelPairLock.unlock() }; return _selectedChannelPairIndex }
         set { channelPairLock.lock(); _selectedChannelPairIndex = newValue; channelPairLock.unlock() }
     }
+
 
     private let fftQueue = DispatchQueue(label: "echolume.fft", qos: .userInitiated)
     private var fftSource: DispatchSourceUserDataOr?
@@ -198,9 +219,15 @@ final class AudioManager {
             let n = Int(buffer.frameLength)
             guard let channelData = buffer.floatChannelData, n > 0 else { return }
 
+            // Realtime contract: never block. If FFT consumer is mid-read,
+            // we drop this audio buffer rather than wait. ringLock contention
+            // is rare (consumer holds it for ~2µs to copy 2048 samples while
+            // tap fires every ~12ms), so frame drops are negligible. The FFT
+            // simply analyzes a slightly older window when this happens.
+            guard self.ringLock.tryLock() else { return }
+
             var sumSq: Float = 0
             var peak: Float = 0
-            self.ringLock.lock()
             var w = self.ringWriteIndex
             if chCount == 1 {
                 let ptr = channelData[0]
