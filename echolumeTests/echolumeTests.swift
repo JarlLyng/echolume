@@ -274,7 +274,7 @@ struct ParamMappingTests {
     @Test func resetTransientsClearsImpulseAndGlitchPhase() {
         let m = ParamMapping()
         // Build up some state.
-        _ = mapParams(mapping: m, snapshot: makeSnapshot(peak: 0.95, impact: 0.9), glitch: 1.0)
+        _ = mapParams(mapping: m, glitch: 1.0, snapshot: makeSnapshot(peak: 0.95, impact: 0.9))
         m.resetTransients()
         // After reset, a quiet snapshot should produce zero impulse.
         let after = mapParams(mapping: m, snapshot: makeSnapshot(peak: 0.0))
