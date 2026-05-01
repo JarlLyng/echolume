@@ -122,21 +122,23 @@ final class AppModel: ObservableObject {
         debugTimer = Timer.scheduledTimer(withTimeInterval: 0.1, repeats: true) { [weak self] _ in
             guard let self = self else { return }
             Task { @MainActor in
-                self.debugEngineRunning = self.audioManager.engineRunning
-                self.debugLastError = self.audioManager.lastError
-                if self.audioManager.engineRunning {
+                // Single atomic read — no race between fields.
+                let snap = self.audioManager.snapshot
+                self.debugEngineRunning = snap.engineRunning
+                self.debugLastError = snap.lastError
+                if snap.engineRunning {
                     self.audioStatus = .running
                 } else if self.hasMicPermission {
-                    self.audioStatus = self.audioManager.lastError != nil ? .error(self.audioManager.lastError ?? "") : .stopped
+                    self.audioStatus = snap.lastError != nil ? .error(snap.lastError ?? "") : .stopped
                 }
-                self.debugFormatSampleRate = self.audioManager.formatSampleRate
-                self.debugFormatChannelCount = self.audioManager.formatChannelCount
-                self.debugLastRMS = self.audioManager.debugLastRMS
-                self.debugLastPeak = self.audioManager.debugLastPeak
-                self.debugLastFrames = self.audioManager.debugLastFrames
-                self.debugChannelCount = self.audioManager.debugChannelCount
-                self.rms = self.audioManager.debugLastRMS
-                self.peak = self.audioManager.debugLastPeak
+                self.debugFormatSampleRate = snap.formatSampleRate
+                self.debugFormatChannelCount = snap.formatChannelCount
+                self.debugLastRMS = snap.rms
+                self.debugLastPeak = snap.peak
+                self.debugLastFrames = snap.frameCount
+                self.debugChannelCount = snap.channelCount
+                self.rms = snap.rms
+                self.peak = snap.peak
                 if self.rms > 0.02 {
                     self.noSignalSeconds = 0
                     self.signalOkSeconds += 0.1
@@ -152,7 +154,7 @@ final class AppModel: ObservableObject {
                     self.debugMaxTapTimeMs = 0
                     self._debugMaxTapTimeReset = now
                 }
-                let ns = self.audioManager.lastTapDurationNs
+                let ns = snap.lastTapDurationNs
                 if ns > 0 {
                     let ms = ns / 1_000_000
                     if ms > self.debugMaxTapTimeMs { self.debugMaxTapTimeMs = ms }

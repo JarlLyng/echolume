@@ -22,6 +22,21 @@ private let kFFTWindowSize = 2048
 private let kFFTBacklogLimit = kFFTWindowSize * 2
 private let kRestartDebounceMs: Int = 250
 
+/// Atomic, race-free view of AudioManager state for cross-thread reads.
+/// All fields are value-typed and copied under a single lock so the UI
+/// layer always observes a coherent moment in time.
+struct AudioManagerSnapshot: Equatable {
+    var engineRunning: Bool = false
+    var lastError: String? = nil
+    var formatSampleRate: Double = 0
+    var formatChannelCount: AVAudioChannelCount = 0
+    var rms: Float = 0
+    var peak: Float = 0
+    var frameCount: UInt32 = 0
+    var channelCount: Int = 0
+    var lastTapDurationNs: Float = 0
+}
+
 final class AudioManager {
     /// Serial queue: all stop → create → set device → tap → start run here. No overlapping restarts.
     private let audioManagerQueue = DispatchQueue(label: "echolume.audio.manager", qos: .userInitiated)
@@ -31,54 +46,48 @@ final class AudioManager {
     /// Latest requested device for debounce; main thread sets, queue reads.
     private var _pendingRestartDeviceID: AudioDeviceID?
 
-    /// New engine per start; nil after tear down.
+    /// New engine per start; nil after tear down. Only mutated on audioManagerQueue.
     private var engine: AVAudioEngine?
     private let analyzer = AudioAnalyzer()
 
-    private var _rms: Float = 0
-    private var _peak: Float = 0
-    private var _frameCount: UInt32 = 0
-    private var _channelCount: Int = 0
-
 #if DEBUG
-    private var _lastTapDurationNs: Float = 0
     private var _timebaseNumer: UInt32 = 1
     private var _timebaseDenom: UInt32 = 1
 #endif
-    var lastTapDurationNs: Float {
-#if DEBUG
-        _lastTapDurationNs
-#else
-        0
-#endif
-    }
 
     private var ringBuffer: [Float]
     private var ringWriteIndex: Int = 0
     private var ringReadIndex: Int = 0
     private let ringLock = NSLock()
-    private let statsLock = NSLock()
     private var processBuffer: [Float]
 
-    private(set) var lastError: String?
-    private(set) var formatSampleRate: Double = 0
-    private(set) var formatChannelCount: AVAudioChannelCount = 0
+    /// Single source of truth for cross-thread state. Always accessed under stateLock.
+    private let stateLock = NSLock()
+    private var _snapshot = AudioManagerSnapshot()
 
-    /// Channel pair for downmix: 0 = ch 1–2, 1 = ch 3–4, …
-    var selectedChannelPairIndex: Int = 0
+    /// Selected channel pair for downmix; mutated from main, read on audioManagerQueue.
+    private let channelPairLock = NSLock()
+    private var _selectedChannelPairIndex: Int = 0
+    var selectedChannelPairIndex: Int {
+        get { channelPairLock.lock(); defer { channelPairLock.unlock() }; return _selectedChannelPairIndex }
+        set { channelPairLock.lock(); _selectedChannelPairIndex = newValue; channelPairLock.unlock() }
+    }
 
     private let fftQueue = DispatchQueue(label: "echolume.fft", qos: .userInitiated)
     private var fftSource: DispatchSourceUserDataOr?
 
-    var engineRunning: Bool { engine?.isRunning ?? false }
-    /// For UI: engine is running.
-    var isRunning: Bool { engine?.isRunning ?? false }
-    /// For UI: last start failure message.
-    var lastErrorMessage: String? { lastError }
-    var debugLastRMS: Float { statsLock.lock(); defer { statsLock.unlock() }; return _rms }
-    var debugLastPeak: Float { statsLock.lock(); defer { statsLock.unlock() }; return _peak }
-    var debugLastFrames: UInt32 { statsLock.lock(); defer { statsLock.unlock() }; return _frameCount }
-    var debugChannelCount: Int { statsLock.lock(); defer { statsLock.unlock() }; return _channelCount }
+    /// Atomic snapshot of audio engine state. Safe to read from any thread.
+    var snapshot: AudioManagerSnapshot {
+        stateLock.lock()
+        defer { stateLock.unlock() }
+        return _snapshot
+    }
+
+    private func mutateSnapshot(_ change: (inout AudioManagerSnapshot) -> Void) {
+        stateLock.lock()
+        change(&_snapshot)
+        stateLock.unlock()
+    }
 
     var lowPublisher: AnyPublisher<Float, Never> { analyzer.lowPublisher.eraseToAnyPublisher() }
     var midPublisher: AnyPublisher<Float, Never> { analyzer.midPublisher.eraseToAnyPublisher() }
@@ -114,11 +123,12 @@ final class AudioManager {
             eng.stop()
         }
         engine = nil
+        mutateSnapshot { $0.engineRunning = false }
     }
 
     /// Called on audioManagerQueue only. One consolidated log line per failure.
     private func startEngine(withDeviceID deviceID: AudioDeviceID?) {
-        lastError = nil
+        mutateSnapshot { $0.lastError = nil }
         stopAndTearDownEngine()
 
         let eng = AVAudioEngine()
@@ -138,7 +148,7 @@ final class AudioManager {
                 size
             )
             if err != noErr {
-                lastError = "Could not use selected input device; using current/default input."
+                mutateSnapshot { $0.lastError = "Could not use selected input device; using current/default input." }
                 #if DEBUG
                 if !didLogThisRestart {
                     Log.warn("AudioManager: AudioUnitSetProperty(CurrentDevice) failed: \(err) (once per restart)")
@@ -147,7 +157,7 @@ final class AudioManager {
                 #endif
             }
         } else if let id = deviceID, id != 0, input.audioUnit == nil {
-            lastError = "Could not use selected input device; using current/default input."
+            mutateSnapshot { $0.lastError = "Could not use selected input device; using current/default input." }
             #if DEBUG
             if !didLogThisRestart {
                 Log.warn("AudioManager: inputNode.audioUnit is nil (once per restart)")
@@ -158,16 +168,17 @@ final class AudioManager {
 
         let format = input.inputFormat(forBus: 0)
         guard format.sampleRate > 0, format.channelCount > 0 else {
-            lastError = lastError ?? "Invalid input format: \(format.sampleRate) Hz, \(format.channelCount) ch"
+            mutateSnapshot {
+                $0.lastError = $0.lastError ?? "Invalid input format: \(format.sampleRate) Hz, \(format.channelCount) ch"
+                $0.engineRunning = false
+            }
             engine = nil
             return
         }
 
         input.removeTap(onBus: 0)
         let chCount = Int(format.channelCount)
-        statsLock.lock()
-        _channelCount = chCount
-        statsLock.unlock()
+        mutateSnapshot { $0.channelCount = chCount }
         ringLock.lock()
         ringWriteIndex = 0
         ringReadIndex = 0
@@ -218,33 +229,41 @@ final class AudioManager {
             let available = self.ringWriteIndex - self.ringReadIndex
             self.ringLock.unlock()
 
-            self.statsLock.lock()
-            self._rms = sqrt(sumSq / Float(n))
-            self._peak = peak
-            self._frameCount = UInt32(n)
-            self.statsLock.unlock()
+            let computedRms = sqrt(sumSq / Float(n))
+            self.mutateSnapshot {
+                $0.rms = computedRms
+                $0.peak = peak
+                $0.frameCount = UInt32(n)
+            }
 
             if available >= kFFTWindowSize {
                 self.scheduleFFT()
             }
 #if DEBUG
             let t1 = mach_absolute_time()
-            self._lastTapDurationNs = Float((t1 - t0) * UInt64(self._timebaseNumer) / UInt64(self._timebaseDenom))
+            let durationNs = Float((t1 - t0) * UInt64(self._timebaseNumer) / UInt64(self._timebaseDenom))
+            self.mutateSnapshot { $0.lastTapDurationNs = durationNs }
 #endif
         }
 
         eng.prepare()
         do {
             try eng.start()
-            formatSampleRate = format.sampleRate
-            formatChannelCount = format.channelCount
+            mutateSnapshot {
+                $0.formatSampleRate = format.sampleRate
+                $0.formatChannelCount = format.channelCount
+                $0.engineRunning = true
+            }
             #if DEBUG
             if !didLogThisRestart { Log.info("AudioManager: started \(format.sampleRate) Hz \(format.channelCount) ch (once per restart)") }
             #endif
         } catch {
-            lastError = "Could not use selected input device; using current/default input."
-            formatSampleRate = 0
-            formatChannelCount = 0
+            mutateSnapshot {
+                $0.lastError = "Could not use selected input device; using current/default input."
+                $0.formatSampleRate = 0
+                $0.formatChannelCount = 0
+                $0.engineRunning = false
+            }
             SentrySDK.capture(error: error) { scope in
                 scope.setTag(value: "audio_engine_start", key: "failure_point")
             }
@@ -313,6 +332,11 @@ final class AudioManager {
 
     func setChannelPairIndex(_ index: Int) {
         selectedChannelPairIndex = max(0, index)
+    }
+
+    /// Read selected channel pair (used by tests / for parity with the public setter).
+    func currentChannelPairIndex() -> Int {
+        selectedChannelPairIndex
     }
 
     static var microphonePermissionGranted: Bool {
