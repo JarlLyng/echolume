@@ -461,8 +461,38 @@ final class AppModel: ObservableObject {
         pushSnapshot()
     }
 
+    /// Randomize theme, shape, scene, and seed in one go. Picks a different
+    /// theme and scene than the current ones when possible so the change is
+    /// always visible. The README and Twitch guide promise this — !randomize
+    /// in chat triggers the same path.
     func randomize() {
         seed = UInt32.random(in: 0 ... .max)
+
+        let themeCount = ThemeLibrary.themes.count
+        if themeCount > 1 {
+            var idx = Int.random(in: 0 ..< themeCount)
+            if idx == selectedThemeIndex {
+                idx = (idx + 1) % themeCount
+            }
+            selectedThemeIndex = idx
+            UserDefaults.standard.set(idx, forKey: Self.userDefaultsThemeIndexKey)
+        }
+
+        let theme = ThemeLibrary.theme(byIndex: selectedThemeIndex)
+        if let shape = theme.allowedShapeStyles.randomElement() {
+            selectedShapeStyle = shape
+            UserDefaults.standard.set(shape.rawValue, forKey: Self.userDefaultsShapeStyleKey)
+        }
+
+        let scenes = SceneType.allCases
+        if scenes.count > 1, var newScene = scenes.randomElement() {
+            if newScene == selectedScene {
+                newScene = scenes.first(where: { $0 != selectedScene }) ?? newScene
+            }
+            selectedScene = newScene
+            UserDefaults.standard.set(newScene.rawValue, forKey: Self.userDefaultsSceneKey)
+        }
+
         pushSnapshot()
     }
 
