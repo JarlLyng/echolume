@@ -38,6 +38,12 @@ struct InputOutputSection: View {
             if !appModel.debugEngineRunning || appModel.debugLastError != nil {
                 engineErrorBanner
             }
+
+            Divider().padding(.vertical, 2)
+
+            // Twitch lives here because it's another input source (chat
+            // commands), not a visual style choice.
+            TwitchSection(appModel: appModel)
         }
         .padding(DesignTokens.Spacing.md)
         .frame(maxWidth: .infinity, alignment: .leading)

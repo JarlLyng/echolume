@@ -1,9 +1,11 @@
 //
-//  SetupDebugSection.swift
+//  DebugInspectorView.swift
 //  echolume
 //
-//  DEBUG-only collapsible diagnostics: band levels, engine state,
-//  format, RMS/peak, frames, and tap timing.
+//  DEBUG-only diagnostics window: band levels, engine state, format,
+//  RMS/peak, frames, and tap timing. Opened from the View menu in
+//  development builds (Window → Show Debug Inspector, ⇧⌘D).
+//  Never shipped to Release / TestFlight.
 //
 
 #if DEBUG
@@ -11,47 +13,48 @@
 import IAMJARLDesignTokens
 import SwiftUI
 
-struct SetupDebugSection: View {
+struct DebugInspectorView: View {
     @ObservedObject var appModel: AppModel
     @Environment(\.colorScheme) private var colorScheme
-    @Binding var isExpanded: Bool
 
     var body: some View {
-        DisclosureGroup(isExpanded: $isExpanded) {
-            VStack(alignment: .leading, spacing: DesignTokens.Spacing.xs) {
-                HStack(spacing: DesignTokens.Spacing.sm) {
-                    Text("L: \(String(format: "%.2f", appModel.low))")
-                    Text("M: \(String(format: "%.2f", appModel.mid))")
-                    Text("H: \(String(format: "%.2f", appModel.high))")
-                }
-                .font(.system(size: DesignTokens.Typography.Size.xs))
-                .foregroundStyle(DesignTokens.Common.Text.tertiary(colorScheme))
+        VStack(alignment: .leading, spacing: DesignTokens.Spacing.sm) {
+            Text("Debug Inspector")
+                .font(.system(size: DesignTokens.Typography.Size.lg, weight: DesignTokens.Typography.Weight.bold))
+                .foregroundStyle(DesignTokens.Common.Text.primary(colorScheme))
 
-                debugLine("engineRunning: \(appModel.debugEngineRunning ? "true" : "false")")
-                if let err = appModel.debugLastError {
-                    debugLine("lastError: \(err)")
-                }
-                debugLine("format: \(String(format: "%.0f", appModel.debugFormatSampleRate)) Hz, \(appModel.debugFormatChannelCount) ch")
-                debugLine("rms: \(String(format: "%.4f", appModel.debugLastRMS))  peak: \(String(format: "%.4f", appModel.debugLastPeak))")
-                debugLine("frames: \(appModel.debugLastFrames)")
-                debugLine("tap max (2s): \(String(format: "%.3f", appModel.debugMaxTapTimeMs)) ms")
+            sectionHeader("Audio")
+            HStack(spacing: DesignTokens.Spacing.sm) {
+                debugLine("L: \(String(format: "%.2f", appModel.low))")
+                debugLine("M: \(String(format: "%.2f", appModel.mid))")
+                debugLine("H: \(String(format: "%.2f", appModel.high))")
             }
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .padding(DesignTokens.Spacing.sm)
-        } label: {
-            Text("Debug")
-                .font(.system(size: DesignTokens.Typography.Size.xs, weight: DesignTokens.Typography.Weight.semibold))
-                .foregroundStyle(DesignTokens.Common.Text.tertiary(colorScheme))
+            debugLine("engineRunning: \(appModel.debugEngineRunning ? "true" : "false")")
+            if let err = appModel.debugLastError {
+                debugLine("lastError: \(err)")
+            }
+            debugLine("format: \(String(format: "%.0f", appModel.debugFormatSampleRate)) Hz, \(appModel.debugFormatChannelCount) ch")
+            debugLine("rms: \(String(format: "%.4f", appModel.debugLastRMS))  peak: \(String(format: "%.4f", appModel.debugLastPeak))")
+            debugLine("frames: \(appModel.debugLastFrames)")
+            debugLine("tap max (2s): \(String(format: "%.3f", appModel.debugMaxTapTimeMs)) ms")
+
+            Spacer()
         }
-        .padding(DesignTokens.Spacing.sm)
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .background(DesignTokens.Common.Background.card(colorScheme).opacity(0.7))
-        .clipShape(RoundedRectangle(cornerRadius: DesignTokens.Radius.sm))
+        .padding(DesignTokens.Spacing.lg)
+        .frame(minWidth: 320, minHeight: 360)
+        .background(DesignTokens.Common.Background.app(colorScheme))
+    }
+
+    private func sectionHeader(_ text: String) -> some View {
+        Text(text)
+            .font(.system(size: DesignTokens.Typography.Size.xs, weight: DesignTokens.Typography.Weight.semibold))
+            .foregroundStyle(DesignTokens.Common.Text.secondary(colorScheme))
+            .padding(.top, DesignTokens.Spacing.xs)
     }
 
     private func debugLine(_ text: String) -> some View {
         Text(text)
-            .font(.system(size: DesignTokens.Typography.Size.xs))
+            .font(.system(.caption, design: .monospaced))
             .foregroundStyle(DesignTokens.Common.Text.tertiary(colorScheme))
     }
 }

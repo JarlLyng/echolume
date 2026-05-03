@@ -45,10 +45,27 @@ struct EcholumeApp: App {
         WindowGroup {
             RootView(appModel: appModel)
                 .onAppear {
-                    // Maximize window to fill the screen (not macOS fullscreen mode)
+                    // Restore saved window frame if available; otherwise maximize.
+                    // setFrameAutosaveName persists position/size automatically;
+                    // on first launch with no saved frame, fall back to maximize.
                     DispatchQueue.main.async {
-                        if let window = NSApplication.shared.windows.first,
-                           let screen = window.screen ?? NSScreen.main {
+                        guard let window = NSApplication.shared.windows.first else { return }
+                        let autosaveName = "EcholumeMainWindow"
+                        let hadSavedFrame = window.setFrameAutosaveName(autosaveName)
+
+                        if !hadSavedFrame {
+                            if let screen = window.screen ?? NSScreen.main {
+                                window.setFrame(screen.visibleFrame, display: true)
+                                window.saveFrame(usingName: autosaveName)
+                            }
+                            return
+                        }
+
+                        // Validate restored frame intersects an attached screen.
+                        // If the saved screen was disconnected, fall back to main.
+                        let frame = window.frame
+                        let onScreen = NSScreen.screens.contains { $0.visibleFrame.intersects(frame) }
+                        if !onScreen, let screen = NSScreen.main {
                             window.setFrame(screen.visibleFrame, display: true)
                         }
                     }
@@ -60,10 +77,33 @@ struct EcholumeApp: App {
                     .keyboardShortcut("r", modifiers: .command)
                 Button("Panic Reset (Visuals)") { appModel.panicReset() }
                     .keyboardShortcut("r", modifiers: [])
+                #if DEBUG
+                Divider()
+                DebugInspectorMenuButton()
+                #endif
             }
         }
+
+        #if DEBUG
+        Window("Debug Inspector", id: "echolume.debug") {
+            DebugInspectorView(appModel: appModel)
+        }
+        .windowResizability(.contentSize)
+        #endif
     }
 }
+
+#if DEBUG
+private struct DebugInspectorMenuButton: View {
+    @Environment(\.openWindow) private var openWindow
+    var body: some View {
+        Button("Show Debug Inspector") {
+            openWindow(id: "echolume.debug")
+        }
+        .keyboardShortcut("d", modifiers: [.command, .shift])
+    }
+}
+#endif
 
 private struct RootView: View {
     @ObservedObject var appModel: AppModel

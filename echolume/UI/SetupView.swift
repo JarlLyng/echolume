@@ -17,9 +17,6 @@ private let twoColumnBreakpoint: CGFloat = 700
 struct SetupView: View {
     @ObservedObject var appModel: AppModel
     @Environment(\.colorScheme) private var colorScheme
-    #if DEBUG
-    @State private var debugExpanded: Bool = false
-    #endif
 
     var body: some View {
         VStack(spacing: 0) {
@@ -54,10 +51,6 @@ struct SetupView: View {
                         }
 
                         PerformanceSection(appModel: appModel)
-
-                        #if DEBUG
-                        SetupDebugSection(appModel: appModel, isExpanded: $debugExpanded)
-                        #endif
                     }
                     .padding(DesignTokens.Spacing.xxl)
                     .padding(.bottom, DesignTokens.Spacing.xl)
