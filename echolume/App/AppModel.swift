@@ -113,6 +113,9 @@ final class AppModel: ObservableObject {
     /// Renderer reads from this on its thread; we update from main.
     let visualParamsProvider = VisualParamsProvider()
 
+    /// Saved visual presets (theme + shape + scene + 5 knobs). Persisted as JSON.
+    let presetStore = PresetStore()
+
     private let audioManager = AudioManager()
     private var twitchManager: TwitchChatManager?
     private var twitchStatusCancellable: AnyCancellable?
@@ -565,6 +568,56 @@ final class AppModel: ObservableObject {
         pushSnapshot()
     }
 
+    // MARK: - Presets
+
+    /// Snapshot the current visual state under `name` (not yet stored).
+    func captureCurrentPreset(name: String) -> VisualPreset {
+        VisualPreset(
+            name: name,
+            themeIndex: selectedThemeIndex,
+            shapeStyle: selectedShapeStyle.rawValue,
+            scene: selectedScene.rawValue,
+            abstraction: abstraction,
+            energyBias: energyBias,
+            motion: motion,
+            noise: noise,
+            glitch: glitch
+        )
+    }
+
+    /// Apply a preset by routing through the existing setters, so persistence
+    /// and the render snapshot update exactly as if the user moved each control.
+    /// Note: `setThemeIndex` resets shape to the theme default, so it must run
+    /// before the shape is applied.
+    func apply(_ preset: VisualPreset) {
+        setThemeIndex(preset.themeIndex)
+        if let style = VisualShapeStyle(rawValue: preset.shapeStyle) {
+            setShapeStyle(style)
+        }
+        if let scene = SceneType(rawValue: preset.scene) {
+            setScene(scene)
+        }
+        setAbstraction(preset.abstraction)
+        setEnergyBias(preset.energyBias)
+        setMotion(preset.motion)
+        setNoise(preset.noise)
+        setGlitch(preset.glitch)
+    }
+
+    /// Recall the preset in the given 1-based slot (keyboard ⌘1…9). No-op if empty.
+    func applyPreset(atSlot slot: Int) {
+        if let preset = presetStore.preset(atSlot: slot) {
+            apply(preset)
+        }
+    }
+
+    /// Recall a preset by name (Twitch `!preset <name>`). No-op if not found.
+    func applyPreset(named name: String) {
+        if let preset = presetStore.preset(named: name) {
+            apply(preset)
+        }
+    }
+
     // MARK: - Twitch
 
     func setTwitchEnabled(_ enabled: Bool) {
@@ -650,6 +703,8 @@ final class AppModel: ObservableObject {
             setGlitch(glitch > 0.5 ? 0.2 : 1.0)
         case .abstract(let pct):
             setAbstraction(Float(pct) / 100.0)
+        case .preset(let name):
+            applyPreset(named: name)
         }
     }
 }

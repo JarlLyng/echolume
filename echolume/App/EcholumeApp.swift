@@ -133,6 +133,12 @@ private struct RootView: View {
                 if showSetup { appModel.enterLive() } else { appModel.exitLive() }
                 return .handled
             }
+            // ⌘1…9 recall saved presets 1–9 (no-op if that slot is empty).
+            if key.modifiers.contains(.command), let digit = ch.first, let slot = digit.wholeNumberValue,
+               (1...9).contains(slot) {
+                appModel.applyPreset(atSlot: slot)
+                return .handled
+            }
             if ch == "1" { appModel.setThemeIndex(0); return .handled }
             if ch == "2" { appModel.setThemeIndex(1); return .handled }
             if ch == "3" { appModel.setThemeIndex(2); return .handled }

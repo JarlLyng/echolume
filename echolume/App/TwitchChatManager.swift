@@ -23,6 +23,7 @@ enum TwitchCommand {
     case randomize
     case glitch
     case abstract(Int)
+    case preset(String)
 }
 
 @MainActor
@@ -155,6 +156,9 @@ final class TwitchChatManager: ObservableObject {
         case "abstract":
             guard let str = arg, let val = Int(str) else { return nil }
             return .abstract(max(0, min(100, val)))
+        case "preset":
+            guard let name = arg, !name.isEmpty else { return nil }
+            return .preset(name)
         default:
             return nil
         }

@@ -51,6 +51,8 @@ struct SetupView: View {
                         }
 
                         PerformanceSection(appModel: appModel)
+
+                        PresetSection(appModel: appModel)
                     }
                     .padding(DesignTokens.Spacing.xxl)
                     .padding(.bottom, DesignTokens.Spacing.xl)
