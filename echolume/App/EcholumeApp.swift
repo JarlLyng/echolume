@@ -84,6 +84,14 @@ struct EcholumeApp: App {
             }
         }
 
+        Settings {
+            SettingsView(appModel: appModel)
+        }
+
+        MenuBarExtra("Echolume", systemImage: "waveform", isInserted: $appModel.menubarEnabled) {
+            MenuBarContent(appModel: appModel)
+        }
+
         #if DEBUG
         Window("Debug Inspector", id: "echolume.debug") {
             DebugInspectorView(appModel: appModel)
