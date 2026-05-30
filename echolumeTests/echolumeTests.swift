@@ -6,6 +6,7 @@
 //  not exercised here — see UI tests and manual verification for those.
 //
 
+import Foundation
 import Testing
 import simd
 @testable import echolume
@@ -93,6 +94,21 @@ struct TwitchCommandParsingTests {
     @Test func abstract_withInvalidArg_returnsNil() {
         #expect(TwitchChatManager.parseCommand("!abstract abc") == nil)
         #expect(TwitchChatManager.parseCommand("!abstract") == nil)
+    }
+
+    // MARK: preset (name arg)
+
+    @Test func preset_withName_returnsPreset() {
+        guard case .preset(let name) = TwitchChatManager.parseCommand("!preset chill vibes") else {
+            Issue.record("Expected .preset")
+            return
+        }
+        #expect(name == "chill vibes")
+    }
+
+    @Test func preset_withoutArg_returnsNil() {
+        #expect(TwitchChatManager.parseCommand("!preset") == nil)
+        #expect(TwitchChatManager.parseCommand("!preset   ") == nil)
     }
 
     // MARK: rejection
@@ -328,5 +344,117 @@ struct ShaderUniformsLayoutTests {
     @Test func strideIsMultipleOfFloat4Alignment() {
         // Metal expects struct stride to be a multiple of its alignment.
         #expect(MemoryLayout<ShaderUniforms>.stride % 16 == 0)
+    }
+}
+
+// MARK: - VisualPreset Codable
+
+@MainActor
+struct VisualPresetCodableTests {
+
+    @Test func jsonRoundTripPreservesAllFields() throws {
+        let original = VisualPreset(
+            name: "Techno Peak",
+            themeIndex: 3,
+            shapeStyle: "lines",
+            scene: "grid",
+            abstraction: 0.7,
+            energyBias: 0.4,
+            motion: 0.9,
+            noise: 0.1,
+            glitch: 0.6
+        )
+        let data = try JSONEncoder().encode(original)
+        let decoded = try JSONDecoder().decode(VisualPreset.self, from: data)
+        #expect(decoded == original)
+    }
+}
+
+// MARK: - PresetStore
+
+@MainActor
+struct PresetStoreTests {
+
+    /// A store backed by a unique throwaway directory so tests never touch
+    /// the real Application Support location.
+    private func makeStore() -> PresetStore {
+        let dir = FileManager.default.temporaryDirectory
+            .appendingPathComponent("echolume-tests-\(UUID().uuidString)", isDirectory: true)
+        return PresetStore(directory: dir)
+    }
+
+    private func sample(_ name: String) -> VisualPreset {
+        VisualPreset(
+            name: name,
+            themeIndex: 1,
+            shapeStyle: "blobs",
+            scene: "radial",
+            abstraction: 0.5,
+            energyBias: 0.5,
+            motion: 0.5,
+            noise: 0.5,
+            glitch: 0.2
+        )
+    }
+
+    @Test func addStoresAndTrimsName() throws {
+        let store = makeStore()
+        let stored = try store.add(sample("  Chill  "))
+        #expect(stored.name == "Chill")
+        #expect(store.presets.count == 1)
+        #expect(store.contains(name: "chill"))
+    }
+
+    @Test func emptyNameThrows() {
+        let store = makeStore()
+        #expect(throws: PresetError.emptyName) {
+            try store.add(sample("   "))
+        }
+        #expect(store.presets.isEmpty)
+    }
+
+    @Test func duplicateNameIsRejectedCaseInsensitively() throws {
+        let store = makeStore()
+        try store.add(sample("Aurora"))
+        #expect(throws: PresetError.duplicateName("aurora")) {
+            try store.add(sample("aurora"))
+        }
+        #expect(store.presets.count == 1)
+    }
+
+    @Test func deleteRemovesPreset() throws {
+        let store = makeStore()
+        let p = try store.add(sample("Gone"))
+        store.delete(id: p.id)
+        #expect(store.presets.isEmpty)
+    }
+
+    @Test func slotLookupIsOneBased() throws {
+        let store = makeStore()
+        let first = try store.add(sample("One"))
+        let second = try store.add(sample("Two"))
+        #expect(store.preset(atSlot: 1) == first)
+        #expect(store.preset(atSlot: 2) == second)
+        #expect(store.preset(atSlot: 3) == nil)
+        #expect(store.preset(atSlot: 0) == nil)
+    }
+
+    @Test func namedLookupIsCaseInsensitive() throws {
+        let store = makeStore()
+        let p = try store.add(sample("Deep Space"))
+        #expect(store.preset(named: "deep space") == p)
+        #expect(store.preset(named: "  DEEP SPACE  ") == p)
+        #expect(store.preset(named: "nope") == nil)
+    }
+
+    @Test func presetsPersistAcrossStoreInstances() throws {
+        let dir = FileManager.default.temporaryDirectory
+            .appendingPathComponent("echolume-tests-\(UUID().uuidString)", isDirectory: true)
+        let first = PresetStore(directory: dir)
+        try first.add(sample("Persisted"))
+
+        let reopened = PresetStore(directory: dir)
+        #expect(reopened.presets.count == 1)
+        #expect(reopened.contains(name: "Persisted"))
     }
 }

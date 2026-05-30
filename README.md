@@ -25,11 +25,11 @@ This README mixes shipped features with target architecture. The split below is 
 - Themes, scenes (radial/flow/grid), shape styles, performance knobs, and Randomize.
 - External display output selection.
 - Twitch chat integration (anonymous read‑only IRC, viewer commands).
+- Preset system: save/recall/delete named visual configurations (UI, `⌘1–9`, `!preset` chat command).
 - Settings persistence in `UserDefaults`.
 - Optional Sentry crash reporting (opt‑in — see [Sentry](#sentry-error-monitoring)).
 
 ### Planned
-- Preset system for visual configurations ([#2](https://github.com/JarlLyng/echolume/issues/2)).
 - Beat detection and tempo‑synced effects ([#5](https://github.com/JarlLyng/echolume/issues/5)).
 - MIDI controller support ([#1](https://github.com/JarlLyng/echolume/issues/1)).
 - Video recording/export ([#6](https://github.com/JarlLyng/echolume/issues/6)).
@@ -245,6 +245,17 @@ A theme defines:
 
 ---
 
+## Presets
+
+Presets capture the full visual state — theme, shape style, scene, and all five performance knobs (seed is excluded; it's regenerated on Randomize). They let you switch between pre‑dialed looks instantly during a set.
+
+- **Save** the current look from the Presets section in SetupView (names must be unique).
+- **Recall** by clicking a preset, pressing `⌘1`–`⌘9` for the first nine, or via the `!preset <name>` Twitch chat command.
+- **Delete** via a preset's context menu.
+- Presets are stored as JSON in Application Support and persist across launches.
+
+---
+
 ## UX / Interaction
 
 ### SetupView
@@ -259,7 +270,7 @@ A theme defines:
 ### LiveView
 - Fullscreen (toggle) with minimal chrome.
 - ESC exits fullscreen; `⌘.` or Back button exits Live.
-- Keyboard-first: Space = Randomize, Enter = Exit/Back, R = Panic Reset, ⌘R = Restart audio.
+- Keyboard-first: Space = Randomize, Enter = Exit/Back, R = Panic Reset, ⌘R = Restart audio, 1–6 = themes, ⌘1–⌘9 = recall presets.
 
 ---
 
@@ -281,6 +292,7 @@ Echolume can connect to a Twitch channel's chat (read-only, anonymous) and react
 | `!randomize` | Random theme + seed |
 | `!glitch` | Toggle glitch intensity |
 | `!abstract <0–100>` | Set abstraction level |
+| `!preset <name>` | Recall a saved preset by name |
 
 ### Rate limiting
 
