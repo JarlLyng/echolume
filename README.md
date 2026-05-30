@@ -27,11 +27,11 @@ This README mixes shipped features with target architecture. The split below is 
 - Twitch chat integration (anonymous read‑only IRC, viewer commands).
 - Preset system: save/recall/delete named visual configurations (UI, `⌘1–9`, `!preset` chat command).
 - MIDI controller support: MIDI Learn binds the 5 knobs to CC and notes to randomize/panic/next+previous theme.
+- Beat detection: autocorrelation BPM + beat-phase tracking exposed to shaders (subtle tempo-synced pulse), with tap-tempo fallback.
 - Settings persistence in `UserDefaults`.
 - Optional Sentry crash reporting (opt‑in — see [Sentry](#sentry-error-monitoring)).
 
 ### Planned
-- Beat detection and tempo‑synced effects ([#5](https://github.com/JarlLyng/echolume/issues/5)).
 - Video recording/export ([#6](https://github.com/JarlLyng/echolume/issues/6)).
 - OSC input for TouchDesigner / Resolume ([#7](https://github.com/JarlLyng/echolume/issues/7)).
 - Twitch OAuth for authenticated features ([#4](https://github.com/JarlLyng/echolume/issues/4)).
@@ -253,6 +253,16 @@ Presets capture the full visual state — theme, shape style, scene, and all fiv
 - **Recall** by clicking a preset, pressing `⌘1`–`⌘9` for the first nine, or via the `!preset <name>` Twitch chat command.
 - **Delete** via a preset's context menu.
 - Presets are stored as JSON in Application Support and persist across launches.
+
+---
+
+## Beat & tempo
+
+Echolume estimates tempo from the low‑band onset envelope (autocorrelation over a multi‑second window, 80–180 BPM) and tracks a beat phase with a phase‑locked loop. `beatPhase` (0–1) and `bpm` are passed to the Metal shaders, which add a subtle brightness pulse on each beat (no‑op until a tempo lock is found).
+
+- The **Tempo** area in Input & Output shows the detected BPM with a lock indicator.
+- **Tap tempo:** tap the **Tap** button (or bind a MIDI note to *Tap Tempo* via MIDI Learn) to set the tempo manually; the Manual toggle holds it.
+- Detection works on mic or BlackHole‑routed input.
 
 ---
 

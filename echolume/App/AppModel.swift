@@ -124,6 +124,13 @@ final class AppModel: ObservableObject {
     /// The control currently armed for MIDI Learn (nil = none armed).
     @Published var midiArmedTarget: MidiTarget?
 
+    // Tempo / beat tracking
+    @Published private(set) var bpm: Float = 0
+    @Published private(set) var beatPhase: Float = 0
+    @Published private(set) var beatConfidence: Float = 0
+    /// When true, tempo is held at the tapped/manual BPM instead of auto-detected.
+    @Published private(set) var useManualTempo = false
+
     private let audioManager = AudioManager()
     private var twitchManager: TwitchChatManager?
     private var twitchStatusCancellable: AnyCancellable?
@@ -246,6 +253,17 @@ final class AppModel: ObservableObject {
             .sink { [weak self] v in self?.impact = v; self?.pushSnapshot() }
             .store(in: &cancellables)
 
+        audioManager.beatPublisher
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] beat in
+                guard let self else { return }
+                self.bpm = beat.bpm
+                self.beatPhase = beat.beatPhase
+                self.beatConfidence = beat.confidence
+                self.pushSnapshot()
+            }
+            .store(in: &cancellables)
+
         midi.onMessage = { [weak self] msg in self?.handleMidi(msg) }
         midi.start()
     }
@@ -259,7 +277,7 @@ final class AppModel: ObservableObject {
 
     private func pushSnapshot() {
         visualParamsProvider.update(
-            snapshot: AnalyzerSnapshot(level: rms, peak: peak, low: low, mid: mid, high: high, impact: impact),
+            snapshot: AnalyzerSnapshot(level: rms, peak: peak, low: low, mid: mid, high: high, impact: impact, bpm: bpm, beatPhase: beatPhase),
             abstraction: abstraction,
             seed: seed,
             themeIndex: selectedThemeIndex,
@@ -677,8 +695,23 @@ final class AppModel: ObservableObject {
         case .panic: panicReset()
         case .nextTheme: nextTheme()
         case .previousTheme: previousTheme()
+        case .tapTempo: tapTempo()
         default: break
         }
+    }
+
+    // MARK: - Tempo
+
+    /// Register a tap-tempo tap. Switches tempo to manual hold.
+    func tapTempo() {
+        useManualTempo = true
+        audioManager.tapTempo()
+    }
+
+    /// Toggle between auto-detected tempo and a held manual/tapped tempo.
+    func setUseManualTempo(_ on: Bool) {
+        useManualTempo = on
+        audioManager.setManualBPM(on ? (bpm > 0 ? bpm : nil) : nil)
     }
 
     /// Advance to the next theme, wrapping around.

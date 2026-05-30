@@ -9,6 +9,7 @@
 import Accelerate
 import Combine
 import Foundation
+import QuartzCore
 
 /// Envelope: attack 0.05 (fast), release 0.25 (slower).
 private let kEnvelopeAttack: Float = 0.05
@@ -24,6 +25,9 @@ final class AudioAnalyzer {
     let midPublisher = PassthroughSubject<Float, Never>()
     let highPublisher = PassthroughSubject<Float, Never>()
     let impactPublisher = PassthroughSubject<Float, Never>()
+    let beatPublisher = PassthroughSubject<BeatTracker.Output, Never>()
+
+    private let beatTracker = BeatTracker()
 
     private let rmsSmoother = SmoothValue(initial: 0, attackCoeff: 0.35, releaseCoeff: 0.02)
     private let peakSmoother = SmoothValue(initial: 0, attackCoeff: 0.5, releaseCoeff: 0.08)
@@ -51,6 +55,16 @@ final class AudioAnalyzer {
 
     func setSampleRate(_ rate: Float) {
         sampleRate = rate > 0 ? rate : 48000
+    }
+
+    /// Register a manual tap. Call serialized with `process` (on the FFT queue).
+    func tapTempo() {
+        beatTracker.tap(now: CACurrentMediaTime())
+    }
+
+    /// Override BPM (nil re-enables auto-detection). Call on the FFT queue.
+    func setManualBPM(_ bpm: Float?) {
+        beatTracker.setManualBPM(bpm)
     }
 
     /// Process float PCM. For FFT we need at least 2048 samples; pass buffer of 2048 (e.g. from tap).
@@ -100,6 +114,7 @@ final class AudioAnalyzer {
             let midN = min(1, midRaw / (runningMid + 0.001))
             let highN = min(1, highRaw / (runningHigh + 0.001))
 
+            let onsetStrength = max(0, lowN - prevLowN)
             if lowN - prevLowN > kImpactRiseThreshold {
                 impact = 1.0
             } else {
@@ -107,6 +122,10 @@ final class AudioAnalyzer {
             }
             impact = min(1, max(0, impact))
             prevLowN = lowN
+
+            // Beat tracking from the low-band onset envelope (runs on the FFT queue).
+            let beat = beatTracker.ingest(onsetStrength: onsetStrength, now: CACurrentMediaTime())
+            beatPublisher.send(beat)
 
             let smoothedLow = lowEnvelope.tick(with: lowN)
             let smoothedMid = midEnvelope.tick(with: midN)

@@ -411,6 +411,87 @@ struct MidiMessageTests {
     }
 }
 
+// MARK: - BeatTracker
+
+@MainActor
+struct BeatTrackerTests {
+
+    /// Feed a synthetic onset impulse train at `bpm` for `seconds` and return
+    /// the final detected output.
+    private func runTrain(bpm: Float, seconds: Double, dt: Double = 0.0427) -> BeatTracker.Output {
+        let tracker = BeatTracker()
+        let beatInterval = 60.0 / Double(bpm)
+        var now = 0.0
+        var nextBeat = 0.0
+        var last = BeatTracker.Output(bpm: 0, beatPhase: 0, confidence: 0)
+        while now < seconds {
+            // Impulse on frames at/just past a beat boundary; quiet otherwise.
+            var onset: Float = 0
+            if now >= nextBeat {
+                onset = 1.0
+                nextBeat += beatInterval
+            }
+            last = tracker.ingest(onsetStrength: onset, now: now)
+            now += dt
+        }
+        return last
+    }
+
+    @Test func detects120BPM() {
+        let out = runTrain(bpm: 120, seconds: 10)
+        #expect(abs(out.bpm - 120) <= 2, "expected ~120, got \(out.bpm)")
+    }
+
+    @Test func detects90BPM() {
+        let out = runTrain(bpm: 90, seconds: 10)
+        #expect(abs(out.bpm - 90) <= 2, "expected ~90, got \(out.bpm)")
+    }
+
+    @Test func detects140BPM() {
+        let out = runTrain(bpm: 140, seconds: 10)
+        #expect(abs(out.bpm - 140) <= 2, "expected ~140, got \(out.bpm)")
+    }
+
+    @Test func phaseStaysInUnitRange() {
+        let tracker = BeatTracker()
+        tracker.setManualBPM(120)
+        var now = 0.0
+        for _ in 0 ..< 200 {
+            let out = tracker.ingest(onsetStrength: 0, now: now)
+            #expect(out.beatPhase >= 0 && out.beatPhase < 1, "phase out of range: \(out.beatPhase)")
+            now += 0.0427
+        }
+    }
+
+    @Test func tapTempoSetsBPM() {
+        let tracker = BeatTracker()
+        // Four taps 0.5s apart → 120 BPM.
+        for i in 0 ..< 4 { tracker.tap(now: Double(i) * 0.5) }
+        let out = tracker.ingest(onsetStrength: 0, now: 2.0)
+        #expect(abs(out.bpm - 120) <= 1, "expected 120 from taps, got \(out.bpm)")
+    }
+
+    @Test func tapResetsPhaseToZero() {
+        let tracker = BeatTracker()
+        tracker.setManualBPM(120)
+        _ = tracker.ingest(onsetStrength: 0, now: 0.3)   // advance phase
+        tracker.tap(now: 0.31)
+        let out = tracker.ingest(onsetStrength: 0, now: 0.31)   // minimal advance after reset
+        // Without the reset, ~0.3s at 120 BPM would leave phase ≈ 0.6; the reset
+        // brings it back near 0 (a tiny advance from the dt floor remains).
+        #expect(out.beatPhase < 0.05, "phase should reset on tap, got \(out.beatPhase)")
+    }
+
+    @Test func manualBPMOverridesDetection() {
+        let tracker = BeatTracker()
+        tracker.setManualBPM(128)
+        var now = 0.0
+        var out = BeatTracker.Output(bpm: 0, beatPhase: 0, confidence: 0)
+        for _ in 0 ..< 50 { out = tracker.ingest(onsetStrength: 0, now: now); now += 0.0427 }
+        #expect(out.bpm == 128)
+    }
+}
+
 // MARK: - MidiMappingStore
 
 @MainActor

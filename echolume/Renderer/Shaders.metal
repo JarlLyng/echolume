@@ -41,7 +41,16 @@ struct Uniforms {
     float lfo3;
     float speedMul;
     float glitchPhase;
+    float beatPhase;   // 0..1 sawtooth, 0 == beat
+    float bpm;         // detected/tapped tempo; 0 == no lock
 };
+
+// Short decaying pulse at the start of each beat (0 when no tempo lock).
+// Sharp attack at phase 0, fast exponential decay over the first part of the beat.
+inline float beatPulse(constant Uniforms &u) {
+    if (u.bpm <= 0.0) { return 0.0; }
+    return exp(-u.beatPhase * 6.0);
+}
 
 struct VertexOut {
     float4 position [[position]];
@@ -357,6 +366,10 @@ fragment float4 fullscreenQuadFragment(
     if (sceneType == 0) col = renderRadial(u, in.uv);
     else if (sceneType == 1) col = renderFlow(u, in.uv);
     else col = renderGrid(u, in.uv);
+
+    // Subtle tempo-synced pulse: a small brightness lift on each beat. Bounded
+    // (<=8%) so it accents rather than dominates; no-op without a tempo lock.
+    col.rgb *= 1.0 + 0.08 * beatPulse(u);
 
     col.rgb = clamp(col.rgb, 0.0, 1.0);
     return col;

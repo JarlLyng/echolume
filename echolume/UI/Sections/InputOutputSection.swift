@@ -49,6 +49,10 @@ struct InputOutputSection: View {
 
             // MIDI is likewise an input source (hardware controller).
             MidiSection(appModel: appModel)
+
+            Divider().padding(.vertical, 2)
+
+            TempoSection(appModel: appModel)
         }
         .padding(DesignTokens.Spacing.md)
         .frame(maxWidth: .infinity, alignment: .leading)
