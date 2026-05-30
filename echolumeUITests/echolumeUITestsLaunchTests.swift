@@ -20,6 +20,7 @@ final class echolumeUITestsLaunchTests: XCTestCase {
     @MainActor
     func testLaunch() throws {
         let app = XCUIApplication()
+        app.launchEnvironment["ECHOLUME_UITEST"] = "1"   // app omits the MenuBarExtra under test
         app.launch()
 
         // Insert steps here to perform after app launch but before taking a screenshot,

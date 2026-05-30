@@ -29,13 +29,14 @@ This README mixes shipped features with target architecture. The split below is 
 - MIDI controller support: MIDI Learn binds the 5 knobs to CC and notes to randomize/panic/next+previous theme.
 - Beat detection: autocorrelation BPM + beat-phase tracking exposed to shaders (subtle tempo-synced pulse), with tap-tempo fallback.
 - OSC input: opt-in UDP listener (default port 9000) mapping a `/echolume/…` namespace to knobs, theme/scene/shape, and triggers — for TouchDesigner/Resolume rigs.
+- Menu bar extra: quick actions (Randomize, Panic Reset, Restart Audio), live status, and Open Echolume — reachable while running fullscreen on another display.
 - Settings persistence in `UserDefaults`.
 - Optional Sentry crash reporting (opt‑in — see [Sentry](#sentry-error-monitoring)).
 
 ### Planned
 - Video recording/export ([#6](https://github.com/JarlLyng/echolume/issues/6)).
 - Twitch OAuth for authenticated features ([#4](https://github.com/JarlLyng/echolume/issues/4)).
-- Menubar extra ([#8](https://github.com/JarlLyng/echolume/issues/8)) and Danish localization ([#9](https://github.com/JarlLyng/echolume/issues/9)).
+- Danish localization ([#9](https://github.com/JarlLyng/echolume/issues/9)).
 
 ---
 

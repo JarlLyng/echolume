@@ -84,6 +84,10 @@ struct EcholumeApp: App {
             }
         }
 
+        Settings {
+            SettingsView(appModel: appModel)
+        }
+
         #if DEBUG
         Window("Debug Inspector", id: "echolume.debug") {
             DebugInspectorView(appModel: appModel)

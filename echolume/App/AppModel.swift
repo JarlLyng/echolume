@@ -66,6 +66,7 @@ final class AppModel: ObservableObject {
     private static let userDefaultsSelectedChannelPairKey = "echolume.selectedChannelPair"
     private static let userDefaultsOSCEnabledKey = "echolume.oscEnabled"
     private static let userDefaultsOSCPortKey = "echolume.oscPort"
+    private static let userDefaultsMenubarEnabledKey = "echolume.menubarEnabled"
 
     /// Available displays (main first). Refreshed by refreshDisplays().
     @Published var availableDisplays: [OutputDisplay] = []
@@ -137,6 +138,16 @@ final class AppModel: ObservableObject {
     let oscServer = OSCServer()
     @Published private(set) var oscEnabled = false
     @Published private(set) var oscPort: UInt16 = 9000
+
+    /// Whether the menu bar extra is shown. Persisted; default on. Bound by the
+    /// Settings toggle; drives the AppKit status item.
+    @Published var menubarEnabled = true {
+        didSet {
+            UserDefaults.standard.set(menubarEnabled, forKey: Self.userDefaultsMenubarEnabledKey)
+            menuBarController?.setVisible(menubarEnabled)
+        }
+    }
+    private var menuBarController: MenuBarController?
 
     private let audioManager = AudioManager()
     private var twitchManager: TwitchChatManager?
@@ -280,6 +291,26 @@ final class AppModel: ObservableObject {
         oscEnabled = UserDefaults.standard.bool(forKey: Self.userDefaultsOSCEnabledKey)
         oscServer.onMessage = { [weak self] msg in self?.handleOSC(msg) }
         if oscEnabled { oscServer.start(port: oscPort) }
+
+        if UserDefaults.standard.object(forKey: Self.userDefaultsMenubarEnabledKey) != nil {
+            menubarEnabled = UserDefaults.standard.bool(forKey: Self.userDefaultsMenubarEnabledKey)
+        }
+        // Create the status item unless launched by the UI test harness (a menu
+        // bar extra blocks XCUITest's accessibility handshake).
+        if ProcessInfo.processInfo.environment["ECHOLUME_UITEST"] != "1" {
+            let controller = MenuBarController(appModel: self)
+            controller.setVisible(menubarEnabled)
+            menuBarController = controller
+        }
+    }
+
+    /// Bring the main window forward (from the menu bar extra while fullscreen
+    /// on another display).
+    func showMainWindow() {
+        NSApplication.shared.activate(ignoringOtherApps: true)
+        if let window = NSApplication.shared.windows.first(where: { $0.canBecomeMain }) {
+            window.makeKeyAndOrderFront(nil)
+        }
     }
 
     deinit {
