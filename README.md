@@ -28,12 +28,12 @@ This README mixes shipped features with target architecture. The split below is 
 - Preset system: save/recall/delete named visual configurations (UI, `⌘1–9`, `!preset` chat command).
 - MIDI controller support: MIDI Learn binds the 5 knobs to CC and notes to randomize/panic/next+previous theme.
 - Beat detection: autocorrelation BPM + beat-phase tracking exposed to shaders (subtle tempo-synced pulse), with tap-tempo fallback.
+- OSC input: opt-in UDP listener (default port 9000) mapping a `/echolume/…` namespace to knobs, theme/scene/shape, and triggers — for TouchDesigner/Resolume rigs.
 - Settings persistence in `UserDefaults`.
 - Optional Sentry crash reporting (opt‑in — see [Sentry](#sentry-error-monitoring)).
 
 ### Planned
 - Video recording/export ([#6](https://github.com/JarlLyng/echolume/issues/6)).
-- OSC input for TouchDesigner / Resolume ([#7](https://github.com/JarlLyng/echolume/issues/7)).
 - Twitch OAuth for authenticated features ([#4](https://github.com/JarlLyng/echolume/issues/4)).
 - Menubar extra ([#8](https://github.com/JarlLyng/echolume/issues/8)) and Danish localization ([#9](https://github.com/JarlLyng/echolume/issues/9)).
 
@@ -263,6 +263,24 @@ Echolume estimates tempo from the low‑band onset envelope (autocorrelation ove
 - The **Tempo** area in Input & Output shows the detected BPM with a lock indicator.
 - **Tap tempo:** tap the **Tap** button (or bind a MIDI note to *Tap Tempo* via MIDI Learn) to set the tempo manually; the Manual toggle holds it.
 - Detection works on mic or BlackHole‑routed input.
+
+---
+
+## OSC control
+
+Echolume can listen for **OSC over UDP** so it slots into TouchDesigner, Resolume, or any show-control rig. It's **opt-in**: enable it and set the port (default **9000**) in the OSC area of Input & Output. Enabling it requires the incoming-network sandbox entitlement (already configured).
+
+Address namespace:
+
+| Address | Arg | Effect |
+|---------|-----|--------|
+| `/echolume/knob/abstraction` (also `energybias`, `motion`, `noise`, `glitch`) | float 0–1 | Set that knob |
+| `/echolume/theme` / `/echolume/scene` / `/echolume/shape` | int | Select by index |
+| `/echolume/nexttheme` / `/echolume/prevtheme` | — | Cycle theme |
+| `/echolume/randomize` / `/echolume/panic` / `/echolume/tempo/tap` | — | Trigger |
+| `/echolume/preset` | int (slot) or string (name) | Recall preset |
+
+Example: send `/echolume/knob/abstraction 0.8` to set abstraction to 80%.
 
 ---
 

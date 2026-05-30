@@ -53,6 +53,10 @@ struct InputOutputSection: View {
             Divider().padding(.vertical, 2)
 
             TempoSection(appModel: appModel)
+
+            Divider().padding(.vertical, 2)
+
+            OSCSection(appModel: appModel)
         }
         .padding(DesignTokens.Spacing.md)
         .frame(maxWidth: .infinity, alignment: .leading)
