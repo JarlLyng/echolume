@@ -51,7 +51,10 @@ struct ShaderUniforms {
 final class Renderer: NSObject, MTKViewDelegate {
     private let device: MTLDevice
     private let commandQueue: MTLCommandQueue
-    private var pipelineState: MTLRenderPipelineState
+    private var pipelineState: MTLRenderPipelineState   // single-pass fallback
+    private var feedbackPipeline: MTLRenderPipelineState
+    private var presentPipeline: MTLRenderPipelineState
+    private let sampler: MTLSamplerState
     private var vertexBuffer: MTLBuffer
     private let startTime = CACurrentMediaTime()
     private weak var paramsProvider: VisualParamsProvider?
@@ -60,6 +63,13 @@ final class Renderer: NSObject, MTKViewDelegate {
     /// softly corrected toward the analysis-thread phase (which updates ~23 Hz).
     private var displayBeatPhase: Float = 0
     private var prevBeatTime: Float = -1
+
+    /// Ping-pong accumulation textures for the feedback/trail pass.
+    private var accum: [MTLTexture] = []
+    private var accumIndex = 0
+    private var accumSize: SIMD2<Int> = .zero
+    private var clearPending = true
+    private static let accumFormat: MTLPixelFormat = .rgba16Float
 
     init?(metalDevice device: MTLDevice, paramsProvider: VisualParamsProvider) {
         self.device = device
@@ -88,8 +98,33 @@ final class Renderer: NSObject, MTKViewDelegate {
         descriptor.fragmentFunction = fragmentFunction
         descriptor.colorAttachments[0].pixelFormat = .bgra8Unorm
 
+        guard let feedbackFn = library.makeFunction(name: "feedbackFragment"),
+              let presentFn = library.makeFunction(name: "presentFragment") else {
+            return nil
+        }
+
+        let feedbackDesc = MTLRenderPipelineDescriptor()
+        feedbackDesc.vertexFunction = vertexFunction
+        feedbackDesc.fragmentFunction = feedbackFn
+        feedbackDesc.colorAttachments[0].pixelFormat = Self.accumFormat
+
+        let presentDesc = MTLRenderPipelineDescriptor()
+        presentDesc.vertexFunction = vertexFunction
+        presentDesc.fragmentFunction = presentFn
+        presentDesc.colorAttachments[0].pixelFormat = .bgra8Unorm
+
+        let samplerDesc = MTLSamplerDescriptor()
+        samplerDesc.minFilter = .linear
+        samplerDesc.magFilter = .linear
+        samplerDesc.sAddressMode = .clampToEdge
+        samplerDesc.tAddressMode = .clampToEdge
+        guard let samplerState = device.makeSamplerState(descriptor: samplerDesc) else { return nil }
+        sampler = samplerState
+
         do {
             pipelineState = try device.makeRenderPipelineState(descriptor: descriptor)
+            feedbackPipeline = try device.makeRenderPipelineState(descriptor: feedbackDesc)
+            presentPipeline = try device.makeRenderPipelineState(descriptor: presentDesc)
         } catch {
             SentrySDK.capture(error: error) { scope in
                 scope.setTag(value: "render_pipeline", key: "failure_point")
@@ -101,11 +136,10 @@ final class Renderer: NSObject, MTKViewDelegate {
     }
 
     func draw(in view: MTKView) {
-        guard let drawable = view.currentDrawable,
-              let descriptor = view.currentRenderPassDescriptor,
-              let commandBuffer = commandQueue.makeCommandBuffer(),
-              let encoder = commandBuffer.makeRenderCommandEncoder(descriptor: descriptor),
-              let provider = paramsProvider else {
+        guard let provider = paramsProvider,
+              let drawable = view.currentDrawable,
+              let drawableDescriptor = view.currentRenderPassDescriptor,
+              let commandBuffer = commandQueue.makeCommandBuffer() else {
             return
         }
 
@@ -165,20 +199,98 @@ final class Renderer: NSObject, MTKViewDelegate {
             bpm: p.bpm
         )
 
-        encoder.setRenderPipelineState(pipelineState)
-        encoder.setVertexBuffer(vertexBuffer, offset: 0, index: 0)
-        encoder.setFragmentBytes(&uniforms, length: MemoryLayout<ShaderUniforms>.stride, index: 0)
-        encoder.drawPrimitives(type: .triangle, vertexStart: 0, vertexCount: 6)
-        encoder.endEncoding()
+        // Panic Reset clears the trails.
+        if provider.consumeTrailReset() { clearPending = true }
 
+        ensureAccumTextures(width: Int(view.drawableSize.width), height: Int(view.drawableSize.height))
+
+        // Fallback to a single direct pass if accumulation textures are unavailable.
+        guard accum.count == 2 else {
+            if let enc = commandBuffer.makeRenderCommandEncoder(descriptor: drawableDescriptor) {
+                enc.setRenderPipelineState(pipelineState)
+                enc.setVertexBuffer(vertexBuffer, offset: 0, index: 0)
+                enc.setFragmentBytes(&uniforms, length: MemoryLayout<ShaderUniforms>.stride, index: 0)
+                enc.drawPrimitives(type: .triangle, vertexStart: 0, vertexCount: 6)
+                enc.endEncoding()
+            }
+            commandBuffer.present(drawable)
+            commandBuffer.commit()
+            return
+        }
+
+        let prev = accum[accumIndex]
+        let curr = accum[1 - accumIndex]
+
+        if clearPending {
+            clear(prev, commandBuffer: commandBuffer)
+            clear(curr, commandBuffer: commandBuffer)
+            clearPending = false
+        }
+
+        // Pass 1: scene blended over decayed previous frame → curr.
+        let p1 = MTLRenderPassDescriptor()
+        p1.colorAttachments[0].texture = curr
+        p1.colorAttachments[0].loadAction = .dontCare
+        p1.colorAttachments[0].storeAction = .store
+        if let enc = commandBuffer.makeRenderCommandEncoder(descriptor: p1) {
+            enc.setRenderPipelineState(feedbackPipeline)
+            enc.setVertexBuffer(vertexBuffer, offset: 0, index: 0)
+            enc.setFragmentBytes(&uniforms, length: MemoryLayout<ShaderUniforms>.stride, index: 0)
+            enc.setFragmentTexture(prev, index: 0)
+            enc.setFragmentSamplerState(sampler, index: 0)
+            enc.drawPrimitives(type: .triangle, vertexStart: 0, vertexCount: 6)
+            enc.endEncoding()
+        }
+
+        // Pass 2: present curr → drawable.
+        if let enc = commandBuffer.makeRenderCommandEncoder(descriptor: drawableDescriptor) {
+            enc.setRenderPipelineState(presentPipeline)
+            enc.setVertexBuffer(vertexBuffer, offset: 0, index: 0)
+            enc.setFragmentTexture(curr, index: 0)
+            enc.setFragmentSamplerState(sampler, index: 0)
+            enc.drawPrimitives(type: .triangle, vertexStart: 0, vertexCount: 6)
+            enc.endEncoding()
+        }
+
+        accumIndex = 1 - accumIndex
         commandBuffer.present(drawable)
         commandBuffer.commit()
     }
 
-    func mtkView(_ view: MTKView, drawableSizeWillChange size: CGSize) {}
+    func mtkView(_ view: MTKView, drawableSizeWillChange size: CGSize) {
+        ensureAccumTextures(width: Int(size.width), height: Int(size.height))
+    }
 
-    /// Reset any internal feedback/trail state. No-op when renderer is stateless (for panic reset).
-    func resetFeedback() {}
+    /// Clear the trails on the next frame (panic reset / size change).
+    func resetFeedback() { clearPending = true }
+
+    /// (Re)create the ping-pong accumulation textures when missing or resized.
+    private func ensureAccumTextures(width: Int, height: Int) {
+        guard width > 0, height > 0 else { return }
+        if accum.count == 2, accumSize == SIMD2(width, height) { return }
+        let desc = MTLTextureDescriptor.texture2DDescriptor(
+            pixelFormat: Self.accumFormat, width: width, height: height, mipmapped: false)
+        desc.usage = [.renderTarget, .shaderRead]
+        desc.storageMode = .private
+        guard let a = device.makeTexture(descriptor: desc),
+              let b = device.makeTexture(descriptor: desc) else {
+            accum = []
+            return
+        }
+        accum = [a, b]
+        accumSize = SIMD2(width, height)
+        accumIndex = 0
+        clearPending = true
+    }
+
+    private func clear(_ texture: MTLTexture, commandBuffer: MTLCommandBuffer) {
+        let d = MTLRenderPassDescriptor()
+        d.colorAttachments[0].texture = texture
+        d.colorAttachments[0].loadAction = .clear
+        d.colorAttachments[0].clearColor = MTLClearColor(red: 0, green: 0, blue: 0, alpha: 1)
+        d.colorAttachments[0].storeAction = .store
+        commandBuffer.makeRenderCommandEncoder(descriptor: d)?.endEncoding()
+    }
 
     /// Fractional part in 0..<1 (handles negatives).
     private static func fract(_ x: Float) -> Float {

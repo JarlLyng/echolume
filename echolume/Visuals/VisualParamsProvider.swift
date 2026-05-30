@@ -23,6 +23,7 @@ final class VisualParamsProvider: @unchecked Sendable {
     private var glitch: Float = 0.2
     private var hasSignal: Bool = true
     private var resetTransientsRequested: Bool = false
+    private var trailResetRequested: Bool = false
     private let mapping = ParamMapping()
 
     /// Call from main thread when analyzer or user settings change.
@@ -46,7 +47,18 @@ final class VisualParamsProvider: @unchecked Sendable {
     func requestTransientReset() {
         lock.lock()
         resetTransientsRequested = true
+        trailResetRequested = true
         lock.unlock()
+    }
+
+    /// Returns true once after a transient reset was requested, so the renderer
+    /// can clear its feedback/trail textures. Call from the render thread.
+    func consumeTrailReset() -> Bool {
+        lock.lock()
+        defer { lock.unlock() }
+        let r = trailResetRequested
+        trailResetRequested = false
+        return r
     }
 
     /// Call from render thread. Returns VisualParams for this frame.

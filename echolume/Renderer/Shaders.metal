@@ -357,15 +357,14 @@ float4 renderGrid(constant Uniforms& u, float2 uv) {
     return applyGlitch(col, uv, t, u);
 }
 
-fragment float4 fullscreenQuadFragment(
-    VertexOut in [[stage_in]],
-    constant Uniforms& u [[buffer(0)]]
-) {
+// Scene color for the current frame (no feedback). Shared by the feedback pass
+// and the single-pass fallback.
+float4 sceneColor(constant Uniforms& u, float2 uv) {
     int sceneType = int(u.sceneType);
     float4 col;
-    if (sceneType == 0) col = renderRadial(u, in.uv);
-    else if (sceneType == 1) col = renderFlow(u, in.uv);
-    else col = renderGrid(u, in.uv);
+    if (sceneType == 0) col = renderRadial(u, uv);
+    else if (sceneType == 1) col = renderFlow(u, uv);
+    else col = renderGrid(u, uv);
 
     // Subtle tempo-synced pulse: a small brightness lift on each beat. Bounded
     // (<=8%) so it accents rather than dominates; no-op without a tempo lock.
@@ -373,4 +372,39 @@ fragment float4 fullscreenQuadFragment(
 
     col.rgb = clamp(col.rgb, 0.0, 1.0);
     return col;
+}
+
+// Single-pass fallback (unused when the feedback pipeline is active).
+fragment float4 fullscreenQuadFragment(
+    VertexOut in [[stage_in]],
+    constant Uniforms& u [[buffer(0)]]
+) {
+    return sceneColor(u, in.uv);
+}
+
+// Feedback pass: blend this frame's scene over a decayed copy of the previous
+// accumulation. `max` (phosphor-style decay) avoids runaway brightness; the
+// gentle inward zoom on the feedback sample gives trails a living echo.
+fragment float4 feedbackFragment(
+    VertexOut in [[stage_in]],
+    constant Uniforms& u [[buffer(0)]],
+    texture2d<float> prevTex [[texture(0)]],
+    sampler s [[sampler(0)]]
+) {
+    float4 scene = sceneColor(u, in.uv);
+    float2 echoUV = (in.uv - 0.5) * 0.997 + 0.5;
+    // Offscreen textures store logical uv at sample-v = 1 - uv.y; flip to read back aligned.
+    float3 prev = prevTex.sample(s, float2(echoUV.x, 1.0 - echoUV.y)).rgb * u.trailPersistence;
+    float3 outRGB = max(scene.rgb, prev);
+    return float4(outRGB, 1.0);
+}
+
+// Present pass: copy the accumulation texture to the drawable.
+fragment float4 presentFragment(
+    VertexOut in [[stage_in]],
+    texture2d<float> tex [[texture(0)]],
+    sampler s [[sampler(0)]]
+) {
+    // Undo the offscreen store flip so the drawable matches the single-pass orientation.
+    return float4(tex.sample(s, float2(in.uv.x, 1.0 - in.uv.y)).rgb, 1.0);
 }
