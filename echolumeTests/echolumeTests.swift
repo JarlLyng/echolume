@@ -349,6 +349,7 @@ struct ShaderUniformsLayoutTests {
 
 // MARK: - VisualPreset Codable
 
+@MainActor
 struct VisualPresetCodableTests {
 
     @Test func jsonRoundTripPreservesAllFields() throws {

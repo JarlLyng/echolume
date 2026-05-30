@@ -10,10 +10,11 @@
 
 import Foundation
 
-// A plain data model — explicitly nonisolated so its Codable/Equatable
-// conformances work from background or test (nonisolated) contexts, despite
-// the project's `-default-isolation=MainActor` build setting.
-nonisolated struct VisualPreset: Codable, Identifiable, Equatable {
+// A plain data model. Under the project's `-default-isolation=MainActor`
+// build setting it is MainActor-isolated, which is fine: PresetStore encodes
+// and decodes it on the main actor. Tests that exercise its Codable/Equatable
+// conformance run in a @MainActor context for the same reason.
+struct VisualPreset: Codable, Identifiable, Equatable {
     var id: UUID
     var name: String
     var themeIndex: Int
