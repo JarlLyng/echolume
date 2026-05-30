@@ -23,6 +23,14 @@ struct KnobView: View {
     let defaultValue: Double
     var size: KnobSize = .standard
     var isEnabled: Bool = true
+    /// Bound MIDI CC number, shown as a small badge when non-nil.
+    var midiCC: Int? = nil
+    /// When true, the knob is in MIDI Learn mode: a tap arms it instead of resetting.
+    var isLearnMode: Bool = false
+    /// When true, this knob is the one currently waiting for a MIDI CC.
+    var isArmed: Bool = false
+    /// Called when the knob is tapped in MIDI Learn mode.
+    var onArm: (() -> Void)? = nil
 
     private static let dragPixelsFullRange: CGFloat = 200
     private static let fineControlMultiplier: CGFloat = 0.3
@@ -51,6 +59,21 @@ struct KnobView: View {
 
     private var clampedValue: Double {
         max(0, min(1, value))
+    }
+
+    /// Accent ring shown in MIDI Learn mode: solid when armed, subtle when a
+    /// CC is already bound.
+    @ViewBuilder private var learnRing: some View {
+        if isLearnMode {
+            Circle()
+                .strokeBorder(
+                    isArmed ? DesignTokens.Common.primary(colorScheme)
+                            : (midiCC != nil ? DesignTokens.Common.primary(colorScheme).opacity(0.4)
+                                             : DesignTokens.Common.Border.subtle(colorScheme)),
+                    lineWidth: isArmed ? 2 : 1
+                )
+                .frame(width: knobSize + 8, height: knobSize + 8)
+        }
     }
 
     private var indicatorAngle: Angle {
@@ -92,16 +115,20 @@ struct KnobView: View {
                     .rotationEffect(indicatorAngle)
             }
             .frame(width: knobSize, height: knobSize)
+            .overlay(learnRing)
             .contentShape(Rectangle())
             .opacity(isEnabled ? 1 : 0.5)
             .allowsHitTesting(isEnabled)
             .onTapGesture(count: 2) {
-                if isEnabled { value = max(0, min(1, defaultValue)) }
+                if isEnabled && !isLearnMode { value = max(0, min(1, defaultValue)) }
+            }
+            .onTapGesture {
+                if isEnabled && isLearnMode { onArm?() }
             }
             .gesture(
                 DragGesture()
                     .onChanged { g in
-                        guard isEnabled else { return }
+                        guard isEnabled, !isLearnMode else { return }
                         if !dragGestureActive {
                             dragGestureActive = true
                             dragStartValue = clampedValue
@@ -115,7 +142,11 @@ struct KnobView: View {
                     }
             )
 
-            if isEnabled {
+            if isLearnMode {
+                Text(isArmed ? "Listening…" : (midiCC.map { "CC \($0)" } ?? "Tap to bind"))
+                    .font(.system(size: DesignTokens.Typography.Size.xs, weight: DesignTokens.Typography.Weight.semibold))
+                    .foregroundStyle(isArmed ? DesignTokens.Common.primary(colorScheme) : DesignTokens.Common.Text.tertiary(colorScheme))
+            } else if isEnabled {
                 Text(String(format: "%.0f%%", clampedValue * 100))
                     .font(.system(size: DesignTokens.Typography.Size.xs, weight: DesignTokens.Typography.Weight.regular))
                     .foregroundStyle(DesignTokens.Common.Text.tertiary(colorScheme))

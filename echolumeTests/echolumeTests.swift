@@ -370,6 +370,111 @@ struct VisualPresetCodableTests {
     }
 }
 
+// MARK: - MidiMessage parsing
+
+@MainActor
+struct MidiMessageTests {
+
+    @Test func parsesControlChange() {
+        // 0xB0 = CC on channel 0
+        #expect(MidiMessage.parse(status: 0xB0, 21, 64) == .controlChange(channel: 0, cc: 21, value: 64))
+    }
+
+    @Test func parsesControlChangeChannel() {
+        // 0xB5 = CC on channel 5
+        #expect(MidiMessage.parse(status: 0xB5, 7, 127) == .controlChange(channel: 5, cc: 7, value: 127))
+    }
+
+    @Test func parsesNoteOn() {
+        // 0x90 = note-on channel 0
+        #expect(MidiMessage.parse(status: 0x90, 60, 100) == .noteOn(channel: 0, note: 60, velocity: 100))
+    }
+
+    @Test func noteOnZeroVelocityIsNil() {
+        // Note-on velocity 0 is a note-off by convention.
+        #expect(MidiMessage.parse(status: 0x90, 60, 0) == nil)
+    }
+
+    @Test func noteOffIsNil() {
+        #expect(MidiMessage.parse(status: 0x80, 60, 64) == nil)
+    }
+
+    @Test func unknownStatusIsNil() {
+        #expect(MidiMessage.parse(status: 0xF0, 0, 0) == nil)   // sysex
+        #expect(MidiMessage.parse(status: 0xE0, 0, 0) == nil)   // pitch bend
+    }
+
+    @Test func midiValueScales() {
+        #expect(midiValueToUnit(0) == 0.0)
+        #expect(midiValueToUnit(127) == 1.0)
+        #expect(abs(midiValueToUnit(64) - 0.5039) < 0.001)
+    }
+}
+
+// MARK: - MidiMappingStore
+
+@MainActor
+struct MidiMappingStoreTests {
+
+    private func makeStore() -> MidiMappingStore {
+        let suite = "echolume-miditests-\(UUID().uuidString)"
+        let defaults = UserDefaults(suiteName: suite)!
+        return MidiMappingStore(defaults: defaults)
+    }
+
+    @Test func bindCCToKnobAndLookUp() {
+        let store = makeStore()
+        store.bind(target: .motion, kind: .cc, number: 21)
+        #expect(store.cc(for: .motion) == 21)
+        #expect(store.target(forCC: 21) == .motion)
+    }
+
+    @Test func rebindingTargetReplacesPrevious() {
+        let store = makeStore()
+        store.bind(target: .motion, kind: .cc, number: 21)
+        store.bind(target: .motion, kind: .cc, number: 22)
+        #expect(store.cc(for: .motion) == 22)
+        #expect(store.target(forCC: 21) == nil)   // old CC freed
+        #expect(store.bindings.count == 1)
+    }
+
+    @Test func bindingSameNumberStealsItFromOldTarget() {
+        let store = makeStore()
+        store.bind(target: .motion, kind: .cc, number: 21)
+        store.bind(target: .noise, kind: .cc, number: 21)
+        #expect(store.target(forCC: 21) == .noise)
+        #expect(store.cc(for: .motion) == nil)
+        #expect(store.bindings.count == 1)
+    }
+
+    @Test func bindNoteToAction() {
+        let store = makeStore()
+        store.bind(target: .randomize, kind: .note, number: 36)
+        #expect(store.note(for: .randomize) == 36)
+        #expect(store.target(forNote: 36) == .randomize)
+    }
+
+    @Test func removeBinding() {
+        let store = makeStore()
+        store.bind(target: .glitch, kind: .cc, number: 50)
+        store.removeBinding(for: .glitch)
+        #expect(store.cc(for: .glitch) == nil)
+        #expect(store.bindings.isEmpty)
+    }
+
+    @Test func bindingsPersistAcrossInstances() {
+        let suite = "echolume-miditests-\(UUID().uuidString)"
+        let defaults = UserDefaults(suiteName: suite)!
+        let first = MidiMappingStore(defaults: defaults)
+        first.bind(target: .abstraction, kind: .cc, number: 1)
+        first.bind(target: .panic, kind: .note, number: 48)
+
+        let reopened = MidiMappingStore(defaults: defaults)
+        #expect(reopened.cc(for: .abstraction) == 1)
+        #expect(reopened.note(for: .panic) == 48)
+    }
+}
+
 // MARK: - PresetStore
 
 @MainActor
