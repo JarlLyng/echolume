@@ -139,11 +139,15 @@ final class AppModel: ObservableObject {
     @Published private(set) var oscEnabled = false
     @Published private(set) var oscPort: UInt16 = 9000
 
-    /// Whether the menu bar extra is shown. Persisted; default on. Bound
-    /// directly by the Settings toggle and the MenuBarExtra `isInserted`.
+    /// Whether the menu bar extra is shown. Persisted; default on. Bound by the
+    /// Settings toggle; drives the AppKit status item.
     @Published var menubarEnabled = true {
-        didSet { UserDefaults.standard.set(menubarEnabled, forKey: Self.userDefaultsMenubarEnabledKey) }
+        didSet {
+            UserDefaults.standard.set(menubarEnabled, forKey: Self.userDefaultsMenubarEnabledKey)
+            menuBarController?.setVisible(menubarEnabled)
+        }
     }
+    private var menuBarController: MenuBarController?
 
     private let audioManager = AudioManager()
     private var twitchManager: TwitchChatManager?
@@ -290,6 +294,13 @@ final class AppModel: ObservableObject {
 
         if UserDefaults.standard.object(forKey: Self.userDefaultsMenubarEnabledKey) != nil {
             menubarEnabled = UserDefaults.standard.bool(forKey: Self.userDefaultsMenubarEnabledKey)
+        }
+        // Create the status item unless launched by the UI test harness (a menu
+        // bar extra blocks XCUITest's accessibility handshake).
+        if ProcessInfo.processInfo.environment["ECHOLUME_UITEST"] != "1" {
+            let controller = MenuBarController(appModel: self)
+            controller.setVisible(menubarEnabled)
+            menuBarController = controller
         }
     }
 
