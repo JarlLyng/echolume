@@ -43,6 +43,7 @@ struct PerformanceSection: View {
                     isArmed: appModel.midiArmedTarget == .abstraction,
                     onArm: { appModel.midiArmedTarget = .abstraction }
                 )
+                .frame(maxWidth: .infinity)
                 KnobView(
                     title: "Energy Bias",
                     value: Binding(
@@ -57,6 +58,7 @@ struct PerformanceSection: View {
                     isArmed: appModel.midiArmedTarget == .energyBias,
                     onArm: { appModel.midiArmedTarget = .energyBias }
                 )
+                .frame(maxWidth: .infinity)
                 KnobView(
                     title: "Motion",
                     value: Binding(
@@ -71,6 +73,7 @@ struct PerformanceSection: View {
                     isArmed: appModel.midiArmedTarget == .motion,
                     onArm: { appModel.midiArmedTarget = .motion }
                 )
+                .frame(maxWidth: .infinity)
                 KnobView(
                     title: "Noise",
                     value: Binding(
@@ -85,6 +88,7 @@ struct PerformanceSection: View {
                     isArmed: appModel.midiArmedTarget == .noise,
                     onArm: { appModel.midiArmedTarget = .noise }
                 )
+                .frame(maxWidth: .infinity)
                 KnobView(
                     title: "Glitch",
                     value: Binding(
@@ -99,6 +103,7 @@ struct PerformanceSection: View {
                     isArmed: appModel.midiArmedTarget == .glitch,
                     onArm: { appModel.midiArmedTarget = .glitch }
                 )
+                .frame(maxWidth: .infinity)
             }
             .frame(maxWidth: .infinity)
         }

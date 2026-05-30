@@ -50,6 +50,8 @@ struct SetupView: View {
                             .frame(maxWidth: .infinity)
                         }
 
+                        ControlSourcesSection(appModel: appModel)
+
                         PerformanceSection(appModel: appModel)
 
                         PresetSection(appModel: appModel)
