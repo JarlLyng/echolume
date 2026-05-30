@@ -26,12 +26,12 @@ This README mixes shipped features with target architecture. The split below is 
 - External display output selection.
 - Twitch chat integration (anonymous read‑only IRC, viewer commands).
 - Preset system: save/recall/delete named visual configurations (UI, `⌘1–9`, `!preset` chat command).
+- MIDI controller support: MIDI Learn binds the 5 knobs to CC and notes to randomize/panic/next+previous theme.
 - Settings persistence in `UserDefaults`.
 - Optional Sentry crash reporting (opt‑in — see [Sentry](#sentry-error-monitoring)).
 
 ### Planned
 - Beat detection and tempo‑synced effects ([#5](https://github.com/JarlLyng/echolume/issues/5)).
-- MIDI controller support ([#1](https://github.com/JarlLyng/echolume/issues/1)).
 - Video recording/export ([#6](https://github.com/JarlLyng/echolume/issues/6)).
 - OSC input for TouchDesigner / Resolume ([#7](https://github.com/JarlLyng/echolume/issues/7)).
 - Twitch OAuth for authenticated features ([#4](https://github.com/JarlLyng/echolume/issues/4)).
@@ -253,6 +253,17 @@ Presets capture the full visual state — theme, shape style, scene, and all fiv
 - **Recall** by clicking a preset, pressing `⌘1`–`⌘9` for the first nine, or via the `!preset <name>` Twitch chat command.
 - **Delete** via a preset's context menu.
 - Presets are stored as JSON in Application Support and persist across launches.
+
+---
+
+## MIDI control
+
+Echolume reads from any class‑compliant MIDI input via CoreMIDI (no driver or entitlement needed — it runs under the App Sandbox). Bindings are global and persist in `UserDefaults`.
+
+- Open the **MIDI** area in Input & Output and toggle **MIDI Learn**.
+- **Knobs:** click a knob to arm it, then move a CC on your controller — it binds and shows a `CC n` badge. Moving that CC then drives the knob.
+- **Note triggers:** use the per‑action **Learn** buttons to bind notes to Randomize, Panic Reset, Next Theme, and Previous Theme.
+- Connect a controller, or test without hardware via the **IAC Driver** in *Audio MIDI Setup*.
 
 ---
 

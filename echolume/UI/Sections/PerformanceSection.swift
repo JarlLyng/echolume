@@ -37,7 +37,11 @@ struct PerformanceSection: View {
                     ),
                     defaultValue: 0.5,
                     size: .standard,
-                    isEnabled: true
+                    isEnabled: true,
+                    midiCC: appModel.midiMappings.cc(for: .abstraction).map(Int.init),
+                    isLearnMode: appModel.midiLearnActive,
+                    isArmed: appModel.midiArmedTarget == .abstraction,
+                    onArm: { appModel.midiArmedTarget = .abstraction }
                 )
                 KnobView(
                     title: "Energy Bias",
@@ -47,7 +51,11 @@ struct PerformanceSection: View {
                     ),
                     defaultValue: 0.5,
                     size: .standard,
-                    isEnabled: true
+                    isEnabled: true,
+                    midiCC: appModel.midiMappings.cc(for: .energyBias).map(Int.init),
+                    isLearnMode: appModel.midiLearnActive,
+                    isArmed: appModel.midiArmedTarget == .energyBias,
+                    onArm: { appModel.midiArmedTarget = .energyBias }
                 )
                 KnobView(
                     title: "Motion",
@@ -57,7 +65,11 @@ struct PerformanceSection: View {
                     ),
                     defaultValue: 0.5,
                     size: .standard,
-                    isEnabled: true
+                    isEnabled: true,
+                    midiCC: appModel.midiMappings.cc(for: .motion).map(Int.init),
+                    isLearnMode: appModel.midiLearnActive,
+                    isArmed: appModel.midiArmedTarget == .motion,
+                    onArm: { appModel.midiArmedTarget = .motion }
                 )
                 KnobView(
                     title: "Noise",
@@ -67,7 +79,11 @@ struct PerformanceSection: View {
                     ),
                     defaultValue: 0.5,
                     size: .standard,
-                    isEnabled: true
+                    isEnabled: true,
+                    midiCC: appModel.midiMappings.cc(for: .noise).map(Int.init),
+                    isLearnMode: appModel.midiLearnActive,
+                    isArmed: appModel.midiArmedTarget == .noise,
+                    onArm: { appModel.midiArmedTarget = .noise }
                 )
                 KnobView(
                     title: "Glitch",
@@ -77,7 +93,11 @@ struct PerformanceSection: View {
                     ),
                     defaultValue: 0.2,
                     size: .standard,
-                    isEnabled: true
+                    isEnabled: true,
+                    midiCC: appModel.midiMappings.cc(for: .glitch).map(Int.init),
+                    isLearnMode: appModel.midiLearnActive,
+                    isArmed: appModel.midiArmedTarget == .glitch,
+                    onArm: { appModel.midiArmedTarget = .glitch }
                 )
             }
             .frame(maxWidth: .infinity)

@@ -116,6 +116,14 @@ final class AppModel: ObservableObject {
     /// Saved visual presets (theme + shape + scene + 5 knobs). Persisted as JSON.
     let presetStore = PresetStore()
 
+    /// MIDI controller input + persisted CC/note bindings.
+    let midi = MidiManager()
+    let midiMappings = MidiMappingStore()
+    /// When true, the next incoming CC/note binds to `midiArmedTarget`.
+    @Published var midiLearnActive = false
+    /// The control currently armed for MIDI Learn (nil = none armed).
+    @Published var midiArmedTarget: MidiTarget?
+
     private let audioManager = AudioManager()
     private var twitchManager: TwitchChatManager?
     private var twitchStatusCancellable: AnyCancellable?
@@ -237,6 +245,9 @@ final class AppModel: ObservableObject {
             .receive(on: DispatchQueue.main)
             .sink { [weak self] v in self?.impact = v; self?.pushSnapshot() }
             .store(in: &cancellables)
+
+        midi.onMessage = { [weak self] msg in self?.handleMidi(msg) }
+        midi.start()
     }
 
     deinit {
@@ -616,6 +627,72 @@ final class AppModel: ObservableObject {
         if let preset = presetStore.preset(named: name) {
             apply(preset)
         }
+    }
+
+    // MARK: - MIDI
+
+    /// Route an incoming MIDI message: in Learn mode bind it to the armed
+    /// target; otherwise apply it through the persisted mappings.
+    private func handleMidi(_ msg: MidiMessage) {
+        if midiLearnActive, let target = midiArmedTarget {
+            switch msg {
+            case .controlChange(_, let cc, _) where target.isKnob:
+                midiMappings.bind(target: target, kind: .cc, number: cc)
+                midiArmedTarget = nil
+            case .noteOn(_, let note, _) where !target.isKnob:
+                midiMappings.bind(target: target, kind: .note, number: note)
+                midiArmedTarget = nil
+            default:
+                break // wrong message type for the armed target — keep waiting
+            }
+            return
+        }
+
+        switch msg {
+        case .controlChange(_, let cc, let value):
+            if let target = midiMappings.target(forCC: cc) {
+                applyKnobTarget(target, value: midiValueToUnit(value))
+            }
+        case .noteOn(_, let note, _):
+            if let target = midiMappings.target(forNote: note) {
+                applyActionTarget(target)
+            }
+        }
+    }
+
+    private func applyKnobTarget(_ target: MidiTarget, value: Float) {
+        switch target {
+        case .abstraction: setAbstraction(value)
+        case .energyBias: setEnergyBias(value)
+        case .motion: setMotion(value)
+        case .noise: setNoise(value)
+        case .glitch: setGlitch(value)
+        default: break
+        }
+    }
+
+    private func applyActionTarget(_ target: MidiTarget) {
+        switch target {
+        case .randomize: randomize()
+        case .panic: panicReset()
+        case .nextTheme: nextTheme()
+        case .previousTheme: previousTheme()
+        default: break
+        }
+    }
+
+    /// Advance to the next theme, wrapping around.
+    func nextTheme() {
+        let count = ThemeLibrary.themes.count
+        guard count > 0 else { return }
+        setThemeIndex((selectedThemeIndex + 1) % count)
+    }
+
+    /// Go to the previous theme, wrapping around.
+    func previousTheme() {
+        let count = ThemeLibrary.themes.count
+        guard count > 0 else { return }
+        setThemeIndex((selectedThemeIndex - 1 + count) % count)
     }
 
     // MARK: - Twitch
