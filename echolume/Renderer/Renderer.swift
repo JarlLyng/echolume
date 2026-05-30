@@ -44,6 +44,8 @@ struct ShaderUniforms {
     var lfo3: Float
     var speedMul: Float
     var glitchPhase: Float
+    var beatPhase: Float
+    var bpm: Float
 }
 
 final class Renderer: NSObject, MTKViewDelegate {
@@ -53,6 +55,11 @@ final class Renderer: NSObject, MTKViewDelegate {
     private var vertexBuffer: MTLBuffer
     private let startTime = CACurrentMediaTime()
     private weak var paramsProvider: VisualParamsProvider?
+
+    /// Beat phase advanced at render rate (60 fps) from the detected BPM and
+    /// softly corrected toward the analysis-thread phase (which updates ~23 Hz).
+    private var displayBeatPhase: Float = 0
+    private var prevBeatTime: Float = -1
 
     init?(metalDevice device: MTLDevice, paramsProvider: VisualParamsProvider) {
         self.device = device
@@ -106,6 +113,18 @@ final class Renderer: NSObject, MTKViewDelegate {
         let res = SIMD2<Float>(Float(view.drawableSize.width), Float(view.drawableSize.height))
         let p = provider.params(time: t, resolution: res)
 
+        // Advance beat phase smoothly at render rate; nudge toward the tracked
+        // phase so it stays locked without stepping at the slower analysis rate.
+        let beatDt = prevBeatTime < 0 ? 0 : max(0, t - prevBeatTime)
+        prevBeatTime = t
+        if p.bpm > 0 {
+            displayBeatPhase = Self.fract(displayBeatPhase + beatDt * p.bpm / 60)
+            let err = p.beatPhase - displayBeatPhase
+            displayBeatPhase = Self.fract(displayBeatPhase + 0.05 * (err - (err).rounded()))
+        } else {
+            displayBeatPhase = 0
+        }
+
         let pal = p.palette
         var uniforms = ShaderUniforms(
             time: p.time,
@@ -141,7 +160,9 @@ final class Renderer: NSObject, MTKViewDelegate {
             lfo2: p.lfo2,
             lfo3: p.lfo3,
             speedMul: p.speedMul,
-            glitchPhase: p.glitchPhase
+            glitchPhase: p.glitchPhase,
+            beatPhase: displayBeatPhase,
+            bpm: p.bpm
         )
 
         encoder.setRenderPipelineState(pipelineState)
@@ -158,4 +179,10 @@ final class Renderer: NSObject, MTKViewDelegate {
 
     /// Reset any internal feedback/trail state. No-op when renderer is stateless (for panic reset).
     func resetFeedback() {}
+
+    /// Fractional part in 0..<1 (handles negatives).
+    private static func fract(_ x: Float) -> Float {
+        let v = x - x.rounded(.down)
+        return v < 0 ? v + 1 : v
+    }
 }

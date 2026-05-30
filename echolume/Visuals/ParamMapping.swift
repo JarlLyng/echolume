@@ -17,6 +17,8 @@ struct AnalyzerSnapshot {
     var mid: Float
     var high: Float
     var impact: Float
+    var bpm: Float = 0
+    var beatPhase: Float = 0
 }
 
 private let kPeakImpulseThreshold: Float = 0.7
@@ -140,7 +142,9 @@ final class ParamMapping {
             lfo2: lfo2,
             lfo3: lfo3,
             speedMul: speedMul,
-            glitchPhase: glitchPhase
+            glitchPhase: glitchPhase,
+            bpm: snapshot.bpm,
+            beatPhase: snapshot.beatPhase
         )
     }
 

@@ -39,4 +39,6 @@ struct VisualParams {
     var lfo3: Float
     var speedMul: Float
     var glitchPhase: Float
+    var bpm: Float
+    var beatPhase: Float
 }

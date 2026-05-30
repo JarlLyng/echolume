@@ -20,13 +20,14 @@ enum MidiTarget: String, Codable, CaseIterable, Equatable {
     case panic
     case nextTheme
     case previousTheme
+    case tapTempo
 
     /// Knob targets bind to CC messages; the rest are note-triggered actions.
     var isKnob: Bool {
         switch self {
         case .abstraction, .energyBias, .motion, .noise, .glitch:
             return true
-        case .randomize, .panic, .nextTheme, .previousTheme:
+        case .randomize, .panic, .nextTheme, .previousTheme, .tapTempo:
             return false
         }
     }
@@ -42,11 +43,12 @@ enum MidiTarget: String, Codable, CaseIterable, Equatable {
         case .panic: return "Panic Reset"
         case .nextTheme: return "Next Theme"
         case .previousTheme: return "Previous Theme"
+        case .tapTempo: return "Tap Tempo"
         }
     }
 
     /// The note-triggered actions, in display order.
-    static var actions: [MidiTarget] { [.randomize, .panic, .nextTheme, .previousTheme] }
+    static var actions: [MidiTarget] { [.randomize, .panic, .nextTheme, .previousTheme, .tapTempo] }
 }
 
 struct MidiBinding: Codable, Equatable, Identifiable {

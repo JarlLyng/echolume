@@ -114,6 +114,18 @@ final class AudioManager {
     var midPublisher: AnyPublisher<Float, Never> { analyzer.midPublisher.eraseToAnyPublisher() }
     var highPublisher: AnyPublisher<Float, Never> { analyzer.highPublisher.eraseToAnyPublisher() }
     var impactPublisher: AnyPublisher<Float, Never> { analyzer.impactPublisher.eraseToAnyPublisher() }
+    var beatPublisher: AnyPublisher<BeatTracker.Output, Never> { analyzer.beatPublisher.eraseToAnyPublisher() }
+
+    /// Register a tap-tempo tap. Serialized onto the FFT queue so all beat
+    /// tracker access happens on one thread.
+    func tapTempo() {
+        fftQueue.async { [weak self] in self?.analyzer.tapTempo() }
+    }
+
+    /// Override BPM (nil re-enables auto-detection).
+    func setManualBPM(_ bpm: Float?) {
+        fftQueue.async { [weak self] in self?.analyzer.setManualBPM(bpm) }
+    }
 
     init() {
         ringBuffer = [Float](repeating: 0, count: kRingCapacity)
