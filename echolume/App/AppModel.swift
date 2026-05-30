@@ -64,6 +64,8 @@ final class AppModel: ObservableObject {
     private static let userDefaultsEnergyBiasKey = "echolume.energyBias"
     private static let userDefaultsSelectedDeviceIDKey = "echolume.selectedDeviceID"
     private static let userDefaultsSelectedChannelPairKey = "echolume.selectedChannelPair"
+    private static let userDefaultsOSCEnabledKey = "echolume.oscEnabled"
+    private static let userDefaultsOSCPortKey = "echolume.oscPort"
 
     /// Available displays (main first). Refreshed by refreshDisplays().
     @Published var availableDisplays: [OutputDisplay] = []
@@ -130,6 +132,11 @@ final class AppModel: ObservableObject {
     @Published private(set) var beatConfidence: Float = 0
     /// When true, tempo is held at the tapped/manual BPM instead of auto-detected.
     @Published private(set) var useManualTempo = false
+
+    // OSC input
+    let oscServer = OSCServer()
+    @Published private(set) var oscEnabled = false
+    @Published private(set) var oscPort: UInt16 = 9000
 
     private let audioManager = AudioManager()
     private var twitchManager: TwitchChatManager?
@@ -266,6 +273,13 @@ final class AppModel: ObservableObject {
 
         midi.onMessage = { [weak self] msg in self?.handleMidi(msg) }
         midi.start()
+
+        if let p = UserDefaults.standard.object(forKey: Self.userDefaultsOSCPortKey) as? Int, p > 0, p <= 65535 {
+            oscPort = UInt16(p)
+        }
+        oscEnabled = UserDefaults.standard.bool(forKey: Self.userDefaultsOSCEnabledKey)
+        oscServer.onMessage = { [weak self] msg in self?.handleOSC(msg) }
+        if oscEnabled { oscServer.start(port: oscPort) }
     }
 
     deinit {
@@ -712,6 +726,43 @@ final class AppModel: ObservableObject {
     func setUseManualTempo(_ on: Bool) {
         useManualTempo = on
         audioManager.setManualBPM(on ? (bpm > 0 ? bpm : nil) : nil)
+    }
+
+    // MARK: - OSC
+
+    func setOSCEnabled(_ on: Bool) {
+        oscEnabled = on
+        UserDefaults.standard.set(on, forKey: Self.userDefaultsOSCEnabledKey)
+        if on { oscServer.start(port: oscPort) } else { oscServer.stop() }
+    }
+
+    func setOSCPort(_ port: UInt16) {
+        guard port > 0 else { return }
+        oscPort = port
+        UserDefaults.standard.set(Int(port), forKey: Self.userDefaultsOSCPortKey)
+        if oscEnabled { oscServer.start(port: port) }   // restart on the new port
+    }
+
+    /// Apply an incoming OSC message via the fixed /echolume/... namespace.
+    private func handleOSC(_ message: OSCMessage) {
+        guard let action = OSCAction(message: message) else { return }
+        switch action {
+        case .abstraction(let v): setAbstraction(v)
+        case .energyBias(let v): setEnergyBias(v)
+        case .motion(let v): setMotion(v)
+        case .noise(let v): setNoise(v)
+        case .glitch(let v): setGlitch(v)
+        case .theme(let i): setThemeIndex(i)
+        case .scene(let i): if SceneType.allCases.indices.contains(i) { setScene(SceneType.allCases[i]) }
+        case .shape(let i): if VisualShapeStyle.allCases.indices.contains(i) { setShapeStyle(VisualShapeStyle.allCases[i]) }
+        case .randomize: randomize()
+        case .panic: panicReset()
+        case .nextTheme: nextTheme()
+        case .prevTheme: previousTheme()
+        case .tapTempo: tapTempo()
+        case .presetSlot(let n): applyPreset(atSlot: n)
+        case .presetName(let name): applyPreset(named: name)
+        }
     }
 
     /// Advance to the next theme, wrapping around.

@@ -411,6 +411,93 @@ struct MidiMessageTests {
     }
 }
 
+// MARK: - OSC parsing + routing
+
+@MainActor
+struct OSCTests {
+
+    // OSC byte-buffer builders.
+    private func oscString(_ s: String) -> [UInt8] {
+        var b = Array(s.utf8); b.append(0)
+        while b.count % 4 != 0 { b.append(0) }
+        return b
+    }
+    private func be32(_ u: UInt32) -> [UInt8] {
+        [UInt8((u >> 24) & 0xFF), UInt8((u >> 16) & 0xFF), UInt8((u >> 8) & 0xFF), UInt8(u & 0xFF)]
+    }
+    private func floatMsg(_ addr: String, _ f: Float) -> Data {
+        Data(oscString(addr) + oscString(",f") + be32(f.bitPattern))
+    }
+    private func intMsg(_ addr: String, _ i: Int32) -> Data {
+        Data(oscString(addr) + oscString(",i") + be32(UInt32(bitPattern: i)))
+    }
+    private func stringMsg(_ addr: String, _ s: String) -> Data {
+        Data(oscString(addr) + oscString(",s") + oscString(s))
+    }
+    private func bangMsg(_ addr: String) -> Data {
+        Data(oscString(addr))   // no type tag
+    }
+
+    @Test func parsesFloatMessage() {
+        let msgs = OSCParser.parse(floatMsg("/echolume/knob/motion", 0.5))
+        #expect(msgs == [OSCMessage(address: "/echolume/knob/motion", arguments: [.float(0.5)])])
+    }
+
+    @Test func parsesIntMessage() {
+        let msgs = OSCParser.parse(intMsg("/echolume/theme", 3))
+        #expect(msgs == [OSCMessage(address: "/echolume/theme", arguments: [.int(3)])])
+    }
+
+    @Test func parsesStringMessage() {
+        let msgs = OSCParser.parse(stringMsg("/echolume/preset", "chill"))
+        #expect(msgs == [OSCMessage(address: "/echolume/preset", arguments: [.string("chill")])])
+    }
+
+    @Test func parsesBangMessage() {
+        let msgs = OSCParser.parse(bangMsg("/echolume/randomize"))
+        #expect(msgs == [OSCMessage(address: "/echolume/randomize", arguments: [.bang])])
+    }
+
+    @Test func parsesBundleWithTwoMessages() {
+        let m1 = [UInt8](floatMsg("/echolume/knob/noise", 0.2))
+        let m2 = [UInt8](intMsg("/echolume/theme", 1))
+        var bytes = oscString("#bundle") + [0, 0, 0, 0, 0, 0, 0, 0]   // timetag
+        bytes += be32(UInt32(m1.count)) + m1
+        bytes += be32(UInt32(m2.count)) + m2
+        let msgs = OSCParser.parse(Data(bytes))
+        #expect(msgs.count == 2)
+        #expect(msgs.first?.address == "/echolume/knob/noise")
+        #expect(msgs.last?.address == "/echolume/theme")
+    }
+
+    @Test func emptyOrMalformedYieldsNothing() {
+        #expect(OSCParser.parse(Data()).isEmpty)
+        #expect(OSCParser.parse(Data([0x01, 0x02, 0x03])).isEmpty)   // no leading '/' or '#'
+    }
+
+    // MARK: routing
+
+    @Test func routesKnobWithClamp() {
+        #expect(OSCAction(message: OSCMessage(address: "/echolume/knob/abstraction", arguments: [.float(0.8)])) == .abstraction(0.8))
+        #expect(OSCAction(message: OSCMessage(address: "/echolume/knob/glitch", arguments: [.float(1.5)])) == .glitch(1.0))
+    }
+
+    @Test func routesThemeAndTriggers() {
+        #expect(OSCAction(message: OSCMessage(address: "/echolume/theme", arguments: [.int(3)])) == .theme(3))
+        #expect(OSCAction(message: OSCMessage(address: "/echolume/randomize", arguments: [.bang])) == .randomize)
+        #expect(OSCAction(message: OSCMessage(address: "/echolume/tempo/tap", arguments: [.bang])) == .tapTempo)
+    }
+
+    @Test func routesPresetSlotVsName() {
+        #expect(OSCAction(message: OSCMessage(address: "/echolume/preset", arguments: [.int(2)])) == .presetSlot(2))
+        #expect(OSCAction(message: OSCMessage(address: "/echolume/preset", arguments: [.string("warm")])) == .presetName("warm"))
+    }
+
+    @Test func unknownAddressIsNil() {
+        #expect(OSCAction(message: OSCMessage(address: "/echolume/nope", arguments: [.bang])) == nil)
+    }
+}
+
 // MARK: - BeatTracker
 
 @MainActor
