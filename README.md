@@ -3,7 +3,7 @@
 [![Build and Test](https://github.com/JarlLyng/echolume/actions/workflows/build.yml/badge.svg)](https://github.com/JarlLyng/echolume/actions/workflows/build.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![macOS 14+](https://img.shields.io/badge/macOS-14%2B-blue.svg)](https://www.apple.com/macos/)
-[![Swift 5.9+](https://img.shields.io/badge/Swift-5.9%2B-orange.svg)](https://swift.org)
+[![Swift 5 mode · Xcode 16+](https://img.shields.io/badge/Swift-5%20mode%20%C2%B7%20Xcode%2016%2B-orange.svg)](https://swift.org)
 [![Co-created with AI](https://madebyhuman.iamjarl.com/badges/co-created-white.svg)](https://madebyhuman.iamjarl.com)
 
 A macOS app for **live, audio‑reactive 2D visuals** rendered with **Metal**. Echolume is meant as a **performance tool**: choose an **audio input device** (audio interface inputs, loopback inputs, mic, etc.), pick a visual theme/scene, tweak a few performance knobs, hit **Ready**, and perform.
@@ -11,6 +11,31 @@ A macOS app for **live, audio‑reactive 2D visuals** rendered with **Metal**. E
 > Design goals: **stable**, **low‑latency**, **minimal UI**, **beautiful results with few controls**, and a **clean architecture** that Cursor can extend deterministically.
 
 **Other repo docs:** `SEO_STRATEGY.md` (Danish) covers SEO for the GitHub Pages site in `docs/` only — not app architecture.
+
+---
+
+## Status
+
+This README mixes shipped features with target architecture. The split below is the quick reference; the **Architecture** and **Milestones** sections further down describe the intended design (which Cursor follows when extending the app).
+
+### Implemented now
+- Metal renderer for 2D visuals (procedural shapes + optional feedback/trail pass).
+- Audio engine: input‑device enumeration, in‑app device switching, channel‑pair selection, safe fallback, live RMS/peak meter, FFT bands (low/mid/high).
+- SetupView and LiveView (fullscreen output, minimal overlay, no‑signal banner, Panic Reset).
+- Themes, scenes (radial/flow/grid), shape styles, performance knobs, and Randomize.
+- External display output selection.
+- Twitch chat integration (anonymous read‑only IRC, viewer commands).
+- Settings persistence in `UserDefaults`.
+- Optional Sentry crash reporting (opt‑in — see [Sentry](#sentry-error-monitoring)).
+
+### Planned
+- Preset system for visual configurations ([#2](https://github.com/JarlLyng/echolume/issues/2)).
+- Beat detection and tempo‑synced effects ([#5](https://github.com/JarlLyng/echolume/issues/5)).
+- MIDI controller support ([#1](https://github.com/JarlLyng/echolume/issues/1)).
+- Video recording/export ([#6](https://github.com/JarlLyng/echolume/issues/6)).
+- OSC input for TouchDesigner / Resolume ([#7](https://github.com/JarlLyng/echolume/issues/7)).
+- Twitch OAuth for authenticated features ([#4](https://github.com/JarlLyng/echolume/issues/4)).
+- Menubar extra ([#8](https://github.com/JarlLyng/echolume/issues/8)) and Danish localization ([#9](https://github.com/JarlLyng/echolume/issues/9)).
 
 ---
 
@@ -287,6 +312,7 @@ If using external display APIs later, ensure no unnecessary entitlements.
 ## Technical requirements
 
 - macOS 14+ (Sonoma)
+- Xcode 16+ (project builds in **Swift 5 language mode** — `SWIFT_VERSION = 5.0` — using the Swift 6 toolchain that ships with Xcode 16)
 - SwiftUI for UI
 - Metal / MetalKit for rendering
 - AVFoundation (AVAudioEngine) + Accelerate for FFT
@@ -449,7 +475,7 @@ When the app is on the Mac App Store, replace the download CTA in `docs/index.ht
 
 ## Sentry (error monitoring)
 
-**Note:** Sentry is **on** for the test phase. Set `SENTRY_DSN` (and optionally `SENTRY_ENVIRONMENT`) in the scheme’s Environment Variables. Consider removing or disabling Sentry before App Store release. If the build fails with "Missing package product 'Sentry'", open the project in Xcode and run **File → Packages → Resolve Package Versions** (or **Reset Package Caches** first, then resolve).
+**Note:** Sentry is **opt-in and disabled by default**. The SDK only starts when a DSN is provided via the `SENTRY_DSN` environment variable or a `SentryDSN` Info.plist key; without one, the app runs with no crash reporting. A DSN is configured for the test phase. Set `SENTRY_DSN` (and optionally `SENTRY_ENVIRONMENT`) in the scheme’s Environment Variables. Consider removing the dependency entirely before App Store release. If the build fails with "Missing package product 'Sentry'", open the project in Xcode and run **File → Packages → Resolve Package Versions** (or **Reset Package Caches** first, then resolve).
 
 **Setup:**
 

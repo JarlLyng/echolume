@@ -58,7 +58,7 @@
 
       <section>
         <h2>Crash reporting</h2>
-        <p>Echolume uses <a href="https://sentry.io" target="_blank" rel="noopener">Sentry</a> for crash reporting and performance monitoring. When the app crashes or encounters an error, Sentry may collect:</p>
+        <p>Echolume can optionally use <a href="https://sentry.io" target="_blank" rel="noopener">Sentry</a> for crash reporting and performance monitoring. This is <strong>opt-in and disabled by default</strong>: crash reporting only runs when the build is configured with a Sentry DSN, which is used during the test phase. If no DSN is configured, no crash or diagnostic data leaves your Mac. When enabled, Sentry may collect:</p>
         <ul>
           <li>Crash logs and stack traces</li>
           <li>Device model, OS version, and app version</li>

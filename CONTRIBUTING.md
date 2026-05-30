@@ -13,8 +13,7 @@ Thanks for considering a contribution! Echolume is a small, focused macOS app fo
 
 ### Requirements
 - macOS 14 (Sonoma) or later
-- Xcode 16 or later
-- Swift 5.9+
+- Xcode 16 or later (builds in Swift 5 language mode via the Xcode 16 toolchain)
 
 ### Getting the code
 
@@ -62,7 +61,7 @@ Use the `IAMJARLDesignTokens` SPM package for all colors, spacing, and typograph
 
 ## Code style
 
-- Swift 5.9+ idiomatic
+- Idiomatic Swift (Swift 5 language mode)
 - `@MainActor` isolation for UI and state
 - `Log` (via `os.Logger`) instead of `print()`
 - No force-unwraps unless guarded by a precondition the compiler can't see
