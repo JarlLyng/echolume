@@ -51,22 +51,32 @@ final class AppModel: ObservableObject {
         rendererError = message
     }
 
-    private static let userDefaultsShapeStyleKey = "echolume.selectedShapeStyle"
-    private static let userDefaultsSceneKey = "echolume.selectedScene"
-    private static let userDefaultsMotionKey = "echolume.motion"
-    private static let userDefaultsNoiseKey = "echolume.noise"
-    private static let userDefaultsGlitchKey = "echolume.glitch"
-    private static let userDefaultsSelectedDisplayIDKey = "echolume.selectedDisplayID"
-    private static let userDefaultsTwitchEnabledKey = "echolume.twitchEnabled"
-    private static let userDefaultsTwitchChannelKey = "echolume.twitchChannel"
-    private static let userDefaultsThemeIndexKey = "echolume.themeIndex"
-    private static let userDefaultsAbstractionKey = "echolume.abstraction"
-    private static let userDefaultsEnergyBiasKey = "echolume.energyBias"
-    private static let userDefaultsSelectedDeviceIDKey = "echolume.selectedDeviceID"
-    private static let userDefaultsSelectedChannelPairKey = "echolume.selectedChannelPair"
-    private static let userDefaultsOSCEnabledKey = "echolume.oscEnabled"
-    private static let userDefaultsOSCPortKey = "echolume.oscPort"
-    private static let userDefaultsMenubarEnabledKey = "echolume.menubarEnabled"
+    /// Single source of truth for the UserDefaults keys. Raw values are the
+    /// exact legacy strings, so existing users' saved settings still load.
+    private enum DefaultsKey: String {
+        case shapeStyle = "echolume.selectedShapeStyle"
+        case scene = "echolume.selectedScene"
+        case motion = "echolume.motion"
+        case noise = "echolume.noise"
+        case glitch = "echolume.glitch"
+        case selectedDisplayID = "echolume.selectedDisplayID"
+        case twitchEnabled = "echolume.twitchEnabled"
+        case twitchChannel = "echolume.twitchChannel"
+        case themeIndex = "echolume.themeIndex"
+        case abstraction = "echolume.abstraction"
+        case energyBias = "echolume.energyBias"
+        case selectedDeviceID = "echolume.selectedDeviceID"
+        case selectedChannelPair = "echolume.selectedChannelPair"
+        case oscEnabled = "echolume.oscEnabled"
+        case oscPort = "echolume.oscPort"
+        case menubarEnabled = "echolume.menubarEnabled"
+    }
+
+    /// Persist a settings value. Centralizes the write so setters don't repeat
+    /// `UserDefaults.standard.set(_:forKey:)` with literal keys.
+    private func persist(_ value: Any, _ key: DefaultsKey) {
+        UserDefaults.standard.set(value, forKey: key.rawValue)
+    }
 
     /// Available displays (main first). Refreshed by refreshDisplays().
     @Published var availableDisplays: [OutputDisplay] = []
@@ -148,7 +158,7 @@ final class AppModel: ObservableObject {
     /// Settings toggle; drives the AppKit status item.
     @Published var menubarEnabled = true {
         didSet {
-            UserDefaults.standard.set(menubarEnabled, forKey: Self.userDefaultsMenubarEnabledKey)
+            persist(menubarEnabled, .menubarEnabled)
             menuBarController?.setVisible(menubarEnabled)
         }
     }
@@ -220,31 +230,31 @@ final class AppModel: ObservableObject {
             }
         }
         RunLoop.main.add(debugTimer!, forMode: .common)
-        if let raw = UserDefaults.standard.string(forKey: Self.userDefaultsShapeStyleKey),
+        if let raw = UserDefaults.standard.string(forKey: DefaultsKey.shapeStyle.rawValue),
            let style = VisualShapeStyle(rawValue: raw) {
             selectedShapeStyle = style
         }
-        if let raw = UserDefaults.standard.string(forKey: Self.userDefaultsSceneKey),
+        if let raw = UserDefaults.standard.string(forKey: DefaultsKey.scene.rawValue),
            let scene = SceneType(rawValue: raw) {
             selectedScene = scene
         }
-        if let v = UserDefaults.standard.object(forKey: Self.userDefaultsMotionKey) as? Double { motion = Float(v) }
-        if let v = UserDefaults.standard.object(forKey: Self.userDefaultsNoiseKey) as? Double { noise = Float(v) }
-        if let v = UserDefaults.standard.object(forKey: Self.userDefaultsGlitchKey) as? Double { glitch = Float(v) }
-        if let v = UserDefaults.standard.object(forKey: Self.userDefaultsAbstractionKey) as? Double { abstraction = Float(v) }
-        if let v = UserDefaults.standard.object(forKey: Self.userDefaultsEnergyBiasKey) as? Double { energyBias = Float(v) }
-        if let v = UserDefaults.standard.object(forKey: Self.userDefaultsThemeIndexKey) as? Int {
+        if let v = UserDefaults.standard.object(forKey: DefaultsKey.motion.rawValue) as? Double { motion = Float(v) }
+        if let v = UserDefaults.standard.object(forKey: DefaultsKey.noise.rawValue) as? Double { noise = Float(v) }
+        if let v = UserDefaults.standard.object(forKey: DefaultsKey.glitch.rawValue) as? Double { glitch = Float(v) }
+        if let v = UserDefaults.standard.object(forKey: DefaultsKey.abstraction.rawValue) as? Double { abstraction = Float(v) }
+        if let v = UserDefaults.standard.object(forKey: DefaultsKey.energyBias.rawValue) as? Double { energyBias = Float(v) }
+        if let v = UserDefaults.standard.object(forKey: DefaultsKey.themeIndex.rawValue) as? Int {
             selectedThemeIndex = max(0, min(v, ThemeLibrary.themes.count - 1))
         }
-        if let v = UserDefaults.standard.object(forKey: Self.userDefaultsSelectedDeviceIDKey) as? Int, v > 0 {
+        if let v = UserDefaults.standard.object(forKey: DefaultsKey.selectedDeviceID.rawValue) as? Int, v > 0 {
             // Restore as nil-ish hint; actual device existence is verified once
             // the device list is refreshed below.
             selectedDeviceID = AudioDeviceID(v)
         }
-        if let v = UserDefaults.standard.object(forKey: Self.userDefaultsSelectedChannelPairKey) as? Int {
+        if let v = UserDefaults.standard.object(forKey: DefaultsKey.selectedChannelPair.rawValue) as? Int {
             selectedChannelPair = max(0, v)
         }
-        if let uuidString = UserDefaults.standard.string(forKey: Self.userDefaultsSelectedDisplayIDKey),
+        if let uuidString = UserDefaults.standard.string(forKey: DefaultsKey.selectedDisplayID.rawValue),
            let uuid = UUID(uuidString: uuidString) {
             selectedDisplayID = uuid
         }
@@ -259,8 +269,8 @@ final class AppModel: ObservableObject {
         screenParamsObserver = NotificationCenter.default.addObserver(forName: NSApplication.didChangeScreenParametersNotification, object: nil, queue: .main) { [weak self] _ in
             DispatchQueue.main.async { self?.refreshDisplays() }
         }
-        twitchEnabled = UserDefaults.standard.bool(forKey: Self.userDefaultsTwitchEnabledKey)
-        twitchChannelName = UserDefaults.standard.string(forKey: Self.userDefaultsTwitchChannelKey) ?? ""
+        twitchEnabled = UserDefaults.standard.bool(forKey: DefaultsKey.twitchEnabled.rawValue)
+        twitchChannelName = UserDefaults.standard.string(forKey: DefaultsKey.twitchChannel.rawValue) ?? ""
         if twitchEnabled && !twitchChannelName.isEmpty {
             connectTwitch()
         }
@@ -297,15 +307,15 @@ final class AppModel: ObservableObject {
         midi.onMessage = { [weak self] msg in self?.handleMidi(msg) }
         midi.start()
 
-        if let p = UserDefaults.standard.object(forKey: Self.userDefaultsOSCPortKey) as? Int, p > 0, p <= 65535 {
+        if let p = UserDefaults.standard.object(forKey: DefaultsKey.oscPort.rawValue) as? Int, p > 0, p <= 65535 {
             oscPort = UInt16(p)
         }
-        oscEnabled = UserDefaults.standard.bool(forKey: Self.userDefaultsOSCEnabledKey)
+        oscEnabled = UserDefaults.standard.bool(forKey: DefaultsKey.oscEnabled.rawValue)
         oscServer.onMessage = { [weak self] msg in self?.handleOSC(msg) }
         if oscEnabled { oscServer.start(port: oscPort) }
 
-        if UserDefaults.standard.object(forKey: Self.userDefaultsMenubarEnabledKey) != nil {
-            menubarEnabled = UserDefaults.standard.bool(forKey: Self.userDefaultsMenubarEnabledKey)
+        if UserDefaults.standard.object(forKey: DefaultsKey.menubarEnabled.rawValue) != nil {
+            menubarEnabled = UserDefaults.standard.bool(forKey: DefaultsKey.menubarEnabled.rawValue)
         }
         // Create the status item unless launched by the UI test harness (a menu
         // bar extra blocks XCUITest's accessibility handshake).
@@ -453,9 +463,9 @@ final class AppModel: ObservableObject {
         guard selectedDisplayID != id else { return }
         selectedDisplayID = id
         if let uuid = id {
-            UserDefaults.standard.set(uuid.uuidString, forKey: Self.userDefaultsSelectedDisplayIDKey)
+            persist(uuid.uuidString, .selectedDisplayID)
         } else {
-            UserDefaults.standard.removeObject(forKey: Self.userDefaultsSelectedDisplayIDKey)
+            UserDefaults.standard.removeObject(forKey: DefaultsKey.selectedDisplayID.rawValue)
         }
     }
 
@@ -533,9 +543,9 @@ final class AppModel: ObservableObject {
         if selectedDeviceID == id { return }
         selectedDeviceID = id
         if let id {
-            UserDefaults.standard.set(Int(id), forKey: Self.userDefaultsSelectedDeviceIDKey)
+            persist(Int(id), .selectedDeviceID)
         } else {
-            UserDefaults.standard.removeObject(forKey: Self.userDefaultsSelectedDeviceIDKey)
+            UserDefaults.standard.removeObject(forKey: DefaultsKey.selectedDeviceID.rawValue)
         }
         audioManager.setChannelPairIndex(selectedChannelPair)
         if hasMicPermission { audioManager.restart(withDeviceID: id) }
@@ -544,7 +554,7 @@ final class AppModel: ObservableObject {
 
     func selectChannelPair(_ index: Int) {
         selectedChannelPair = max(0, index)
-        UserDefaults.standard.set(selectedChannelPair, forKey: Self.userDefaultsSelectedChannelPairKey)
+        persist(selectedChannelPair, .selectedChannelPair)
         audioManager.setChannelPairIndex(selectedChannelPair)
         if hasMicPermission { audioManager.restart(withDeviceID: selectedDeviceID) }
         pushSnapshot()
@@ -555,22 +565,23 @@ final class AppModel: ObservableObject {
     /// always visible. The README and Twitch guide promise this — !randomize
     /// in chat triggers the same path.
     func randomize() {
-        seed = UInt32.random(in: 0 ... .max)
+        seed = UInt32.random(in: 0 ... .max)   // intentionally not persisted
 
+        // Route through the setters so persistence/clamping live in one place
+        // (no duplicated UserDefaults writes here).
         let themeCount = ThemeLibrary.themes.count
         if themeCount > 1 {
             var idx = Int.random(in: 0 ..< themeCount)
             if idx == selectedThemeIndex {
                 idx = (idx + 1) % themeCount
             }
-            selectedThemeIndex = idx
-            UserDefaults.standard.set(idx, forKey: Self.userDefaultsThemeIndexKey)
+            setThemeIndex(idx)   // also resets shape to the theme default…
         }
 
+        // …then pick a random allowed shape, overriding that default.
         let theme = ThemeLibrary.theme(byIndex: selectedThemeIndex)
         if let shape = theme.allowedShapeStyles.randomElement() {
-            selectedShapeStyle = shape
-            UserDefaults.standard.set(shape.rawValue, forKey: Self.userDefaultsShapeStyleKey)
+            setShapeStyle(shape)
         }
 
         let scenes = SceneType.allCases
@@ -578,22 +589,16 @@ final class AppModel: ObservableObject {
             if newScene == selectedScene {
                 newScene = scenes.first(where: { $0 != selectedScene }) ?? newScene
             }
-            selectedScene = newScene
-            UserDefaults.standard.set(newScene.rawValue, forKey: Self.userDefaultsSceneKey)
+            setScene(newScene)
         }
 
         // Randomize the performance knobs too (the button lives in Performance).
         // Knobs span a musical mid-range; glitch is kept lower so it isn't always heavy.
-        abstraction = Float.random(in: 0.2 ... 0.9)
-        energyBias = Float.random(in: 0.2 ... 0.9)
-        motion = Float.random(in: 0.2 ... 0.9)
-        noise = Float.random(in: 0.2 ... 0.9)
-        glitch = Float.random(in: 0.0 ... 0.5)
-        UserDefaults.standard.set(Double(abstraction), forKey: Self.userDefaultsAbstractionKey)
-        UserDefaults.standard.set(Double(energyBias), forKey: Self.userDefaultsEnergyBiasKey)
-        UserDefaults.standard.set(Double(motion), forKey: Self.userDefaultsMotionKey)
-        UserDefaults.standard.set(Double(noise), forKey: Self.userDefaultsNoiseKey)
-        UserDefaults.standard.set(Double(glitch), forKey: Self.userDefaultsGlitchKey)
+        setAbstraction(Float.random(in: 0.2 ... 0.9))
+        setEnergyBias(Float.random(in: 0.2 ... 0.9))
+        setMotion(Float.random(in: 0.2 ... 0.9))
+        setNoise(Float.random(in: 0.2 ... 0.9))
+        setGlitch(Float.random(in: 0.0 ... 0.5))
 
         pushSnapshot()
     }
@@ -618,52 +623,52 @@ final class AppModel: ObservableObject {
     /// When user changes theme, apply its default shape style and push to provider.
     func setThemeIndex(_ index: Int) {
         selectedThemeIndex = max(0, min(index, ThemeLibrary.themes.count - 1))
-        UserDefaults.standard.set(selectedThemeIndex, forKey: Self.userDefaultsThemeIndexKey)
+        persist(selectedThemeIndex, .themeIndex)
         let theme = ThemeLibrary.theme(byIndex: selectedThemeIndex)
         selectedShapeStyle = theme.defaultShapeStyle
-        UserDefaults.standard.set(selectedShapeStyle.rawValue, forKey: Self.userDefaultsShapeStyleKey)
+        persist(selectedShapeStyle.rawValue, .shapeStyle)
         pushSnapshot()
     }
 
     func setAbstraction(_ value: Float) {
         abstraction = max(0, min(1, value))
-        UserDefaults.standard.set(Double(abstraction), forKey: Self.userDefaultsAbstractionKey)
+        persist(Double(abstraction), .abstraction)
         pushSnapshot()
     }
 
     func setShapeStyle(_ style: VisualShapeStyle) {
         selectedShapeStyle = style
-        UserDefaults.standard.set(style.rawValue, forKey: Self.userDefaultsShapeStyleKey)
+        persist(style.rawValue, .shapeStyle)
         pushSnapshot()
     }
 
     func setScene(_ scene: SceneType) {
         selectedScene = scene
-        UserDefaults.standard.set(scene.rawValue, forKey: Self.userDefaultsSceneKey)
+        persist(scene.rawValue, .scene)
         pushSnapshot()
     }
 
     func setEnergyBias(_ value: Float) {
         energyBias = max(0, min(1, value))
-        UserDefaults.standard.set(Double(energyBias), forKey: Self.userDefaultsEnergyBiasKey)
+        persist(Double(energyBias), .energyBias)
         pushSnapshot()
     }
 
     func setMotion(_ value: Float) {
         motion = max(0, min(1, value))
-        UserDefaults.standard.set(Double(motion), forKey: Self.userDefaultsMotionKey)
+        persist(Double(motion), .motion)
         pushSnapshot()
     }
 
     func setNoise(_ value: Float) {
         noise = max(0, min(1, value))
-        UserDefaults.standard.set(Double(noise), forKey: Self.userDefaultsNoiseKey)
+        persist(Double(noise), .noise)
         pushSnapshot()
     }
 
     func setGlitch(_ value: Float) {
         glitch = max(0, min(1, value))
-        UserDefaults.standard.set(Double(glitch), forKey: Self.userDefaultsGlitchKey)
+        persist(Double(glitch), .glitch)
         pushSnapshot()
     }
 
@@ -788,14 +793,14 @@ final class AppModel: ObservableObject {
 
     func setOSCEnabled(_ on: Bool) {
         oscEnabled = on
-        UserDefaults.standard.set(on, forKey: Self.userDefaultsOSCEnabledKey)
+        persist(on, .oscEnabled)
         if on { oscServer.start(port: oscPort) } else { oscServer.stop() }
     }
 
     func setOSCPort(_ port: UInt16) {
         guard port > 0 else { return }
         oscPort = port
-        UserDefaults.standard.set(Int(port), forKey: Self.userDefaultsOSCPortKey)
+        persist(Int(port), .oscPort)
         if oscEnabled { oscServer.start(port: port) }   // restart on the new port
     }
 
@@ -869,7 +874,7 @@ final class AppModel: ObservableObject {
 
     func setTwitchEnabled(_ enabled: Bool) {
         twitchEnabled = enabled
-        UserDefaults.standard.set(enabled, forKey: Self.userDefaultsTwitchEnabledKey)
+        persist(enabled, .twitchEnabled)
         if enabled && !twitchChannelName.isEmpty {
             connectTwitch()
         } else if !enabled {
@@ -881,7 +886,7 @@ final class AppModel: ObservableObject {
     /// Connect button (or Enable toggle) — not on every keystroke.
     func setTwitchChannel(_ name: String) {
         twitchChannelName = name
-        UserDefaults.standard.set(name, forKey: Self.userDefaultsTwitchChannelKey)
+        persist(name, .twitchChannel)
         if name.isEmpty {
             disconnectTwitch()
         }
