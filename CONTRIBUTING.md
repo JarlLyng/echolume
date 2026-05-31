@@ -51,11 +51,13 @@ xcodebuild -project echolume.xcodeproj -scheme echolume test
 
 See [README.md](README.md#architecture) for the layered architecture (Audio → Analysis → State → Rendering). When adding features:
 
-- **Audio changes** → `echolume/Audio/`
-- **Visual themes / shaders** → `echolume/Renderer/`, `echolume/Visuals/`
-- **State / parameters** → `echolume/App/AppModel.swift`
-- **UI** → `echolume/UI/`
-- **Twitch / external input** → `echolume/App/TwitchChatManager.swift`
+- **Audio capture / analysis / beat** → `echolume/Audio/` (`AudioManager`, `AudioAnalyzer`, `FFT`, `BeatTracker`)
+- **Shaders / scenes / feedback-trails** → `echolume/Renderer/` (`Shaders.metal`, `Renderer.swift` — two-pass ping-pong feedback)
+- **Visual model / params / themes / presets** → `echolume/Visuals/` (`Theme`, `SceneType`, `ShapeStyle`, `ParamMapping`, `VisualParams(Provider)`, `Preset`)
+- **State / parameters / input dispatch** → `echolume/App/AppModel.swift` (central hub)
+- **UI** → `echolume/UI/` and `echolume/UI/Sections/` (one `*Section.swift` per Setup card)
+- **Control inputs:** Twitch → `echolume/App/TwitchChatManager.swift`; MIDI → `echolume/MIDI/`; OSC → `echolume/OSC/`; menu bar → `echolume/App/MenuBarController.swift`
+- **Audio plugin (AUv3)** → `EcholumeAudioTap/` (separate Xcode target, bundled in the app; C++ DSP kernel + Swift wrapper; sends `/echolume/audio/*` OSC)
 
 Use the `IAMJARLDesignTokens` SPM package for all colors, spacing, and typography. Don't hardcode values.
 

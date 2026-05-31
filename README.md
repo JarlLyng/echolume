@@ -30,6 +30,7 @@ This README mixes shipped features with target architecture. The split below is 
 - Beat detection: autocorrelation BPM + beat-phase tracking exposed to shaders (subtle tempo-synced pulse), with tap-tempo fallback.
 - OSC input: opt-in UDP listener (default port 9000) mapping a `/echolume/…` namespace to knobs, theme/scene/shape, and triggers — for TouchDesigner/Resolume rigs.
 - Menu bar extra: quick actions (Randomize, Panic Reset, Restart Audio), live status, and Open Echolume — reachable while running fullscreen on another display.
+- Audio plugin (beta): bundled `EcholumeAudioTap` AUv3 — drop it on a DAW track and it forwards analysed bands + host BPM to Echolume over OSC (no BlackHole). See [Audio plugin (beta)](#audio-plugin-beta).
 - Settings persistence in `UserDefaults`.
 - Optional Sentry crash reporting (opt‑in — see [Sentry](#sentry-error-monitoring)).
 
