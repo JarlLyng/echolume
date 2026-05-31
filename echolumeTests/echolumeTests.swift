@@ -261,9 +261,18 @@ struct ParamMappingTests {
             noise: 0.5,
             glitch: 0.2
         )
-        // ParamMapping clamps to 0...2 (current scene types).
+        // ParamMapping clamps to the valid scene-type range.
         #expect(oversized.sceneType >= 0)
-        #expect(oversized.sceneType <= 2)
+        #expect(oversized.sceneType <= SceneType.allCases.count - 1)
+    }
+
+    @Test func sceneTypeRoundTripsThroughShaderIndex() {
+        for scene in SceneType.allCases {
+            #expect(SceneType.from(shaderIndex: scene.shaderIndex) == scene)
+        }
+        // Shader indices are contiguous 0..<count, matching the Metal switch.
+        let indices = SceneType.allCases.map(\.shaderIndex).sorted()
+        #expect(indices == Array(0 ..< SceneType.allCases.count))
     }
 
     @Test func impulseFiresOnRisingPeakAboveThreshold() {

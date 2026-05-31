@@ -134,7 +134,7 @@ final class ParamMapping {
             smoothedHigh: snapshot.high,
             impact: min(1, max(0, snapshot.impact)),
             impulse: impulse,
-            sceneType: max(0, min(2, sceneTypeIndex)),
+            sceneType: max(0, min(SceneType.allCases.count - 1, sceneTypeIndex)),
             motion: mot,
             noise: noi,
             glitch: gli,

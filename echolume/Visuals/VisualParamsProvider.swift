@@ -34,7 +34,7 @@ final class VisualParamsProvider: @unchecked Sendable {
         self.seed = seed
         self.themeIndex = max(0, min(themeIndex, ThemeLibrary.themes.count - 1))
         self.shapeStyleIndex = max(0, min(shapeStyleIndex, 4))
-        self.sceneTypeIndex = max(0, min(sceneTypeIndex, 2))
+        self.sceneTypeIndex = max(0, min(sceneTypeIndex, SceneType.allCases.count - 1))
         self.energyBias = max(0, min(1, energyBias))
         self.motion = max(0, min(1, motion))
         self.noise = max(0, min(1, noise))
