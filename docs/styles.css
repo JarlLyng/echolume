@@ -7,18 +7,13 @@
   --text-muted: rgba(255, 255, 255, 0.75);
   --text-tertiary: rgba(255, 255, 255, 0.45);
   --accent: #d0ff00; /* Lime / Neon Yellow */
-  --accent-glow: rgba(208, 255, 0, 0.12);
-  --accent-glow-strong: rgba(208, 255, 0, 0.25);
-  --accent-dim: #b8e000;
   --border: rgba(255, 255, 255, 0.08);
   --border-hover: rgba(255, 255, 255, 0.15);
   --radius: 16px;
   --radius-sm: 8px;
   --font: "Inter", -apple-system, BlinkMacSystemFont, sans-serif;
   --font-heading: "Outfit", -apple-system, BlinkMacSystemFont, sans-serif;
-  --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.5);
   --shadow-md: 0 8px 24px rgba(0, 0, 0, 0.6);
-  --shadow-lg: 0 16px 40px rgba(0, 0, 0, 0.8), 0 0 80px rgba(208, 255, 0, 0.03);
 }
 
 * {
@@ -421,12 +416,6 @@ a:hover {
   letter-spacing: 0.05em;
 }
 
-.badge-accent {
-  background: rgba(208, 255, 0, 0.1);
-  color: var(--accent);
-  border: 1px solid rgba(208, 255, 0, 0.2);
-}
-
 .badge-success {
   background: rgba(46, 204, 113, 0.1);
   color: #2ecc71;
@@ -657,5 +646,19 @@ a:hover {
   }
   .page-main {
     padding: 2rem 1rem 4rem;
+  }
+}
+
+/* Accessibility: honor users who prefer reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
   }
 }
