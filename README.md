@@ -19,10 +19,10 @@ A macOS app for **live, audio‑reactive 2D visuals** rendered with **Metal**. E
 This README mixes shipped features with target architecture. The split below is the quick reference; the **Architecture** and **Milestones** sections further down describe the intended design (which Cursor follows when extending the app).
 
 ### Implemented now
-- Metal renderer for 2D visuals (procedural shapes + optional feedback/trail pass).
+- Metal renderer for 2D visuals (procedural shapes + a two‑pass decaying feedback/trail accumulation; trail length follows Abstraction, cleared by Panic Reset).
 - Audio engine: input‑device enumeration, in‑app device switching, channel‑pair selection, safe fallback, live RMS/peak meter, FFT bands (low/mid/high).
 - SetupView and LiveView (fullscreen output, minimal overlay, no‑signal banner, Panic Reset).
-- Themes, scenes (radial/flow/grid), shape styles, performance knobs, and Randomize.
+- 6 themes, **7 scenes** (radial, flow, grid, spiral, tunnel, kaleidoscope, plasma), 5 shape styles, performance knobs, and Randomize.
 - External display output selection.
 - Twitch chat integration (anonymous read‑only IRC, viewer commands).
 - Preset system: save/recall/delete named visual configurations (UI, `⌘1–9`, `!preset` chat command).
@@ -51,7 +51,7 @@ Echolume turns sound into light. **Constraints (App Store friendly):**
 ## V1 scope (ship‑able)
 
 ### Must‑have
-- **Metal renderer** for 2D visuals (single fullscreen pass + optional trail/feedback pass).
+- **Metal renderer** for 2D visuals (scene pass + ping‑pong feedback/trail pass).
 - **Audio engine** that:
   - enumerates available **audio input devices** (input‑only)
   - allows selecting an **audio input device** directly in-app (without changing macOS system default)
@@ -192,6 +192,10 @@ enum SceneType {
     case radial
     case flow
     case grid
+    case spiral
+    case tunnel
+    case kaleidoscope
+    case plasma
 }
 
 Themes define color and mood.
@@ -214,11 +218,11 @@ Turns analyzer outputs into stable, musical motion:
 Responsibilities:
 - Maintain pipeline state.
 - Draw a fullscreen quad.
-- Optional feedback buffer for trails.
+- Ping‑pong feedback buffer for decaying trails.
 
-V1 rendering strategy:
-- **Pass A**: draw procedural shapes in fragment shader using params.
-- **Pass B** (optional): feedback/trails by mixing previous frame texture.
+Rendering strategy (implemented):
+- **Pass A**: scene fragment blended over a decayed copy of the previous frame (`max(scene, prev × trailPersistence)`) into an offscreen `rgba16Float` accumulation texture (ping‑pong).
+- **Pass B**: present the accumulation texture to the drawable. Falls back to a single direct pass if textures can't be created; trails clear on Panic Reset.
 
 ---
 
