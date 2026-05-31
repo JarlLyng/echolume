@@ -13,15 +13,16 @@ struct MetalView: NSViewRepresentable {
     var onError: ((String?) -> Void)?
 
     func makeNSView(context: Context) -> MTKView {
-        let mtkView = MTKView()
+        let mtkView = PausableMTKView()
         let device = MTLCreateSystemDefaultDevice()
         mtkView.device = device
         mtkView.delegate = context.coordinator
         mtkView.clearColor = MTLClearColor(red: 0, green: 0, blue: 0, alpha: 1)
         mtkView.colorPixelFormat = .bgra8Unorm
-        mtkView.preferredFramesPerSecond = 60
         mtkView.enableSetNeedsDisplay = false
-        mtkView.isPaused = false
+        // preferredFramesPerSecond + isPaused are managed by PausableMTKView
+        // once the view is attached to a window (honors the display's refresh
+        // rate and pauses while the window is fully occluded).
 
         if device == nil {
             let msg = "This Mac does not support Metal. Echolume cannot render visuals."
@@ -68,6 +69,51 @@ struct MetalView: NSViewRepresentable {
                 }
             }
             renderer?.draw(in: view)
+        }
+    }
+}
+
+/// MTKView that honors the display's refresh rate and pauses its render loop
+/// whenever its window is fully occluded/hidden — avoids burning GPU/power on a
+/// 60 fps (or 120 fps ProMotion) feedback pass that nobody can see (e.g. the
+/// Setup window while Live runs fullscreen on an external display).
+final class PausableMTKView: MTKView {
+    private var occlusionObserver: NSObjectProtocol?
+
+    override func viewDidMoveToWindow() {
+        super.viewDidMoveToWindow()
+
+        if let obs = occlusionObserver {
+            NotificationCenter.default.removeObserver(obs)
+            occlusionObserver = nil
+        }
+
+        guard let window = window else {
+            isPaused = true
+            return
+        }
+
+        // Match the display's actual refresh rate (e.g. 120 Hz ProMotion).
+        preferredFramesPerSecond = max(30, window.screen?.maximumFramesPerSecond ?? 60)
+        updatePause(for: window)
+
+        occlusionObserver = NotificationCenter.default.addObserver(
+            forName: NSWindow.didChangeOcclusionStateNotification,
+            object: window,
+            queue: .main
+        ) { [weak self] _ in
+            guard let self, let window = self.window else { return }
+            self.updatePause(for: window)
+        }
+    }
+
+    private func updatePause(for window: NSWindow) {
+        isPaused = !window.occlusionState.contains(.visible)
+    }
+
+    deinit {
+        if let obs = occlusionObserver {
+            NotificationCenter.default.removeObserver(obs)
         }
     }
 }

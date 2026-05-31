@@ -29,6 +29,8 @@ final class BeatTracker {
     private let capacity = 512
     private var history = [Float]()
     private var scratch: [Float]
+    /// Preallocated autocorrelation buffer (reused each estimate; no per-call heap alloc).
+    private var acorr: [Float]
 
     // Timing.
     private var lastNow: Double = -1
@@ -51,6 +53,7 @@ final class BeatTracker {
     init() {
         history.reserveCapacity(capacity)
         scratch = [Float](repeating: 0, count: capacity)
+        acorr = [Float](repeating: 0, count: capacity + 2)
     }
 
     /// The tempo currently in effect (manual override wins).
@@ -144,12 +147,12 @@ final class BeatTracker {
         var bestVal: Float = -.greatestFiniteMagnitude
         var sumVal: Float = 0
         var count = 0
-        var r = [Float](repeating: 0, count: maxLag + 2)
+        // Reuse the preallocated `acorr` buffer; indices [minLag...maxLag] are written before read.
         for lag in minLag ... maxLag {
             var acc: Float = 0
             for i in 0 ..< (n - lag) { acc += scratch[i] * scratch[i + lag] }
             acc /= Float(n - lag)
-            r[lag] = acc
+            acorr[lag] = acc
             sumVal += acc
             count += 1
             if acc > bestVal { bestVal = acc; bestLag = lag }
@@ -159,7 +162,7 @@ final class BeatTracker {
         // Parabolic interpolation around the peak for sub-frame lag precision.
         var refinedLag = Float(bestLag)
         if bestLag > minLag, bestLag < maxLag {
-            let a = r[bestLag - 1], b = r[bestLag], c = r[bestLag + 1]
+            let a = acorr[bestLag - 1], b = acorr[bestLag], c = acorr[bestLag + 1]
             let denom = a - 2 * b + c
             if abs(denom) > 1e-9 {
                 let delta = 0.5 * (a - c) / denom
