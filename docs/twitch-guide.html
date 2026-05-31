@@ -3,64 +3,69 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Twitch chat integration — Echolume</title>
-  <meta name="description" content="Let Twitch viewers control your visuals with chat commands. Set up Echolume's Twitch integration for interactive streams.">
+  <title>Twitch Chat Integration Guide — Echolume</title>
+  <meta name="description" content="Configure Twitch chat commands in Echolume. Let your streaming viewers control live audio-reactive visuals in real time.">
   <link rel="canonical" href="https://echolume.iamjarl.com/twitch-guide.html">
-  <meta property="og:title" content="Twitch chat integration — Echolume">
-  <meta property="og:description" content="Let Twitch viewers control your visuals with chat commands. Interactive audio-reactive streaming.">
+  <meta property="og:title" content="Twitch Chat Integration Guide — Echolume">
+  <meta property="og:description" content="Set up Twitch chat control in Echolume. Interactive audio-reactive streaming visuals.">
   <meta property="og:url" content="https://echolume.iamjarl.com/twitch-guide.html">
   <meta property="og:type" content="article">
   <meta property="og:image" content="https://echolume.iamjarl.com/og-image.png">
   <meta name="twitter:card" content="summary_large_image">
   <meta name="theme-color" content="#D0FF00">
+
+  <!-- HowTo Schema for Twitch integration steps -->
   <script type="application/ld+json">
   {
     "@context": "https://schema.org",
     "@type": "HowTo",
-    "name": "How to set up Twitch chat integration in Echolume",
-    "description": "Let viewers control audio-reactive visuals with Twitch chat commands.",
+    "name": "How to set up Twitch Chat Integration in Echolume",
+    "description": "Connect Echolume to Twitch chat anonymously to allow viewers to control visuals via commands.",
     "step": [
       {
         "@type": "HowToStep",
-        "name": "Enable Twitch Chat",
-        "text": "Open Echolume, go to Setup, and enable Twitch Chat."
+        "name": "Open Setup View",
+        "text": "Launch Echolume on your Mac and open the Setup configuration panel."
       },
       {
         "@type": "HowToStep",
-        "name": "Enter your channel name",
-        "text": "Type your Twitch channel name (e.g. your_twitch_username). Echolume connects automatically — no login or OAuth required."
+        "name": "Configure channel name",
+        "text": "Go to the Twitch Chat section, toggle it enabled, and enter your channel username (e.g., your_twitch_channel)."
       },
       {
         "@type": "HowToStep",
-        "name": "Choose audio and go live",
-        "text": "Select your audio source (e.g. BlackHole 2ch from OBS) and press Ready. Viewers can now control visuals via chat."
+        "name": "Start the session",
+        "text": "Echolume connects automatically. Verify the connection indicator is active, select your audio source, and press Ready."
       }
     ]
   }
   </script>
+
+  <!-- BreadcrumbList Schema -->
   <script type="application/ld+json">
   {
     "@context": "https://schema.org",
     "@type": "BreadcrumbList",
     "itemListElement": [
       { "@type": "ListItem", "position": 1, "name": "Echolume", "item": "https://echolume.iamjarl.com/" },
-      { "@type": "ListItem", "position": 2, "name": "Twitch integration", "item": "https://echolume.iamjarl.com/twitch-guide.html" }
+      { "@type": "ListItem", "position": 2, "name": "Twitch Guide", "item": "https://echolume.iamjarl.com/twitch-guide.html" }
     ]
   }
   </script>
+
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&amp;family=Outfit:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet">
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
   <header class="header">
     <a href="index.html" class="logo">Echolume</a>
-    <nav class="nav">
+    <nav class="nav" aria-label="Main Navigation">
       <a href="index.html">Home</a>
       <a href="how-it-works.html">How it works</a>
       <a href="obs-guide.html">OBS Guide</a>
-      <a href="twitch-guide.html">Twitch</a>
+      <a href="twitch-guide.html" class="active">Twitch</a>
       <a href="index.html#download">Download</a>
       <a href="privacy.html">Privacy</a>
       <a href="support.html">Support</a>
@@ -69,92 +74,128 @@
   </header>
 
   <main class="page-main">
+    <nav class="breadcrumbs" aria-label="Breadcrumbs">
+      <a href="index.html">Echolume</a>
+      <span class="separator"></span>
+      <span>Twitch Guide</span>
+    </nav>
+
     <article class="legal">
-      <h1>Echolume + Twitch</h1>
-      <p class="legal-intro">Make your Twitch stream interactive — let viewers control Echolume's visuals with chat commands while the audio drives the animations.</p>
+      <h1>Interactive Twitch Streaming</h1>
+      <p class="legal-intro">Turn your live stream into an interactive audiovisual experience. By connecting Echolume to your Twitch chat feed, viewers can trigger effects and control rendering parameters in real time.</p>
 
       <section>
-        <h2>What is the Twitch integration?</h2>
-        <p>Echolume can listen to your Twitch chat in real time. When viewers type commands like <strong>!theme</strong> or <strong>!glitch</strong>, the visuals change live on stream. Combined with audio-reactive effects, it creates a unique, interactive experience.</p>
+        <h2>How it works</h2>
+        <p>Echolume uses a native WebSocket client to connect directly to public Twitch IRC chat streams (<code>wss://irc-ws.chat.twitch.tv:443</code>). The connection is completely **anonymous and read-only** (registering as a guest <code>justinfan*</code> account). Echolume never requires your password, streaming keys, or Twitch OAuth logins, making the integration highly secure.</p>
       </section>
 
       <section>
-        <h2>Setup</h2>
+        <h2>Setup guide</h2>
         <ol class="legal-list">
-          <li>Open Echolume and go to Setup.</li>
-          <li>Enable <strong>Twitch Chat</strong> and enter your channel name (e.g. <strong>your_twitch_username</strong>).</li>
-          <li>Echolume connects automatically — no login or OAuth required.</li>
-          <li>Choose your audio source (e.g. BlackHole 2ch from OBS) and press <strong>Ready</strong>.</li>
+          <li>Launch Echolume on your Mac.</li>
+          <li>In the right-hand **Visuals &amp; Integrations** panel, locate the **Twitch Chat** section.</li>
+          <li>Toggle **Twitch Chat** to enabled.</li>
+          <li>Enter your Twitch username in the Channel Name field (do not include the # symbol or URLs).</li>
+          <li>Echolume connects automatically. A status pill changes colors to indicate connectivity (green for connected, yellow for retrying, red for failed, gray for disabled).</li>
+          <li>Click **Ready** to enter fullscreen live visual rendering.</li>
         </ol>
       </section>
 
       <section>
-        <h2>Chat commands</h2>
-        <p>Viewers can type the following commands in Twitch chat:</p>
-        <dl class="faq">
-          <dt>!theme [name]</dt>
-          <dd>Switch visual theme. Example: <strong>!theme aurora</strong></dd>
+        <h2>Twitch chat commands reference</h2>
+        <p>Your viewers can type the following commands in your channel chat to drive visuals. Commands are rate-limited to **1 command per second** globally to prevent chat spam from thrashing visuals.</p>
 
-          <dt>!scene [name]</dt>
-          <dd>Switch scene type. Example: <strong>!scene radial</strong></dd>
-
-          <dt>!shape [name]</dt>
-          <dd>Switch shape style. Example: <strong>!shape dots</strong></dd>
-
-          <dt>!randomize</dt>
-          <dd>Random combination of theme, scene, and shape.</dd>
-
-          <dt>!glitch</dt>
-          <dd>Trigger a short glitch effect.</dd>
-
-          <dt>!abstract [0–100]</dt>
-          <dd>Adjust the abstraction level. Example: <strong>!abstract 75</strong></dd>
-
-          <dt>!preset [name]</dt>
-          <dd>Recall a saved preset by name. Example: <strong>!preset chill</strong></dd>
-        </dl>
+        <div class="comparison-table-wrapper">
+          <table class="comparison-table">
+            <thead>
+              <tr>
+                <th>Command</th>
+                <th>Description / Supported Values</th>
+                <th>Usage Example</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><code>!theme [name]</code></td>
+                <td>Switch visual color palette and trails (<code>summer</code>, <code>winter</code>, <code>dark ambient</code>, <code>techno club</code>, <code>neon lines</code>, <code>monochrome</code>)</td>
+                <td><code>!theme dark ambient</code></td>
+              </tr>
+              <tr>
+                <td><code>!scene [name]</code></td>
+                <td>Switch rendering geometry (<code>radial</code>, <code>flow</code>, <code>grid</code>, <code>spiral</code>, <code>tunnel</code>, <code>kaleidoscope</code>, <code>plasma</code>)</td>
+                <td><code>!scene kaleidoscope</code></td>
+              </tr>
+              <tr>
+                <td><code>!shape [name]</code></td>
+                <td>Switch procedural shapes (<code>blobs</code>, <code>circles</code>, <code>lines</code>, <code>grid</code>, <code>particles</code>)</td>
+                <td><code>!shape lines</code></td>
+              </tr>
+              <tr>
+                <td><code>!randomize</code></td>
+                <td>Trigger a random combination of themes, shapes, and rendering seeds</td>
+                <td><code>!randomize</code></td>
+              </tr>
+              <tr>
+                <td><code>!glitch</code></td>
+                <td>Trigger a short visual glitch feedback warp overlay</td>
+                <td><code>!glitch</code></td>
+              </tr>
+              <tr>
+                <td><code>!abstract [0-100]</code></td>
+                <td>Set the visual complexity knob (scales lines, shapes, and spacing variables)</td>
+                <td><code>!abstract 75</code></td>
+              </tr>
+              <tr>
+                <td><code>!preset [name]</code></td>
+                <td>Recall a user-saved visual preset configuration by its unique name</td>
+                <td><code>!preset techno-pulse</code></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
       </section>
 
       <section>
-        <h2>Stream setup with OBS</h2>
-        <p>To include Echolume in your Twitch stream:</p>
+        <h2>Streaming workflow with OBS Studio</h2>
+        <div class="callout callout-info">
+          <strong>Best performance:</strong> Visual rendering uses your Mac's graphics card. Running Echolume fullscreen on a secondary display and using OBS **Display Capture** yields better framerates than window captures.
+        </div>
+        <p>To broadcast interactive visuals to your stream:</p>
         <ol class="legal-list">
-          <li>Follow the <a href="obs-guide.html">OBS guide</a> to route audio from OBS to Echolume via BlackHole.</li>
-          <li>In OBS, add Echolume's window as a <strong>Window Capture</strong> source.</li>
-          <li>Position it as a background or overlay in your scene.</li>
-          <li>Start your stream — viewers can now control visuals via chat.</li>
+          <li>Follow the instructions in our <a href="obs-guide.html">OBS Studio Setup Guide</a> to route OBS master monitor audio into Echolume via BlackHole.</li>
+          <li>Set up window capture or display capture in OBS to display Echolume.</li>
+          <li>Set the Echolume source depth below your camera overlay or stream widgets.</li>
+          <li>Go live! Viewers can immediately type commands in chat, which will manipulate the background visuals in real time.</li>
         </ol>
       </section>
 
       <section>
-        <h2>Tips</h2>
-        <ul>
-          <li><strong>Cooldown:</strong> Echolume ignores repeated commands within a short interval, so chat spam doesn't disrupt the visuals.</li>
-          <li><strong>External display:</strong> Run Echolume fullscreen on an external display and use Display Capture in OBS for the best quality.</li>
-          <li><strong>Combine with audio:</strong> Twitch commands and audio-reactive effects work together — viewers change the theme while the music drives the motion.</li>
-        </ul>
-      </section>
-
-      <section>
-        <h2>Troubleshooting</h2>
+        <h2>Twitch Troubleshooting</h2>
         <dl class="faq">
-          <dt>Chat commands don't work.</dt>
-          <dd>Check that Twitch Chat is enabled in Setup and the channel name is correct (without #). Make sure Echolume has internet access.</dd>
+          <dt>Echolume fails to connect to chat (status indicator stays red)</dt>
+          <dd>Verify that your Mac has active internet access. Check that your Twitch channel name is spelled correctly (it should match your Twitch username exactly, e.g., <code>twitch_streamer</code>). Ensure local firewall policies do not block outgoing secure WebSocket connections on port 443.</dd>
 
-          <dt>The connection keeps dropping.</dt>
-          <dd>Echolume reconnects automatically. If the problem persists, check your internet connection.</dd>
+          <dt>Commands do not update the visuals</dt>
+          <dd>Confirm that the global Twitch Chat toggle is enabled in Setup. Check the level meter to verify Echolume is active. Note that Echolume ignores commands if you are not currently in **Ready** (Live visual rendering) mode.</dd>
 
-          <dt>Viewers can't see the effect.</dt>
-          <dd>Make sure Echolume's window is added as a source in OBS and is visible in your scene.</dd>
+          <dt>Commands lag or viewer changes are ignored</dt>
+          <dd>To protect graphics performance, Echolume applies a strict global cooldown of 1 second between commands. If multiple viewers type commands simultaneously, excess commands are discarded. Viewer changes apply on top of active music analysis.</dd>
         </dl>
       </section>
     </article>
   </main>
 
   <footer class="footer">
-    <p><a href="index.html">Echolume</a> — <a href="how-it-works.html">How it works</a> · <a href="obs-guide.html">OBS Guide</a> · <a href="twitch-guide.html">Twitch</a> · <a href="privacy.html">Privacy</a> · <a href="support.html">Support</a> · <a href="https://github.com/JarlLyng/echolume">GitHub</a></p>
-    <p style="margin-top:1rem;font-size:0.8em;opacity:0.6;">More from IAMJARL</p>
-    <p style="font-size:0.85em;"><a href="https://madebyhuman.iamjarl.com" target="_blank" rel="noopener noreferrer">Made by Human</a> · <a href="https://emotionwave.iamjarl.com" target="_blank" rel="noopener noreferrer">EmotionWave</a> · <a href="https://beertuner.iamjarl.com" target="_blank" rel="noopener noreferrer">BeerTuner</a> · <a href="https://iamjarl.com" target="_blank" rel="noopener noreferrer">All projects</a></p>
+    <p>Echolume — minimal UI, beautiful results.</p>
+    <div class="footer-nav">
+      <a href="index.html">Home</a>
+      <a href="how-it-works.html">How it works</a>
+      <a href="obs-guide.html">OBS Guide</a>
+      <a href="twitch-guide.html">Twitch</a>
+      <a href="privacy.html">Privacy</a>
+      <a href="support.html">Support</a>
+      <a href="https://github.com/JarlLyng/echolume" target="_blank" rel="noopener">GitHub</a>
+    </div>
   </footer>
 </body>
 </html>

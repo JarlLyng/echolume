@@ -3,68 +3,73 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>OBS Studio guide — Echolume</title>
-  <meta name="description" content="Route audio from OBS Studio into Echolume using BlackHole. Get audio-reactive visuals synced to your stream or recording.">
+  <title>OBS Studio Integration Guide — Echolume</title>
+  <meta name="description" content="Route audio from OBS Studio into Echolume on macOS using BlackHole. Get low-latency, audio-reactive visuals synced to your live stream or recording.">
   <link rel="canonical" href="https://echolume.iamjarl.com/obs-guide.html">
-  <meta property="og:title" content="OBS Studio guide — Echolume">
-  <meta property="og:description" content="Route audio from OBS Studio into Echolume using BlackHole. Get audio-reactive visuals synced to your stream or recording.">
+  <meta property="og:title" content="OBS Studio Integration Guide — Echolume">
+  <meta property="og:description" content="Route audio from OBS Studio into Echolume on macOS using BlackHole. Get audio-reactive visuals synced to your live stream or recording.">
   <meta property="og:url" content="https://echolume.iamjarl.com/obs-guide.html">
   <meta property="og:type" content="article">
   <meta property="og:image" content="https://echolume.iamjarl.com/og-image.png">
   <meta name="twitter:card" content="summary_large_image">
   <meta name="theme-color" content="#D0FF00">
+
+  <!-- HowTo Schema detailing OBS audio routing (SEO & GEO helper) -->
   <script type="application/ld+json">
   {
     "@context": "https://schema.org",
     "@type": "HowTo",
     "name": "How to use Echolume with OBS Studio",
-    "description": "Route OBS audio into Echolume using BlackHole for audio-reactive visuals synced to your stream.",
+    "description": "Route OBS Studio monitor audio into Echolume using BlackHole to create live audio-reactive overlays.",
     "step": [
       {
         "@type": "HowToStep",
-        "name": "Install BlackHole",
-        "text": "Download and install BlackHole 2ch from the official site. BlackHole creates a virtual audio device that routes audio between apps with zero latency."
+        "name": "Install BlackHole virtual driver",
+        "text": "Download and install BlackHole 2ch from Existential Audio. This creates a virtual loopback device on macOS."
       },
       {
         "@type": "HowToStep",
-        "name": "Set up Audio Monitoring in OBS",
-        "text": "In OBS Studio, go to Settings → Audio. Under Advanced, set Monitoring Device to BlackHole 2ch."
+        "name": "Set OBS Monitoring Device",
+        "text": "In OBS Studio, open Settings → Audio. Scroll to Advanced and set the Monitoring Device to BlackHole 2ch."
       },
       {
         "@type": "HowToStep",
-        "name": "Enable monitoring on your audio sources",
-        "text": "Right-click your audio source in the Audio Mixer, select Advanced Audio Properties, and set Audio Monitoring to Monitor and Output."
+        "name": "Enable Audio Monitoring",
+        "text": "Open Advanced Audio Properties in OBS. For the audio sources you want to visual, set Audio Monitoring to Monitor and Output."
       },
       {
         "@type": "HowToStep",
-        "name": "Select BlackHole in Echolume",
-        "text": "Open Echolume, select BlackHole 2ch as Audio Input Device, verify the level meter moves, and press Ready."
+        "name": "Configure Echolume Input",
+        "text": "Launch Echolume and select BlackHole 2ch as the Audio Input Device. Verify level meter movement and press Ready."
       }
     ]
   }
   </script>
+
+  <!-- BreadcrumbList Schema -->
   <script type="application/ld+json">
   {
     "@context": "https://schema.org",
     "@type": "BreadcrumbList",
     "itemListElement": [
       { "@type": "ListItem", "position": 1, "name": "Echolume", "item": "https://echolume.iamjarl.com/" },
-      { "@type": "ListItem", "position": 2, "name": "OBS Studio guide", "item": "https://echolume.iamjarl.com/obs-guide.html" }
+      { "@type": "ListItem", "position": 2, "name": "OBS Studio Guide", "item": "https://echolume.iamjarl.com/obs-guide.html" }
     ]
   }
   </script>
+
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&amp;family=Outfit:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet">
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
   <header class="header">
     <a href="index.html" class="logo">Echolume</a>
-    <nav class="nav">
+    <nav class="nav" aria-label="Main Navigation">
       <a href="index.html">Home</a>
       <a href="how-it-works.html">How it works</a>
-      <a href="obs-guide.html">OBS Guide</a>
+      <a href="obs-guide.html" class="active">OBS Guide</a>
       <a href="twitch-guide.html">Twitch</a>
       <a href="index.html#download">Download</a>
       <a href="privacy.html">Privacy</a>
@@ -74,89 +79,106 @@
   </header>
 
   <main class="page-main">
+    <nav class="breadcrumbs" aria-label="Breadcrumbs">
+      <a href="index.html">Echolume</a>
+      <span class="separator"></span>
+      <span>OBS Guide</span>
+    </nav>
+
     <article class="legal">
-      <h1>Use Echolume with OBS Studio</h1>
-      <p class="legal-intro">Route your OBS audio mix into Echolume with BlackHole to get audio-reactive visuals synced to your stream or recording.</p>
+      <h1>OBS Studio &amp; Stream Setup</h1>
+      <p class="legal-intro">Sync your live streaming visuals to your audio feed. Learn how to route your OBS Studio audio mix directly into Echolume on macOS and capture the resulting rendering output.</p>
 
       <section>
-        <h2>What you need</h2>
+        <h2>Requirements</h2>
         <ul>
-          <li><a href="https://obsproject.com" target="_blank" rel="noopener">OBS Studio</a> (free, open-source)</li>
-          <li><a href="https://existential.audio/blackhole/" target="_blank" rel="noopener">BlackHole 2ch</a> (free virtual audio driver for macOS)</li>
-          <li>Echolume</li>
+          <li><a href="https://obsproject.com" target="_blank" rel="noopener">OBS Studio</a> installed on macOS 14+</li>
+          <li><a href="https://existential.audio/blackhole/" target="_blank" rel="noopener">BlackHole 2ch</a> (free virtual loopback driver)</li>
+          <li>Echolume application</li>
         </ul>
       </section>
 
       <section>
-        <h2>1. Install BlackHole</h2>
-        <p>Download and install <a href="https://existential.audio/blackhole/" target="_blank" rel="noopener">BlackHole 2ch</a> from the official site. BlackHole creates a virtual audio device that routes audio between apps — with zero latency.</p>
-      </section>
+        <h2>Step-by-step setup guide</h2>
+        <div class="callout callout-info">
+          <strong>Why use BlackHole?</strong> macOS does not natively support system output audio capture. BlackHole creates a virtual bridge that routes audio between applications with zero latency.
+        </div>
 
-      <section>
-        <h2>2. Set up Audio Monitoring in OBS</h2>
+        <h3>1. Set up audio monitoring in OBS</h3>
         <ol class="legal-list">
-          <li>Open OBS Studio.</li>
-          <li>Go to <strong>Settings → Audio</strong>.</li>
-          <li>Under <strong>Advanced</strong>, set <strong>Monitoring Device</strong> to <strong>BlackHole 2ch</strong>.</li>
-          <li>Click <strong>OK</strong>.</li>
+          <li>Open OBS Studio and navigate to **Settings &rarr; Audio**.</li>
+          <li>Under the **Advanced** section, find the **Monitoring Device** dropdown.</li>
+          <li>Select **BlackHole 2ch** as the monitoring device and click Apply.</li>
         </ol>
-        <p>This tells OBS to send monitor audio to BlackHole instead of your speakers.</p>
-      </section>
 
-      <section>
-        <h2>3. Enable monitoring on your audio sources</h2>
+        <h3>2. Enable monitoring on your target audio tracks</h3>
         <ol class="legal-list">
-          <li>In OBS, right-click your audio source in the Audio Mixer (e.g. "Desktop Audio" or "Mic/Aux").</li>
-          <li>Select <strong>Advanced Audio Properties</strong>.</li>
-          <li>Set <strong>Audio Monitoring</strong> to <strong>Monitor and Output</strong> for the sources you want to send to Echolume.</li>
+          <li>In the OBS main interface, right-click anywhere in the **Audio Mixer** card.</li>
+          <li>Select **Advanced Audio Properties**.</li>
+          <li>Locate the audio sources you want to drive the visuals (e.g., microphone feed, desktop music, game capture).</li>
+          <li>Change their **Audio Monitoring** state from *Monitor Off* to **Monitor and Output**.</li>
         </ol>
-        <p><strong>Monitor and Output</strong> sends audio to both BlackHole (for Echolume) and your stream/recording. If you only select <strong>Monitor Only</strong>, the audio will not be included in your stream.</p>
-      </section>
+        <p>This setting instructs OBS to broadcast the audio to your stream output *and* replicate it to BlackHole so Echolume can capture it.</p>
 
-      <section>
-        <h2>4. Select BlackHole in Echolume</h2>
+        <h3>3. Select BlackHole inside Echolume</h3>
         <ol class="legal-list">
-          <li>Open Echolume.</li>
-          <li>Select <strong>BlackHole 2ch</strong> as Audio Input Device.</li>
-          <li>Verify the level meter moves when OBS plays audio.</li>
-          <li>Press <strong>Ready</strong>.</li>
+          <li>Launch Echolume.</li>
+          <li>In the Audio input settings, select **BlackHole 2ch** from the dropdown menu.</li>
+          <li>Play audio in OBS and check that Echolume's visual level meter registers signals.</li>
+          <li>Adjust presets or abstraction parameters, and click **Ready**.</li>
         </ol>
-        <p>Echolume now reacts to your full OBS audio mix in real time.</p>
       </section>
 
       <section>
-        <h2>Live streaming tips</h2>
-        <ul>
-          <li><strong>Window Capture:</strong> Add Echolume's window as a source in OBS via Window Capture to include visuals in your stream.</li>
-          <li><strong>External display:</strong> Run Echolume fullscreen on an external display, and use Display Capture in OBS to capture it.</li>
-          <li><strong>Multiple sources:</strong> Enable monitoring on all OBS audio sources you want Echolume to react to.</li>
-          <li><strong>Twitch chat:</strong> <a href="twitch-guide.html">Add Twitch chat control</a> so viewers can change visuals with commands.</li>
-        </ul>
+        <h2>Capturing Echolume inside OBS</h2>
+        <p>Once Echolume is rendering visuals, you need to import its screen output back into OBS to show it on stream:</p>
+
+        <h3>Method A: Window Capture (Single display setups)</h3>
+        <p>Use this method if you are running Echolume in a standard desktop window.</p>
+        <ol class="legal-list">
+          <li>In OBS, click the **+** icon in the Sources dock and select **Window Capture**.</li>
+          <li>Name the source (e.g., "Echolume Visualizer").</li>
+          <li>In the properties, select **[echolume] Echolume** from the Window dropdown.</li>
+          <li>Press OK. Crop or adjust the size to overlay your screen layout.</li>
+        </ol>
+
+        <h3>Method B: Display Capture (External monitor or projector sets)</h3>
+        <p>Highly recommended for VJ performance and high-performance streams.</p>
+        <ol class="legal-list">
+          <li>Connect an external display to your Mac.</li>
+          <li>In Echolume's Setup panel, select the external display from the **Output Display** list.</li>
+          <li>Click **Ready** to project Echolume fullscreen onto the external monitor.</li>
+          <li>In OBS, add a **Display Capture** source, and select the external monitor as the target.</li>
+        </ol>
       </section>
 
       <section>
-        <h2>Troubleshooting</h2>
+        <h2>Frequently Asked Questions</h2>
         <dl class="faq">
-          <dt>The level meter in Echolume doesn't move.</dt>
-          <dd>Check that Monitoring Device is set to BlackHole 2ch in OBS Settings → Audio, and that your audio sources have Audio Monitoring set to "Monitor and Output".</dd>
+          <dt>I can't hear stream audio in my headphones anymore</dt>
+          <dd>Because OBS is routing monitoring audio to BlackHole, your headphones are bypassed. To hear the stream output, open **Audio MIDI Setup** on macOS, click the **+** button in the bottom left, and create a **Multi-Output Device**. Check both your headphones (or audio interface) and **BlackHole 2ch**. Then, in OBS Settings &rarr; Audio, select this Multi-Output Device as your Monitoring Device.</dd>
 
-          <dt>I can't hear my own audio while streaming.</dt>
-          <dd>BlackHole replaces your monitor output. To hear the audio yourself, create a Multi-Output Device in macOS Audio MIDI Setup that combines BlackHole 2ch and your speakers/headphones.</dd>
+          <dt>Is there a delay between stream audio and Echolume visuals?</dt>
+          <dd>No. Virtual loopback drivers like BlackHole run inside the macOS kernel and have zero latency. If you notice a delay, it is likely GPU throttling. Close unused background software to free up rendering cycles.</dd>
 
-          <dt>BlackHole 2ch doesn't appear in Echolume.</dt>
-          <dd>Restart Echolume after installing BlackHole. Make sure Echolume has Microphone permission in macOS Settings → Privacy & Security.</dd>
-
-          <dt>Visuals react with a delay.</dt>
-          <dd>BlackHole has zero latency. Delay is typically caused by high CPU load. Close other GPU-heavy apps, or lower your OBS encoding settings.</dd>
+          <dt>My viewer commands are not affecting the visuals</dt>
+          <dd>To enable viewer interaction, make sure you configure your channel username under the Twitch chat tab in Setup and toggle the connection to active. Refer to the <a href="twitch-guide.html">Twitch integration guide</a>.</dd>
         </dl>
       </section>
     </article>
   </main>
 
   <footer class="footer">
-    <p><a href="index.html">Echolume</a> — <a href="how-it-works.html">How it works</a> · <a href="twitch-guide.html">Twitch</a> · <a href="privacy.html">Privacy</a> · <a href="support.html">Support</a> · <a href="https://github.com/JarlLyng/echolume">GitHub</a></p>
-    <p style="margin-top:1rem;font-size:0.8em;opacity:0.6;">More from IAMJARL</p>
-    <p style="font-size:0.85em;"><a href="https://madebyhuman.iamjarl.com" target="_blank" rel="noopener noreferrer">Made by Human</a> · <a href="https://emotionwave.iamjarl.com" target="_blank" rel="noopener noreferrer">EmotionWave</a> · <a href="https://beertuner.iamjarl.com" target="_blank" rel="noopener noreferrer">BeerTuner</a> · <a href="https://iamjarl.com" target="_blank" rel="noopener noreferrer">All projects</a></p>
+    <p>Echolume — minimal UI, beautiful results.</p>
+    <div class="footer-nav">
+      <a href="index.html">Home</a>
+      <a href="how-it-works.html">How it works</a>
+      <a href="obs-guide.html">OBS Guide</a>
+      <a href="twitch-guide.html">Twitch</a>
+      <a href="privacy.html">Privacy</a>
+      <a href="support.html">Support</a>
+      <a href="https://github.com/JarlLyng/echolume" target="_blank" rel="noopener">GitHub</a>
+    </div>
   </footer>
 </body>
 </html>

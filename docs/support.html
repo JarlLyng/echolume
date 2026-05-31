@@ -3,16 +3,18 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Support — Echolume</title>
-  <meta name="description" content="Get help with Echolume. FAQ and contact.">
+  <title>Support &amp; FAQ — Echolume</title>
+  <meta name="description" content="Get help with Echolume. Troubleshooting guides, FAQs, contact information, and documentation for audio, MIDI, and OSC setup.">
   <link rel="canonical" href="https://echolume.iamjarl.com/support.html">
-  <meta property="og:title" content="Support — Echolume">
-  <meta property="og:description" content="Get help with Echolume. FAQ, troubleshooting, and contact.">
+  <meta property="og:title" content="Support &amp; FAQ — Echolume">
+  <meta property="og:description" content="Get help with Echolume. FAQs, troubleshooting, and contact details.">
   <meta property="og:url" content="https://echolume.iamjarl.com/support.html">
   <meta property="og:type" content="website">
   <meta property="og:image" content="https://echolume.iamjarl.com/og-image.png">
   <meta name="twitter:card" content="summary_large_image">
   <meta name="theme-color" content="#D0FF00">
+
+  <!-- BreadcrumbList Schema -->
   <script type="application/ld+json">
   {
     "@context": "https://schema.org",
@@ -23,6 +25,8 @@
     ]
   }
   </script>
+
+  <!-- Expanded FAQPage Schema (SEO & GEO helper) -->
   <script type="application/ld+json">
   {
     "@context": "https://schema.org",
@@ -30,93 +34,123 @@
     "mainEntity": [
       {
         "@type": "Question",
-        "name": "Echolume needs microphone permission — why?",
+        "name": "Why does Echolume need microphone permission?",
         "acceptedAnswer": {
           "@type": "Answer",
-          "text": "On macOS, access to audio inputs (including audio interfaces) is granted via the same microphone permission. Echolume only uses this to read the audio stream for the visuals. It does not record or send audio anywhere."
+          "text": "On macOS, access to all audio inputs (including external audio interfaces, USB soundcards, and microphones) is categorized under 'Microphone' permissions. Echolume only reads inputs locally for transient and frequency analysis. It never stores, records, or transmits audio data."
         }
       },
       {
         "@type": "Question",
-        "name": "No sound / no signal?",
+        "name": "Can I capture system audio (e.g. Spotify) directly?",
         "acceptedAnswer": {
           "@type": "Answer",
-          "text": "Check that you've selected the correct Audio Input Device and, if applicable, the right channel pair. Ensure the input is not muted and that the level is sufficient. If you use an audio interface, make sure it's connected and chosen in Echolume."
+          "text": "macOS does not allow applications to directly hook and record 'system output' audio due to system sandboxing rules. To capture general system audio, you must route it through a virtual loopback device (like BlackHole 2ch) and select that device as the input in Echolume."
         }
       },
       {
         "@type": "Question",
-        "name": "Can I use system audio (e.g. Spotify) as input?",
+        "name": "How do I register the bundled AUv3 DAW plugin?",
         "acceptedAnswer": {
           "@type": "Answer",
-          "text": "Echolume does not capture system output directly. You can use a loopback or virtual device (e.g. BlackHole, Soundflower) that routes system audio into an input, then select that input in Echolume."
+          "text": "The EcholumeAudioTap AUv3 plugin is bundled directly inside Echolume.app. Launching the main Echolume application once registers the plugin globally on macOS. If your DAW doesn't see it, restart your DAW to trigger an Audio Unit scan."
         }
       },
       {
         "@type": "Question",
-        "name": "Which macOS version is required?",
+        "name": "My DAW plugin is active but Echolume doesn't react?",
         "acceptedAnswer": {
           "@type": "Answer",
-          "text": "Echolume requires macOS 14 (Sonoma) or later."
+          "text": "Verify that 'OSC Input' is enabled in Echolume's Setup panel under the OSC section. EcholumeAudioTap streams analytical frames over local UDP socket loops on port 9000. Ensure no third-party firewalls are blocking internal port 9000 packets."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "Does Echolume support MIDI controller mapping?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Yes, Echolume supports MIDI Learn. Open the MIDI section in Input & Output configuration, toggle 'MIDI Learn', select a knob, and move a hardware fader/knob to bind them. You can also bind MIDI notes to triggers like Randomize or Panic Reset."
         }
       }
     ]
   }
   </script>
+
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&amp;family=Outfit:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet">
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
   <header class="header">
     <a href="index.html" class="logo">Echolume</a>
-    <nav class="nav">
+    <nav class="nav" aria-label="Main Navigation">
       <a href="index.html">Home</a>
       <a href="how-it-works.html">How it works</a>
       <a href="obs-guide.html">OBS Guide</a>
       <a href="twitch-guide.html">Twitch</a>
       <a href="privacy.html">Privacy</a>
+      <a href="support.html" class="active">Support</a>
       <a href="https://github.com/JarlLyng/echolume" target="_blank" rel="noopener">GitHub</a>
     </nav>
   </header>
 
   <main class="page-main">
+    <nav class="breadcrumbs" aria-label="Breadcrumbs">
+      <a href="index.html">Echolume</a>
+      <span class="separator"></span>
+      <span>Support</span>
+    </nav>
+
     <article class="legal">
-      <h1>Support</h1>
+      <h1>Support &amp; Help Center</h1>
+      <p class="legal-intro">Find troubleshooting solutions, configure hardware controllers, or learn how to route audio streams safely inside the sandbox.</p>
 
       <section>
-        <h2>FAQ</h2>
+        <h2>Frequently Asked Questions</h2>
         <dl class="faq">
-          <dt>Echolume needs microphone permission — why?</dt>
-          <dd>On macOS, access to audio inputs (including audio interfaces) is granted via the same "microphone" permission. Echolume only uses this to read the audio stream for the visuals. It does not record or send audio anywhere.</dd>
+          <dt>Why does Echolume need microphone permission?</dt>
+          <dd>On macOS, access to all audio inputs (including external audio interfaces, USB soundcards, and microphones) is categorized under "Microphone" permissions in Privacy &amp; Security. Echolume reads inputs locally for real-time mathematical analysis (FFT and peak levels). It never stores, records, or transmits audio data anywhere. Visuals run 100% locally.</dd>
 
-          <dt>No sound / no signal?</dt>
-          <dd>Check that you've selected the correct <strong>Audio Input Device</strong> and, if applicable, the right <strong>channel pair</strong>. Ensure the input is not muted and that the level is sufficient. If you use an audio interface, make sure it's connected and chosen in Echolume. See the <a href="how-it-works.html">setup guide</a> for details.</dd>
+          <dt>Can I capture system audio (e.g., Spotify, Chrome) directly?</dt>
+          <dd>macOS sandboxing does not allow direct hooks into general speaker output. To capture system audio, download a virtual loopback device like **BlackHole 2ch**. Route your system output to BlackHole, and set Echolume's input device to BlackHole. See the <a href="how-it-works.html">How it works guide</a> for setup details.</dd>
 
-          <dt>Can I use system audio (e.g. Spotify) as input?</dt>
-          <dd>Echolume does not capture "system output" directly. You can use a loopback or virtual device (e.g. BlackHole, Soundflower) that routes system audio into an input, then select that input in Echolume.</dd>
+          <dt>How do I register the bundled AUv3 DAW plugin?</dt>
+          <dd>The **EcholumeAudioTap** AUv3 plugin is embedded inside the main Echolume.app. Launching the main Echolume application once registers the plugin globally on macOS. If your DAW (Ableton, Logic) does not display it, try restarting the host DAW to trigger a fresh Audio Unit plug-in cache scan.</dd>
+
+          <dt>The DAW plugin is active but Echolume visuals aren't moving</dt>
+          <dd>Make sure you have enabled **OSC Input** in Echolume's Setup. Open Setup, scroll to the OSC panel, and toggle OSC to enabled on port **9000**. If it still does not react, verify that you do not have another application blocking UDP port 9000, and check that your macOS local firewall allows local loopback traffic.</dd>
+
+          <dt>Does Echolume support MIDI controller mapping?</dt>
+          <dd>Yes. Open the **MIDI** section under Input &amp; Output settings and turn on **MIDI Learn**. Click a visual knob in Setup to arm it, then adjust a physical knob/slider on your MIDI controller. Echolume will detect the CC value and bind it. You can also map MIDI notes to triggers like Randomize, Panic Reset, Next Theme, and Previous Theme. Map presets easily to trigger visuals on stage.</dd>
 
           <dt>Which macOS version is required?</dt>
-          <dd>Echolume requires macOS 14 (Sonoma) or later.</dd>
+          <dd>Echolume requires macOS 14 (Sonoma) or later to support SwiftUI overlays, Metal rendering shaders, and the sandboxed AUv3 bundle system.</dd>
         </dl>
       </section>
 
       <section>
-        <h2>Contact</h2>
-        <p>For bugs, feature ideas, or questions:</p>
+        <h2>Contact &amp; Contributions</h2>
+        <p>If you encounter a bug, have a feature request, or need further setup help:</p>
         <ul>
-          <li><strong>GitHub:</strong> <a href="https://github.com/JarlLyng/echolume/issues" target="_blank" rel="noopener">Open an issue</a> (preferred for bugs and requests).</li>
-          <li>You can also use the contact email you provide in the Mac App Store listing, if you add one there.</li>
+          <li><strong>GitHub Issues:</strong> <a href="https://github.com/JarlLyng/echolume/issues" target="_blank" rel="noopener">Open a GitHub Issue</a>. This is the fastest way to report bugs or submit contributions directly to the developer Jarl Lyng.</li>
+          <li>For App Store reviews, support URLs resolve directly to this guide for streamlined assistance.</li>
         </ul>
       </section>
     </article>
   </main>
 
   <footer class="footer">
-    <p><a href="index.html">Echolume</a> — <a href="how-it-works.html">How it works</a> · <a href="obs-guide.html">OBS Guide</a> · <a href="twitch-guide.html">Twitch</a> · <a href="privacy.html">Privacy</a> · <a href="support.html">Support</a> · <a href="https://github.com/JarlLyng/echolume">GitHub</a></p>
-    <p style="margin-top:1rem;font-size:0.8em;opacity:0.6;">More from IAMJARL</p>
-    <p style="font-size:0.85em;"><a href="https://madebyhuman.iamjarl.com" target="_blank" rel="noopener noreferrer">Made by Human</a> · <a href="https://emotionwave.iamjarl.com" target="_blank" rel="noopener noreferrer">EmotionWave</a> · <a href="https://beertuner.iamjarl.com" target="_blank" rel="noopener noreferrer">BeerTuner</a> · <a href="https://iamjarl.com" target="_blank" rel="noopener noreferrer">All projects</a></p>
+    <p>Echolume — minimal UI, beautiful results.</p>
+    <div class="footer-nav">
+      <a href="index.html">Home</a>
+      <a href="how-it-works.html">How it works</a>
+      <a href="obs-guide.html">OBS Guide</a>
+      <a href="twitch-guide.html">Twitch</a>
+      <a href="privacy.html">Privacy</a>
+      <a href="support.html">Support</a>
+      <a href="https://github.com/JarlLyng/echolume" target="_blank" rel="noopener">GitHub</a>
+    </div>
   </footer>
 </body>
 </html>

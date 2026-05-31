@@ -4,97 +4,243 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Echolume — Live Audio-Reactive Visuals for macOS</title>
-  <meta name="description" content="Live audio-reactive 2D visuals for macOS. Metal-powered, low-latency, built for performance.">
+  <meta name="description" content="Echolume is a low-latency, Metal-powered live visualizer for macOS. Route DAW audio via AUv3, sync beats, and let Twitch viewers control your visual sets.">
   <link rel="canonical" href="https://echolume.iamjarl.com/">
-  <meta property="og:title" content="Echolume — Sound into light">
-  <meta property="og:description" content="Live audio-reactive 2D visuals for macOS. Metal-powered, low-latency, built for performance.">
+  <meta property="og:title" content="Echolume — Live Audio-Reactive Visuals for macOS">
+  <meta property="og:description" content="Metal-powered live 2D visuals. Connect DAW audio via AUv3, map MIDI parameters, sync BPM, and stream with OBS and Twitch.">
   <meta property="og:url" content="https://echolume.iamjarl.com/">
   <meta property="og:type" content="website">
   <meta property="og:image" content="https://echolume.iamjarl.com/og-image.png">
   <meta name="twitter:card" content="summary_large_image">
   <meta name="theme-color" content="#D0FF00">
+
+  <!-- Structured Data for Software Application (GEO and SEO search enhancements) -->
   <script type="application/ld+json">
   {
     "@context": "https://schema.org",
     "@type": "SoftwareApplication",
     "name": "Echolume",
-    "operatingSystem": "macOS 14+",
+    "operatingSystem": "macOS 14.0+",
     "applicationCategory": "MultimediaApplication",
-    "description": "Live audio-reactive 2D visuals for macOS. Metal-powered, low-latency, built for performance.",
+    "description": "A macOS application for live, audio-reactive 2D visuals rendered with Metal. Built for streaming, VJ performance, and DAW integration.",
+    "softwareVersion": "1.0.0",
+    "fileSize": "MB",
+    "releaseNotes": "Introduced EcholumeAudioTap AUv3 DAW plugin, OSC control, MIDI Learn, beat detection, Twitch commands, and presets.",
     "offers": {
       "@type": "Offer",
       "price": "0",
-      "priceCurrency": "USD"
+      "priceCurrency": "USD",
+      "category": "Free"
     },
     "url": "https://echolume.iamjarl.com/",
+    "downloadUrl": "https://github.com/JarlLyng/echolume/releases",
     "author": {
       "@type": "Person",
       "name": "Jarl Lyng"
-    }
+    },
+    "featureList": [
+      "Metal-powered low-latency 2D visuals and feedback trails",
+      "EcholumeAudioTap AUv3 DAW plugin for DAW audio routing",
+      "Live BPM autocorrelation beat-sync and tap-tempo tracker",
+      "Twitch Chat commands for live viewer interaction",
+      "MIDI Learn and OSC UDP show-control (port 9000)",
+      "Preset store with keyboard hotkeys ⌘1-⌘9",
+      "Menu Bar Extra controller and external display routing"
+    ]
   }
   </script>
+
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&amp;family=Outfit:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet">
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
   <header class="header">
     <a href="index.html" class="logo">Echolume</a>
-    <nav class="nav">
+    <nav class="nav" aria-label="Main Navigation">
       <a href="#features">Features</a>
       <a href="how-it-works.html">How it works</a>
       <a href="obs-guide.html">OBS Guide</a>
       <a href="twitch-guide.html">Twitch</a>
-      <a href="#download">Download</a>
-      <a href="https://github.com/JarlLyng/echolume" target="_blank" rel="noopener">GitHub</a>
+      <a href="#download" class="cta cta-nav">Download</a>
+      <a href="https://github.com/JarlLyng/echolume" target="_blank" rel="noopener" class="github-btn">
+        <svg height="16" width="16" viewBox="0 0 16 16" fill="currentColor" class="github-icon"><path fill-rule="evenodd" d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"></path></svg>
+        GitHub
+      </a>
     </nav>
   </header>
 
   <main>
     <section class="hero">
+      <div class="hero-canvas-container">
+        <canvas id="hero-canvas"></canvas>
+      </div>
       <p class="hero-tagline">Sound into light</p>
       <h1 class="hero-title">Live audio‑reactive visuals for macOS</h1>
-      <p class="hero-desc">Metal-powered 2D visuals that react to your audio in real time. Pick your input, choose a theme, hit Ready — and perform.</p>
-      <p class="hero-more"><a href="how-it-works.html">How it works</a></p>
+      <p class="hero-desc">Metal-powered 2D visuals that react to your sound in real time. Pick your input, choose a theme, hit Ready — and perform. Complete with DAW plugin, OSC and MIDI control.</p>
+      <div class="hero-more">
+        <a href="how-it-works.html">How to route DAW audio, interfaces, or microphones &rarr;</a>
+      </div>
       <a href="#download" class="cta">Get Echolume</a>
     </section>
 
     <section id="features" class="features">
       <h2 class="section-title">Built for performance</h2>
+      <p class="section-subtitle">Low-latency rendering and advanced control integrations, tailored for visual artists, musicians, and streamers.</p>
       <ul class="feature-grid">
         <li class="feature">
-          <span class="feature-accent">Input</span>
-          <p>Choose any audio input device in-app — interface, loopback, or mic — without changing the system default.</p>
+          <span class="feature-accent">AUv3 DAW Tap</span>
+          <h3 class="feature-title">DAW audio routing</h3>
+          <p>Drop the bundled <strong>EcholumeAudioTap</strong> AUv3 plugin onto Ableton Live or Logic Pro tracks to stream analysis parameters and host BPM to Echolume over local OSC. No virtual loopback drivers required.</p>
         </li>
         <li class="feature">
-          <span class="feature-accent">Themes</span>
-          <p>Pick a visual theme and shape style, tweak abstraction and motion, or hit Randomize and go.</p>
+          <span class="feature-accent">BPM &amp; Beat Sync</span>
+          <h3 class="feature-title">Tempo-synced shaders</h3>
+          <p>Auto-detect track BPM using autocorrelation analysis. Sync visuals to a phase-locked loop beat pulse. Supports manual Tap Tempo buttons or MIDI-triggered BPM locking.</p>
         </li>
         <li class="feature">
-          <span class="feature-accent">Fullscreen</span>
-          <p>One tap to fullscreen on your main display or an external output. Minimal overlay, maximum impact.</p>
+          <span class="feature-accent">Twitch Integration</span>
+          <h3 class="feature-title">Interactive stream sets</h3>
+          <p>Connect Echolume directly to Twitch chat as an anonymous reader. Let viewers randomize themes, switch scenes, adjust abstraction, or recall presets using rate-limited chat commands.</p>
         </li>
         <li class="feature">
-          <span class="feature-accent">Low latency</span>
-          <p>Stable, real-time audio analysis and Metal rendering. No streaming, no cloud — everything runs locally.</p>
+          <span class="feature-accent">MIDI Learn &amp; OSC</span>
+          <h3 class="feature-title">Hardware &amp; show control</h3>
+          <p>Bind any hardware MIDI slider, knob, or button to visual parameters. Listen to custom OSC UDP packets from Resolume or TouchDesigner on port 9000 to automate your rig.</p>
+        </li>
+        <li class="feature">
+          <span class="feature-accent">Presets Store</span>
+          <h3 class="feature-title">Instant visual presets</h3>
+          <p>Save complex visual configurations (theme, scene, shape, knob positions) and recall them instantly with keyboard hotkeys <code>⌘1</code>–<code>⌘9</code>, OSC messages, or Twitch command parameters.</p>
+        </li>
+        <li class="feature">
+          <span class="feature-accent">Metal Renderer</span>
+          <h3 class="feature-title">Low-latency Metal engine</h3>
+          <p>Renders high-FPS procedural shapes and two-pass decaying feedback/trail accumulation. Run visuals fullscreen on an external display while controlling Setup on your main screen.</p>
+        </li>
+        <li class="feature">
+          <span class="feature-accent">Menu Bar Control</span>
+          <h3 class="feature-title">Menu bar extra utility</h3>
+          <p>A native status bar menu provides access to Panic Reset (visual trails), Randomize visual seeds, or Audio Engine Restarts while running other apps fullscreen.</p>
+        </li>
+        <li class="feature">
+          <span class="feature-accent">Device Switching</span>
+          <h3 class="feature-title">In-app audio switching</h3>
+          <p>Enumerate and switch audio input sources and stereo channel pairs in-app. Safe fallback keeps visuals alive if an external audio interface disconnects mid-set.</p>
         </li>
       </ul>
     </section>
 
     <section id="download" class="download">
-      <h2 class="section-title">Download</h2>
-      <p class="download-desc">Echolume runs on macOS 14 (Sonoma) or later.</p>
+      <h2 class="section-title">Download Echolume</h2>
+      <p class="download-desc">Echolume is a standalone application requiring macOS 14 (Sonoma) or later. The AUv3 plugin requires an AUv3-compatible host like Ableton Live 11.3+ or Logic Pro.</p>
       <a href="https://github.com/JarlLyng/echolume/releases" class="cta cta-store">Releases on GitHub</a>
-      <p class="download-note">When the app is on the Mac App Store, the link will be added here.</p>
+      <p class="download-note">Mac App Store deployment is currently in preparation. The bundled AUv3 plugin automatically registers upon application launch.</p>
     </section>
   </main>
 
   <footer class="footer">
     <p>Echolume — minimal UI, beautiful results.</p>
-    <p><a href="how-it-works.html">How it works</a> · <a href="obs-guide.html">OBS Guide</a> · <a href="twitch-guide.html">Twitch</a> · <a href="privacy.html">Privacy</a> · <a href="support.html">Support</a> · <a href="https://github.com/JarlLyng/echolume">GitHub</a></p>
-    <p style="margin-top:1rem;font-size:0.8em;opacity:0.6;">More from IAMJARL</p>
-    <p style="font-size:0.85em;"><a href="https://madebyhuman.iamjarl.com" target="_blank" rel="noopener noreferrer">Made by Human</a> · <a href="https://emotionwave.iamjarl.com" target="_blank" rel="noopener noreferrer">EmotionWave</a> · <a href="https://beertuner.iamjarl.com" target="_blank" rel="noopener noreferrer">BeerTuner</a> · <a href="https://iamjarl.com" target="_blank" rel="noopener noreferrer">All projects</a></p>
+    <div class="footer-nav">
+      <a href="how-it-works.html">How it works</a>
+      <a href="obs-guide.html">OBS Guide</a>
+      <a href="twitch-guide.html">Twitch</a>
+      <a href="privacy.html">Privacy</a>
+      <a href="support.html">Support</a>
+      <a href="https://github.com/JarlLyng/echolume" target="_blank" rel="noopener">GitHub Project</a>
+    </div>
+    <p class="footer-more">More from IAMJARL</p>
+    <p class="footer-sublinks">
+      <a href="https://madebyhuman.iamjarl.com" target="_blank" rel="noopener noreferrer">Made by Human</a> ·
+      <a href="https://emotionwave.iamjarl.com" target="_blank" rel="noopener noreferrer">EmotionWave</a> ·
+      <a href="https://beertuner.iamjarl.com" target="_blank" rel="noopener noreferrer">BeerTuner</a> ·
+      <a href="https://iamjarl.com" target="_blank" rel="noopener noreferrer">All Projects</a>
+    </p>
   </footer>
+
+  <!-- Canvas Audio-Reactive Simulation Script -->
+  <script>
+    const canvas = document.getElementById('hero-canvas');
+    const ctx = canvas.getContext('2d');
+    let time = 0;
+    let mouseX = 0;
+    let mouseY = 0;
+    let active = true;
+
+    function resize() {
+      canvas.width = canvas.offsetWidth;
+      canvas.height = canvas.offsetHeight;
+    }
+    resize();
+    window.addEventListener('resize', resize);
+
+    // Track mouse coordinates over the hero area
+    const heroSection = document.querySelector('.hero');
+    heroSection.addEventListener('mousemove', (e) => {
+      const rect = canvas.getBoundingClientRect();
+      mouseX = e.clientX - rect.left;
+      mouseY = e.clientY - rect.top;
+    });
+
+    // Pause animation when page tab goes background (LCP & INP Optimization)
+    document.addEventListener('visibilitychange', () => {
+      active = !document.hidden;
+      if (active) animate();
+    });
+
+    // Card Hover Glow Effect
+    const cards = document.querySelectorAll('.feature');
+    cards.forEach(card => {
+      card.addEventListener('mousemove', (e) => {
+        const rect = card.getBoundingClientRect();
+        const x = e.clientX - rect.left;
+        const y = e.clientY - rect.top;
+        card.style.setProperty('--x', `${x}px`);
+        card.style.setProperty('--y', `${y}px`);
+      });
+    });
+
+    function animate() {
+      if (!active) return;
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      time += 0.012;
+
+      const centerY = canvas.height * 0.55;
+      const waveCount = 5;
+
+      for (let i = 0; i < waveCount; i++) {
+        ctx.beginPath();
+        const offset = i * (Math.PI / 4.5);
+        const amplitude = (35 + i * 12) * (0.85 + Math.sin(time * 0.4 + i) * 0.15);
+        const freq = 0.003 - i * 0.0003;
+        const opacity = 0.12 - i * 0.02;
+
+        ctx.strokeStyle = `rgba(208, 255, 0, ${opacity})`;
+        ctx.lineWidth = 1.0 + (waveCount - i) * 0.4;
+
+        for (let x = 0; x < canvas.width; x += 10) {
+          const dx = x - mouseX;
+          const dy = centerY - mouseY;
+          const dist = Math.sqrt(dx * dx + dy * dy);
+          // Add reactive force near cursor
+          const force = Math.max(0, 1 - dist / 350);
+
+          const y = centerY +
+                    Math.sin(x * freq + time + offset) * amplitude * (1 + force * 0.7) +
+                    Math.cos(x * 0.008 - time * 1.5) * (10 * force);
+
+          if (x === 0) {
+            ctx.moveTo(x, y);
+          } else {
+            ctx.lineTo(x, y);
+          }
+        }
+        ctx.stroke();
+      }
+      requestAnimationFrame(animate);
+    }
+    animate();
+  </script>
 </body>
 </html>

@@ -3,41 +3,18 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>How it works — Echolume</title>
-  <meta name="description" content="Set up Echolume with microphone, audio interface, or BlackHole. Quick start and troubleshooting.">
+  <title>How it works &amp; Setup Guide — Echolume</title>
+  <meta name="description" content="Learn how to route audio into Echolume on macOS. Setup instructions for the AUv3 DAW plugin, audio interfaces, microphones, and BlackHole loopback.">
   <link rel="canonical" href="https://echolume.iamjarl.com/how-it-works.html">
-  <meta property="og:title" content="How it works — Echolume">
-  <meta property="og:description" content="Set up Echolume with microphone, audio interface, or BlackHole. Quick start and troubleshooting.">
+  <meta property="og:title" content="How it works &amp; Setup Guide — Echolume">
+  <meta property="og:description" content="Complete audio routing guide for Echolume. Configure microphones, audio interfaces, virtual loopback, or the AUv3 DAW tap.">
   <meta property="og:url" content="https://echolume.iamjarl.com/how-it-works.html">
   <meta property="og:type" content="article">
   <meta property="og:image" content="https://echolume.iamjarl.com/og-image.png">
   <meta name="twitter:card" content="summary_large_image">
   <meta name="theme-color" content="#D0FF00">
-  <script type="application/ld+json">
-  {
-    "@context": "https://schema.org",
-    "@type": "HowTo",
-    "name": "How to make Echolume react to your sound",
-    "description": "Set up Echolume with microphone, audio interface, or BlackHole for audio-reactive visuals on macOS.",
-    "step": [
-      {
-        "@type": "HowToStep",
-        "name": "Open Echolume",
-        "text": "Launch Echolume on your Mac."
-      },
-      {
-        "@type": "HowToStep",
-        "name": "Choose your Audio Input Device",
-        "text": "Select your microphone, audio interface, or virtual device (e.g. BlackHole 2ch) from the Audio Input Device menu."
-      },
-      {
-        "@type": "HowToStep",
-        "name": "Press Ready",
-        "text": "If the level meter is moving, press Ready to start the audio-reactive visuals."
-      }
-    ]
-  }
-  </script>
+
+  <!-- BreadcrumbList Schema (SEO enhancement) -->
   <script type="application/ld+json">
   {
     "@context": "https://schema.org",
@@ -48,17 +25,50 @@
     ]
   }
   </script>
+
+  <!-- HowTo Schema detailing DAW Plugin routing (GEO/SEO rich result target) -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "HowTo",
+    "name": "How to route DAW audio to Echolume via AUv3 plugin",
+    "description": "Route audio directly from Ableton Live or Logic Pro into Echolume using the bundled EcholumeAudioTap AUv3 plugin.",
+    "step": [
+      {
+        "@type": "HowToStep",
+        "name": "Register the plugin",
+        "text": "Launch Echolume once. macOS will automatically register the bundled EcholumeAudioTap AUv3 audio plugin with your system."
+      },
+      {
+        "@type": "HowToStep",
+        "name": "Add the plugin in your DAW",
+        "text": "Open Ableton Live or Logic Pro, scan for Audio Units, and place EcholumeAudioTap onto your master channel or audio track."
+      },
+      {
+        "@type": "HowToStep",
+        "name": "Enable OSC in Echolume",
+        "text": "Open Echolume Setup and enable OSC input. Keep the default port as 9000."
+      },
+      {
+        "@type": "HowToStep",
+        "name": "Play sound and perform",
+        "text": "Play audio in your DAW. The AUv3 plugin analyzes the frequencies and streams them over OSC directly into Echolume, driving the visuals."
+      }
+    ]
+  }
+  </script>
+
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&amp;family=Outfit:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet">
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
   <header class="header">
     <a href="index.html" class="logo">Echolume</a>
-    <nav class="nav">
+    <nav class="nav" aria-label="Main Navigation">
       <a href="index.html">Home</a>
-      <a href="how-it-works.html">How it works</a>
+      <a href="how-it-works.html" class="active">How it works</a>
       <a href="obs-guide.html">OBS Guide</a>
       <a href="twitch-guide.html">Twitch</a>
       <a href="index.html#download">Download</a>
@@ -69,64 +79,134 @@
   </header>
 
   <main class="page-main">
+    <nav class="breadcrumbs" aria-label="Breadcrumbs">
+      <a href="index.html">Echolume</a>
+      <span class="separator"></span>
+      <span>How it works</span>
+    </nav>
+
     <article class="legal">
-      <h1>How to make Echolume react to your sound</h1>
-      <p class="legal-intro">Echolume reacts to any audio input device on your Mac — microphone, audio interface, or virtual loopback like BlackHole.</p>
+      <h1>Routing audio into Echolume</h1>
+      <p class="legal-intro">Echolume turns sound into light by analyzing real-time audio inputs. You can choose from four primary routing methods to drive your visuals, depending on your performance environment.</p>
 
+      <!-- Routing comparison table for GEO and AI scrapers -->
       <section>
-        <h2>Quick start</h2>
+        <h2>Routing options comparison</h2>
+        <div class="comparison-table-wrapper">
+          <table class="comparison-table">
+            <thead>
+              <tr>
+                <th>Audio Source</th>
+                <th>Setup Complexity</th>
+                <th>Ideal Use Case</th>
+                <th>No Loopback Driver Needed?</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><strong>Macbook Microphone</strong></td>
+                <td><span class="badge badge-success">Minimal</span></td>
+                <td>Quick testing &amp; acoustic sets</td>
+                <td><span class="badge badge-success">Yes</span></td>
+              </tr>
+              <tr>
+                <td><strong>Audio Interface</strong></td>
+                <td><span class="badge badge-success">Minimal</span></td>
+                <td>Live musicians &amp; DJ hardware mixes</td>
+                <td><span class="badge badge-success">Yes</span></td>
+              </tr>
+              <tr>
+                <td><strong>AUv3 DAW Tap Plugin</strong></td>
+                <td><span class="badge badge-info">Low</span></td>
+                <td>Ableton Live &amp; Logic Pro DAW users</td>
+                <td><span class="badge badge-success">Yes</span></td>
+              </tr>
+              <tr>
+                <td><strong>BlackHole virtual loopback</strong></td>
+                <td><span class="badge badge-warning">Medium</span></td>
+                <td>OBS streaming &amp; general system audio</td>
+                <td><span class="badge badge-warning">No</span></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- Detailed setup steps -->
+      <section>
+        <h2>1. Using EcholumeAudioTap DAW Plugin (Recommended for DAWs)</h2>
+        <p>If you produce music in a DAW, you no longer need virtual loopback drivers. Echolume bundles a lightweight **AUv3 audio tap** plugin that handles analysis and data streaming automatically.</p>
+        <div class="callout callout-success">
+          <strong>Pro-tip:</strong> Launching Echolume once automatically registers the AUv3 plugin. No separate installer is needed.
+        </div>
         <ol class="legal-list">
-          <li>Open Echolume.</li>
-          <li>Choose your Audio Input Device.</li>
-          <li>Press Ready.</li>
+          <li>Ensure Echolume is installed on your Mac.</li>
+          <li>Launch your DAW (Ableton Live 11.3+ or Logic Pro) and scan for new Audio Units (AUv3).</li>
+          <li>Add the **EcholumeAudioTap** plugin onto your master output track or individual channels.</li>
+          <li>In Echolume, open the Setup panel, click the OSC section, and toggle **OSC Input** to enabled (using the default port 9000).</li>
+          <li>Play track audio. The plugin performs FFT analysis on your DAW track and routes the results and host BPM over local UDP sockets directly to the Echolume visual engine.</li>
         </ol>
-        <p>If you see the level meter moving, you're ready.</p>
       </section>
 
       <section>
-        <h2>Using your Mac microphone</h2>
-        <p>Select "MacBook Microphone" (or similar) in the Audio Input Device menu. Speak or play sound near the mic — watch the level meter respond.</p>
+        <h2>2. Using an external audio interface</h2>
+        <p>Ideal for DJs and instrumentalists performing live sets using external mixers or soundcards.</p>
+        <ol class="legal-list">
+          <li>Connect your audio interface to your Mac via USB/Thunderbolt.</li>
+          <li>Open Echolume and open the Audio Input Device picker. Select your interface.</li>
+          <li>Choose the active **Stereo Channel Pair** (e.g., 1–2 for main mix, 3–4 for aux track) based on where your inputs are connected.</li>
+          <li>Verify that Echolume's input level meter moves. If it doesn't, ensure your interface gain knobs are adjusted.</li>
+        </ol>
       </section>
 
       <section>
-        <h2>Using an audio interface</h2>
-        <p>Connect your interface and turn it on. In Echolume, select it as the Audio Input Device, then choose the correct channel pair (1–2, 3–4, etc.). Play audio through the interface. Echolume does not change your macOS system audio settings.</p>
+        <h2>3. Using BlackHole virtual device (For general system audio &amp; OBS)</h2>
+        <p>Allows you to route general audio (Spotify, browsers) or route monitor streams from OBS Studio.</p>
+        <ol class="legal-list">
+          <li>Download and install <a href="https://existential.audio/blackhole/" target="_blank" rel="noopener">BlackHole 2ch</a> (free virtual driver).</li>
+          <li>In your source app or system preferences, select **BlackHole 2ch** as the Audio Output device.</li>
+          <li>In Echolume, select **BlackHole 2ch** as the Audio Input Device.</li>
+          <li>For streaming setups, check our step-by-step <a href="obs-guide.html">OBS Studio Setup Guide</a>.</li>
+        </ol>
       </section>
 
       <section>
-        <h2>Using BlackHole (recommended for live visuals)</h2>
-        <p>Route your DAW output into Echolume so visuals stay in sync with your mix.</p>
-        <p><strong>Step 1:</strong> Install <a href="https://existential.audio/blackhole/" target="_blank" rel="noopener">BlackHole 2ch</a> from the official site.</p>
-        <p><strong>Step 2:</strong> In your DAW (Ableton, Logic, etc.), set Audio Output → BlackHole 2ch.</p>
-        <p><strong>Step 3:</strong> In Echolume, select Audio Input Device → BlackHole 2ch.</p>
-        <p>This routes your DAW audio directly into Echolume for perfectly synced visuals. For streaming with OBS, see the <a href="obs-guide.html">full OBS setup guide</a>.</p>
+        <h2>4. Using your Mac microphone</h2>
+        <p>The fastest way to test Echolume's visual reactions.</p>
+        <ol class="legal-list">
+          <li>Launch Echolume and select **MacBook Microphone** (or your external USB mic) from the device picker.</li>
+          <li>Enable macOS microphone permissions when prompted. If declined, go to **System Settings &amp; Privacy &amp; Security &amp; Microphone** and toggle Echolume on.</li>
+          <li>Speak or play ambient sound. The level meter will respond and feed frequencies to the active theme.</li>
+        </ol>
       </section>
 
       <section>
-        <h2>Streaming with Twitch</h2>
-        <p>Echolume integrates with Twitch chat — viewers can control your visuals with commands like <strong>!theme</strong>, <strong>!glitch</strong>, and <strong>!randomize</strong> while you stream. See the <a href="twitch-guide.html">Twitch integration guide</a> for setup instructions.</p>
-      </section>
-
-      <section>
-        <h2>Troubleshooting</h2>
+        <h2>Troubleshooting audio capture</h2>
         <dl class="faq">
-          <dt>I don't see any movement.</dt>
-          <dd>Make sure the level meter is moving. If not, check your selected input device.</dd>
+          <dt>The level meter is not moving / shows no signal</dt>
+          <dd>Ensure that the application has microphone permissions. Select a different stereo channel pair in Setup, or check the gain settings on your hardware audio interface.</dd>
 
-          <dt>No devices appear.</dt>
-          <dd>Make sure Echolume has Microphone permission in macOS Settings.</dd>
+          <dt>My DAW plugin is not sending parameters to Echolume</dt>
+          <dd>Confirm that **OSC Input** is enabled in Echolume's Setup. Verify that no firewall software is blocking local UDP port 9000. Ensure the DAW track is playing audio and not muted.</dd>
 
-          <dt>Visuals lag or stutter.</dt>
-          <dd>Try lowering buffer size in your DAW or closing other GPU-heavy apps.</dd>
+          <dt>Visual trails lag or feel choppy</dt>
+          <dd>Latency is typically a result of CPU/GPU throttling. Check if other heavy graphical applications are running. Try closing external monitors if rendering at very high resolutions.</dd>
         </dl>
       </section>
     </article>
   </main>
 
   <footer class="footer">
-    <p><a href="index.html">Echolume</a> — <a href="obs-guide.html">OBS Guide</a> · <a href="twitch-guide.html">Twitch</a> · <a href="privacy.html">Privacy</a> · <a href="support.html">Support</a> · <a href="https://github.com/JarlLyng/echolume">GitHub</a></p>
-    <p style="margin-top:1rem;font-size:0.8em;opacity:0.6;">More from IAMJARL</p>
-    <p style="font-size:0.85em;"><a href="https://madebyhuman.iamjarl.com" target="_blank" rel="noopener noreferrer">Made by Human</a> · <a href="https://emotionwave.iamjarl.com" target="_blank" rel="noopener noreferrer">EmotionWave</a> · <a href="https://beertuner.iamjarl.com" target="_blank" rel="noopener noreferrer">BeerTuner</a> · <a href="https://iamjarl.com" target="_blank" rel="noopener noreferrer">All projects</a></p>
+    <p>Echolume — minimal UI, beautiful results.</p>
+    <div class="footer-nav">
+      <a href="index.html">Home</a>
+      <a href="how-it-works.html">How it works</a>
+      <a href="obs-guide.html">OBS Guide</a>
+      <a href="twitch-guide.html">Twitch</a>
+      <a href="privacy.html">Privacy</a>
+      <a href="support.html">Support</a>
+      <a href="https://github.com/JarlLyng/echolume" target="_blank" rel="noopener">GitHub</a>
+    </div>
   </footer>
 </body>
 </html>
