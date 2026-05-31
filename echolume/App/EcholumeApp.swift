@@ -102,7 +102,13 @@ private struct RootView: View {
         .animation(.easeInOut(duration: 0.2), value: appModel.liveOnExternal)
         .onKeyPress { key in
             let ch = key.characters
-            if key.key == .space { appModel.randomize(); return .handled }
+            // Spacebar = Randomize, but only in Live. On Setup it would nuke a
+            // dialed-in look with no undo, so let Space behave normally there.
+            if key.key == .space {
+                if showSetup { return .ignored }
+                appModel.randomize()
+                return .handled
+            }
             if key.key == .return {
                 if showSetup { appModel.enterLive() } else { appModel.exitLive() }
                 return .handled

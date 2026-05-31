@@ -391,14 +391,18 @@ Echolume must use the **IAMJARL design system** from:
 
 **Rules:**
 - Do not create ad-hoc colors, spacings, corner radii, or typography.
-- Use design tokens/components from the design system for **all UI** (SetupView, LiveView overlays, pickers, buttons, sliders, etc.).
+- Use design tokens/components from the design system for **all UI** in the main app (SetupView, LiveView overlays, pickers, buttons, sliders, etc.).
 - Keep UI minimal, but consistent.
+
+> **Exception — AUv3 plugin UI.** The `EcholumeAudioTap` app-extension target does **not** link the `IAMJARLDesignTokens` package (keeps the extension lean; the AU host controls view sizing). Its small SwiftUI view uses plain SwiftUI with consistent spacing instead of tokens.
+>
+> **Exception — `LiveView` overlay.** Overlay chrome is drawn on top of arbitrary Metal output (which can be bright or dark), so it uses fixed dark scrims + light text for legibility on any visuals rather than `colorScheme` tokens (which track the app background, not the canvas).
 
 ### Integration
 
 The design system is integrated as a **Swift Package Manager** dependency (already added to the Xcode project):
 - **Package:** `IAMJARLDesignTokens` from `https://github.com/JarlLyng/iamjarl-design`
-- **Version:** `upToNextMajorVersion` from 0.1.3
+- **Version:** `upToNextMajorVersion` from 1.0.0
 - **Update:** *File → Packages → Update to Latest Package Versions* in Xcode
 
 There is **no local copy** of `DesignTokens.swift` — tokens come directly from the SPM package.

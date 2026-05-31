@@ -25,7 +25,7 @@ struct PerformanceSection: View {
                         .foregroundStyle(DesignTokens.Common.primary(colorScheme))
                 }
                 .buttonStyle(.plain)
-                .keyboardShortcut(.space, modifiers: [])
+                .help("Randomize the look (Spacebar in Live)")
             }
 
             HStack(spacing: DesignTokens.Spacing.lg) {

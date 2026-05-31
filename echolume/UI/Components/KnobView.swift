@@ -61,6 +61,15 @@ struct KnobView: View {
         max(0, min(1, value))
     }
 
+    /// Spoken value for VoiceOver: percentage normally, binding state in Learn mode.
+    private var accessibilityValueText: String {
+        if isLearnMode {
+            return isArmed ? "Listening for a MIDI control"
+                           : (midiCC.map { "Bound to CC \($0)" } ?? "Not bound")
+        }
+        return isEnabled ? "\(Int((clampedValue * 100).rounded())) percent" : "Coming soon"
+    }
+
     /// Accent ring shown in MIDI Learn mode: solid when armed, subtle when a
     /// CC is already bound.
     @ViewBuilder private var learnRing: some View {
@@ -161,6 +170,25 @@ struct KnobView: View {
                 .foregroundStyle(DesignTokens.Common.Text.secondary(colorScheme))
         }
         .frame(width: knobSize + DesignTokens.Spacing.lg)
+        // VoiceOver / Switch Control: expose the whole knob as one adjustable element.
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel(title)
+        .accessibilityValue(accessibilityValueText)
+        // The adjustable behavior comes from accessibilityAdjustableAction itself;
+        // only Learn mode is button-like.
+        .accessibilityAddTraits(isLearnMode ? .isButton : [])
+        .accessibilityAdjustableAction { direction in
+            guard isEnabled, !isLearnMode else { return }
+            let step = 0.05
+            switch direction {
+            case .increment: value = min(1, clampedValue + step)
+            case .decrement: value = max(0, clampedValue - step)
+            @unknown default: break
+            }
+        }
+        .accessibilityAction {
+            if isEnabled && isLearnMode { onArm?() }
+        }
     }
 }
 
