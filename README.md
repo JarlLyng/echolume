@@ -552,6 +552,10 @@ Echolume uses **Apple's built-in crash reporting** — no third-party SDK or DSN
 
 ---
 
+## Changelog
+
+See [CHANGELOG.md](CHANGELOG.md) for notable changes.
+
 ## License
 
 MIT — see [LICENSE](LICENSE) for full text.
