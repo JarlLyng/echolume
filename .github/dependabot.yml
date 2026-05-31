@@ -11,7 +11,7 @@ updates:
       - "dependencies"
       - "ci"
 
-  # Swift Package Manager dependencies (Sentry, IAMJARLDesignTokens)
+  # Swift Package Manager dependencies (IAMJARLDesignTokens)
   - package-ecosystem: "swift"
     directory: "/"
     schedule:

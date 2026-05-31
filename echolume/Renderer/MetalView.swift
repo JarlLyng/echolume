@@ -4,7 +4,6 @@
 //
 
 import MetalKit
-import Sentry
 import SwiftUI
 
 struct MetalView: NSViewRepresentable {
@@ -27,9 +26,6 @@ struct MetalView: NSViewRepresentable {
         if device == nil {
             let msg = "This Mac does not support Metal. Echolume cannot render visuals."
             Log.error("[Renderer] \(msg)")
-            SentrySDK.capture(message: "Metal device unavailable") { scope in
-                scope.setTag(value: "renderer_init", key: "failure_point")
-            }
             DispatchQueue.main.async { onError?(msg) }
         }
         return mtkView
@@ -67,9 +63,6 @@ struct MetalView: NSViewRepresentable {
                     didReportInitFailure = true
                     let msg = "Renderer failed to initialize. Try restarting the app or check Console for details."
                     Log.error("[Renderer] \(msg)")
-                    SentrySDK.capture(message: "Renderer init failed") { scope in
-                        scope.setTag(value: "renderer_init", key: "failure_point")
-                    }
                     let cb = onError
                     DispatchQueue.main.async { cb?(msg) }
                 }

@@ -11,7 +11,6 @@ import AudioToolbox
 import Combine
 import CoreAudio
 import Foundation
-import Sentry
 #if canImport(Darwin)
 import Darwin
 #endif
@@ -303,12 +302,7 @@ final class AudioManager {
                 $0.formatChannelCount = 0
                 $0.engineRunning = false
             }
-            SentrySDK.capture(error: error) { scope in
-                scope.setTag(value: "audio_engine_start", key: "failure_point")
-            }
-            #if DEBUG
-            if !didLogThisRestart { Log.warn("AudioManager: engine.start failed: \(error.localizedDescription) (once per restart)") }
-            #endif
+            if !didLogThisRestart { Log.error("AudioManager: engine.start failed: \(error.localizedDescription)") }
         }
     }
 

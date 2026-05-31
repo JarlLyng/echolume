@@ -7,7 +7,6 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		2F0891822F4F27880017269C /* Sentry in Frameworks */ = {isa = PBXBuildFile; productRef = 2F0891812F4F27880017269C /* Sentry */; };
 		2F09CD902FCC5CAB00455D8F /* EcholumeAudioTap.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = 2F09CD662FCC5CAB00455D8F /* EcholumeAudioTap.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		2FA00001300000000017269C /* IAMJARLDesignTokens in Frameworks */ = {isa = PBXBuildFile; productRef = 2FA00002300000000017269C /* IAMJARLDesignTokens */; };
 /* End PBXBuildFile section */
@@ -55,7 +54,6 @@
 		2F08915E2F4F27880017269C /* echolumeTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = echolumeTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		2F0891682F4F27880017269C /* echolumeUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = echolumeUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		2F09CD662FCC5CAB00455D8F /* EcholumeAudioTap.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = EcholumeAudioTap.appex; sourceTree = BUILT_PRODUCTS_DIR; };
-		2FA00010300000000017269C /* Sentry.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = Sentry.xcconfig; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
@@ -112,7 +110,6 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				2F0891822F4F27880017269C /* Sentry in Frameworks */,
 				2FA00001300000000017269C /* IAMJARLDesignTokens in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -147,7 +144,6 @@
 				2F0891532F4F27820017269C /* echolume */,
 				2F0891612F4F27880017269C /* echolumeTests */,
 				2F08916B2F4F27880017269C /* echolumeUITests */,
-				2FA00010300000000017269C /* Sentry.xcconfig */,
 				2F09CD672FCC5CAB00455D8F /* EcholumeAudioTap */,
 				2F0891522F4F27820017269C /* Products */,
 			);
@@ -186,7 +182,6 @@
 			);
 			name = echolume;
 			packageProductDependencies = (
-				2F0891812F4F27880017269C /* Sentry */,
 				2FA00002300000000017269C /* IAMJARLDesignTokens */,
 			);
 			productName = echolume;
@@ -297,7 +292,6 @@
 			mainGroup = 2F0891482F4F27820017269C;
 			minimizedProjectReferenceProxies = 1;
 			packageReferences = (
-				2F0891802F4F27880017269C /* XCRemoteSwiftPackageReference "sentry-cocoa" */,
 				2FA00003300000000017269C /* XCRemoteSwiftPackageReference "iamjarl-design" */,
 			);
 			preferredProjectObjectVersion = 77;
@@ -520,7 +514,6 @@
 		};
 		2F0891732F4F27880017269C /* Debug */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = 2FA00010300000000017269C /* Sentry.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
@@ -549,7 +542,6 @@
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.music";
 				INFOPLIST_KEY_NSHumanReadableCopyright = "";
 				INFOPLIST_KEY_NSMicrophoneUsageDescription = "Echolume needs access to an audio input source to drive real-time visuals.";
-				INFOPLIST_KEY_SentryDSN = "$(SENTRY_DSN)";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/../Frameworks",
@@ -569,7 +561,6 @@
 		};
 		2F0891742F4F27880017269C /* Release */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = 2FA00010300000000017269C /* Sentry.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
@@ -599,7 +590,6 @@
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.music";
 				INFOPLIST_KEY_NSHumanReadableCopyright = "";
 				INFOPLIST_KEY_NSMicrophoneUsageDescription = "Echolume needs access to an audio input source to drive real-time visuals.";
-				INFOPLIST_KEY_SentryDSN = "$(SENTRY_DSN)";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/../Frameworks",
@@ -844,14 +834,6 @@
 /* End XCConfigurationList section */
 
 /* Begin XCRemoteSwiftPackageReference section */
-		2F0891802F4F27880017269C /* XCRemoteSwiftPackageReference "sentry-cocoa" */ = {
-			isa = XCRemoteSwiftPackageReference;
-			repositoryURL = "https://github.com/getsentry/sentry-cocoa";
-			requirement = {
-				kind = upToNextMajorVersion;
-				minimumVersion = 9.14.0;
-			};
-		};
 		2FA00003300000000017269C /* XCRemoteSwiftPackageReference "iamjarl-design" */ = {
 			isa = XCRemoteSwiftPackageReference;
 			repositoryURL = "https://github.com/JarlLyng/iamjarl-design";
@@ -863,11 +845,6 @@
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
-		2F0891812F4F27880017269C /* Sentry */ = {
-			isa = XCSwiftPackageProductDependency;
-			package = 2F0891802F4F27880017269C /* XCRemoteSwiftPackageReference "sentry-cocoa" */;
-			productName = Sentry;
-		};
 		2FA00002300000000017269C /* IAMJARLDesignTokens */ = {
 			isa = XCSwiftPackageProductDependency;
 			package = 2FA00003300000000017269C /* XCRemoteSwiftPackageReference "iamjarl-design" */;
