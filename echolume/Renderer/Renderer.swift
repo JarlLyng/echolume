@@ -5,7 +5,6 @@
 
 import Metal
 import MetalKit
-import Sentry
 import simd
 
 /// Must match Metal Uniforms layout (including padding for float4 alignment).
@@ -126,9 +125,7 @@ final class Renderer: NSObject, MTKViewDelegate {
             feedbackPipeline = try device.makeRenderPipelineState(descriptor: feedbackDesc)
             presentPipeline = try device.makeRenderPipelineState(descriptor: presentDesc)
         } catch {
-            SentrySDK.capture(error: error) { scope in
-                scope.setTag(value: "render_pipeline", key: "failure_point")
-            }
+            Log.error("[Renderer] Pipeline state creation failed: \(error.localizedDescription)")
             return nil
         }
 

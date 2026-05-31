@@ -22,7 +22,7 @@ A performance/VJ tool: pick an audio input, a theme/scene/shape, tweak 5 perform
 - `echolumeTests/` — Swift Testing unit tests (pure logic: parsing, mapping, stores, beat). `echolumeUITests/` — stock launch tests.
 
 ## Implemented features
-Audio engine + in‑app device switching; 6 themes × 7 scenes × 5 shapes + 5 knobs + Randomize; feedback/decaying trails; beat detection (autocorrelation BPM + tap tempo); preset system (save/recall/delete, ⌘1–9); MIDI Learn; OSC input; menu bar extra; the AUv3 audio‑tap plugin (beta). Optional Sentry (opt‑in via `SENTRY_DSN`, off by default).
+Audio engine + in‑app device switching; 6 themes × 7 scenes × 5 shapes + 5 knobs + Randomize; feedback/decaying trails; beat detection (autocorrelation BPM + tap tempo); preset system (save/recall/delete, ⌘1–9); MIDI Learn; OSC input; menu bar extra; the AUv3 audio‑tap plugin (beta). Crash reporting via Apple's built‑in tooling (Xcode Organizer / App Store Connect) — no third‑party SDK.
 
 ## Shipping to TestFlight
 Xcode Organizer: **Product → Archive** (destination "Any Mac") → **Distribute App → TestFlight & App Store Connect → Upload**. Automatic signing, team `KDWZ3WNLDK`, bundle `com.iamjarl.echolume`. Bump `CURRENT_PROJECT_VERSION` (all app‑target configs, replace_all) before each upload. See the `echolume-release-state` memory for the last uploaded build number.

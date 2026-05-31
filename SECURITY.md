@@ -34,7 +34,7 @@ Security reports are welcome for:
 - The marketing site at `docs/`
 
 Out of scope:
-- Vulnerabilities in third-party dependencies (please report those upstream — Sentry, IAMJARLDesignTokens)
+- Vulnerabilities in third-party dependencies (please report those upstream — IAMJARLDesignTokens)
 - Issues requiring physical access to the user's machine
 - Social engineering attacks
 

@@ -28,6 +28,3 @@ Thumbs.db
 # IDE
 .idea/
 *.swp
-
-# Secrets — keep DSN out of version control
-Sentry.xcconfig

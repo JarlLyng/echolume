@@ -22,17 +22,6 @@ git clone https://github.com/JarlLyng/echolume.git
 cd echolume
 ```
 
-### Sentry configuration (optional)
-
-Crash reporting is optional. If you want to test with Sentry:
-
-```bash
-cp Sentry.xcconfig.example Sentry.xcconfig
-# Edit Sentry.xcconfig and add your DSN
-```
-
-`Sentry.xcconfig` is gitignored — never commit your DSN.
-
 ### Build and run
 
 Open `echolume.xcodeproj` in Xcode and press **Run**, or:

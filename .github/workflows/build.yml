@@ -36,9 +36,6 @@ jobs:
           echo "Selecting $XC"
           sudo xcode-select -s "$XC"
 
-      - name: Set up Sentry config (no DSN — keeps Sentry inactive in CI)
-        run: cp Sentry.xcconfig.example Sentry.xcconfig
-
       - name: Show versions
         run: |
           xcodebuild -version
@@ -91,9 +88,6 @@ jobs:
           [ -z "$XC" ] && XC=/Applications/Xcode.app
           echo "Selecting $XC"
           sudo xcode-select -s "$XC"
-
-      - name: Set up Sentry config (no DSN — keeps Sentry inactive in CI)
-        run: cp Sentry.xcconfig.example Sentry.xcconfig
 
       - name: Run unit tests
         run: |

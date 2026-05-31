@@ -32,7 +32,7 @@ This README mixes shipped features with target architecture. The split below is 
 - Menu bar extra: quick actions (Randomize, Panic Reset, Restart Audio), live status, and Open Echolume — reachable while running fullscreen on another display.
 - Audio plugin (beta): bundled `EcholumeAudioTap` AUv3 — drop it on a DAW track and it forwards analysed bands + host BPM to Echolume over OSC (no BlackHole). See [Audio plugin (beta)](#audio-plugin-beta).
 - Settings persistence in `UserDefaults`.
-- Optional Sentry crash reporting (opt‑in — see [Sentry](#sentry-error-monitoring)).
+- Crash reporting via Apple's built‑in tooling (Xcode Organizer / App Store Connect) — no third‑party SDK. See [Crash reporting](#crash-reporting).
 
 ### Planned
 - Video recording/export ([#6](https://github.com/JarlLyng/echolume/issues/6)).
@@ -473,7 +473,7 @@ When implementing, follow these rules:
 
 1. **Small, testable steps**. Prefer compiling after each file.
 2. Keep SwiftUI views dumb; most logic goes into `AppModel` and subsystems.
-3. Approved third-party deps: **Sentry** (crash reporting, test phase only) and **IAMJARLDesignTokens** (design system). Avoid adding others without good reason.
+3. Approved third-party deps: **IAMJARLDesignTokens** (design system). Avoid adding others without good reason.
 4. Prefer deterministic code (no hidden magic).
 5. Add lightweight logging around audio start/stop and input format (avoid logging inside realtime callbacks).
 6. Device switching must use a deterministic restart model (dispose engine → create new engine → set device → install tap → start). Avoid KVC hacks or private API access.
@@ -538,21 +538,13 @@ When the app is on the Mac App Store, replace the download CTA in `docs/index.ht
 
 ---
 
-## Sentry (error monitoring)
+## Crash reporting
 
-**Note:** Sentry is **opt-in and disabled by default**. The SDK only starts when a DSN is provided via the `SENTRY_DSN` environment variable or a `SentryDSN` Info.plist key; without one, the app runs with no crash reporting. A DSN is configured for the test phase. Set `SENTRY_DSN` (and optionally `SENTRY_ENVIRONMENT`) in the scheme’s Environment Variables. Consider removing the dependency entirely before App Store release. If the build fails with "Missing package product 'Sentry'", open the project in Xcode and run **File → Packages → Resolve Package Versions** (or **Reset Package Caches** first, then resolve).
+Echolume uses **Apple's built-in crash reporting** — no third-party SDK or DSN. For TestFlight and App Store builds, crash reports from users who opt into sharing analytics flow automatically into **Xcode → Window → Organizer → Crashes** and App Store Connect, symbolicated from the dSYMs uploaded at archive time.
 
-**Setup:**
-
-1. In [Sentry](https://sentry.io), create a project (e.g. **macOS** or **echolume**) and copy the DSN.
-2. Run the app with the DSN set:
-   - **Environment variable:** `SENTRY_DSN=https://…@….ingest.sentry.io/…`
-   - Or in Xcode: **Edit Scheme** → **Run** → **Arguments** → **Environment Variables** → add `SENTRY_DSN`.
-3. Optional: `SENTRY_ENVIRONMENT` (default `development`) to separate test/production.
-
-Without `SENTRY_DSN`, the app runs as before; Sentry is simply not started.
-
-**Archive / TestFlight:** If you see "Upload Symbols Failed" (missing dSYM for some UUIDs), the upload can still succeed — click **Done**. The missing symbols are often from the Sentry framework (SPM); App Store Connect may still accept the build. For full symbolication of all binaries, you’d need to ensure SPM framework dSYMs are included (e.g. via a Run Script phase) or remove Sentry from the archive build.
+- Nothing to configure: archive and upload as usual; dSYMs are produced by the Release config (`DEBUG_INFORMATION_FORMAT = dwarf-with-dsym`).
+- Reports are aggregated and post-release only (not real-time, and not collected during local development).
+- If richer on-device diagnostics are needed later (hangs, launch/CPU/disk metrics), [MetricKit](https://developer.apple.com/documentation/metrickit) (`MXMetricManager`) can be added with no third-party dependency.
 
 ---
 

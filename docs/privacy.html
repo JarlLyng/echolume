@@ -29,6 +29,8 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&amp;family=Outfit:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet">
+  <!-- Umami analytics (privacy-friendly, cookieless) -->
+  <script defer src="https://umami-iamjarl.vercel.app/script.js" data-website-id="09a6bdeb-cb4b-4156-8674-aaff69e3fee9"></script>
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
@@ -68,13 +70,7 @@
 
       <section>
         <h2>Diagnostic and crash reporting</h2>
-        <p>Echolume can optionally use <a href="https://sentry.io" target="_blank" rel="noopener">Sentry</a> to track application crashes, exceptions, and render-loop performance issues during testing cycles. **This is opt-in and disabled by default**. The Sentry framework only activates if a Sentry DSN is manually set in your environment variables. When active, Sentry may collect:</p>
-        <ul>
-          <li>Stack traces and crash diagnostics (registers, active thread details)</li>
-          <li>System details: device hardware model, macOS version, app bundle version</li>
-          <li>Performance benchmarks (initial app launch duration, GPU render hangs)</li>
-        </ul>
-        <p>Sentry diagnostics **never** collect audio streams, personal names, account identifiers, or user files. Collected data is used exclusively to debug the application. Refer to <a href="https://sentry.io/privacy/" target="_blank" rel="noopener">Sentry's Privacy Policy</a> for more information on how they handle data safety.</p>
+        <p>Echolume uses no third-party crash-reporting or analytics SDK. Crash reports are handled entirely by Apple's built-in tooling: if you have opted into sharing analytics with developers in your macOS privacy settings, anonymized crash diagnostics for App Store and TestFlight builds reach us through Apple's Xcode Organizer and App Store Connect. This data is governed by <a href="https://www.apple.com/legal/privacy/" target="_blank" rel="noopener">Apple's Privacy Policy</a> and contains no audio streams, personal names, account identifiers, or user files.</p>
       </section>
 
       <section>
@@ -83,8 +79,13 @@
       </section>
 
       <section>
-        <h2>Website hosting</h2>
-        <p>This marketing website is hosted using GitHub Pages. GitHub may capture standard HTTP access logs (including visitor IP addresses, browser user-agent tokens, and request timestamps) to maintain network stability and security, as outlined in the <a href="https://docs.github.com/en/site-policy/privacy-policies/github-privacy-statement" target="_blank" rel="noopener">GitHub Privacy Statement</a>. We do not use third-party analytics cookies, trackers, or marketing pixels on this website.</p>
+        <h2>Website hosting &amp; analytics</h2>
+        <p>This marketing website is hosted using GitHub Pages. GitHub may capture standard HTTP access logs (including visitor IP addresses, browser user-agent tokens, and request timestamps) to maintain network stability and security, as outlined in the <a href="https://docs.github.com/en/site-policy/privacy-policies/github-privacy-statement" target="_blank" rel="noopener">GitHub Privacy Statement</a>. We do not use marketing or advertising trackers, and we set no cookies on this website.</p>
+      </section>
+
+      <section>
+        <h2>Analytics</h2>
+        <p>We use <a href="https://umami.is" target="_blank" rel="noopener">Umami</a>, a privacy-friendly, self-hosted, cookieless analytics tool, to understand aggregate traffic such as page views, referrers, browser, and country. Umami does <strong>not</strong> use cookies, does <strong>not</strong> collect or store personally identifiable information, and does <strong>not</strong> track you across other websites. No data is ever sold or shared with advertisers.</p>
       </section>
 
       <section>
