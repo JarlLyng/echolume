@@ -9,18 +9,20 @@ Dette dokument beskriver en SEO-strategi for Echolumes marketing-site på GitHub
 ### På plads
 
 - **Canonical URLs**, **meta descriptions**, **Open Graph**, **Twitter Cards** (`summary_large_image`) på alle sider.
-- **Struktureret data:** `SoftwareApplication` + `FAQPage` på support; **BreadcrumbList** på bl.a. support og privacy.
+- **Struktureret data:** `SoftwareApplication` på forsiden; `HowTo` + `FAQPage` + `BreadcrumbList` på guide-siderne (how-it-works, obs-guide, twitch-guide); `FAQPage` + `BreadcrumbList` på support; `BreadcrumbList` på privacy.
 - **robots.txt**, **sitemap.xml** med `lastmod` og `changefreq` per URL.
 - **Semantisk HTML**, **viewport**, **theme-color**.
+- **Sprog ensartet:** alle sider er nu engelske (`lang="en"`).
+- **URL-konsistens:** interne links peger på roden (`/`) i overensstemmelse med canonical.
+- **Privatlivsvenlig analytics:** Umami (cookieless) på alle sider.
 
 ### Huller / forbedringer
 
 | Problem | Detalje |
 |--------|--------|
-| **Manglende OG-billede** | `og-image.png` refereres i HTML men ligger ikke i `docs/` — deling viser 404/blankt billede. |
-| **Sprog-uensartethed** | De fleste sider er engelske; OBS- og Twitch-guides er danske (`lang="da"`). Blandet sprogsignal for SEO og brugere. |
-| **Ingen hreflang** | Kun relevant hvis I bevidst kører to sprog; ellers ensret sprog på tværs af sider. |
-| **URL-konsistens** | Canonical bruger ofte trailing slash på roden; nogle interne links peger på `index.html` — ensret hvis I vil minimere dubletter i analytics. |
+| **OG-billede skal optimeres** | `og-image.png` ligger nu i `docs/`, men er ~880 KB og 1024×1024 (JPEG). Bør re-eksporteres til 1200×630 og <150 KB. Spores i issue [#62](https://github.com/JarlLyng/echolume/issues/62). |
+| **Ingen hreflang** | Ikke relevant så længe sitet er ét sprog (engelsk); kun nødvendigt hvis der senere tilføjes dansk parallel-indhold. |
+| **`Article`-schema mangler** | `datePublished`/`dateModified` på guide-siderne ville styrke freshness (se §5). |
 
 ---
 
@@ -120,12 +122,12 @@ Anbefaling: Start med **A) fuld engelsk** for bedre international søgeeffekt, m
 ### Allerede implementeret
 
 - **SoftwareApplication** på forsiden: navn, OS, kategori, beskrivelse, pris, URL, forfatter.
-- **FAQPage** på support med relevante Q&A.
+- **HowTo** på how-it-works, obs-guide og twitch-guide.
+- **FAQPage** på support og på alle tre guide-sider (spejler on-page-FAQ).
 - **BreadcrumbList** på alle nuværende undersider (how-it-works, obs-guide, twitch-guide, support, privacy).
 
 ### Anbefalede udvidelser
 
-- **HowTo** på how-it-works, obs-guide og twitch-guide: step-by-step giver mulighed for HowTo-snippets i søgninger.
 - **Article** på guide-sider: `datePublished` / `dateModified` og `author` styrker indholds-freshness og tillid.
 
 Tilføj som ekstra `application/ld+json`-blokke i `<head>` uden at fjerne eksisterende schema.
@@ -134,12 +136,12 @@ Tilføj som ekstra `application/ld+json`-blokke i `<head>` uden at fjerne eksist
 
 ## 6. Social deling og OG-billede
 
-### 6.1 OG-billede (påkrævet)
+### 6.1 OG-billede (skal optimeres)
 
-- **Fil:** Opret `docs/og-image.png`.
-- **Anbefalet størrelse:** 1200×630 px (Open Graph standard).
+- **Fil:** `docs/og-image.png` findes nu og serveres korrekt.
+- **Problem:** den er ~880 KB og 1024×1024 (JPEG-data). Open Graph-standarden er **1200×630 px**, og kvadratiske billeder beskæres/letterboxes i Twitter/Facebook/Slack/iMessage.
+- **Handling:** re-eksportér til 1200×630 og komprimér til <150 KB. Spores i issue [#62](https://github.com/JarlLyng/echolume/issues/62).
 - **Indhold:** App-navn (Echolume), tagline ("Sound into light") og evt. et stilbillede fra appen (uden for meget tekst).
-- Alle sider der har `og:image` peger i dag på `https://echolume.iamjarl.com/og-image.png` — sørg for at filen ligger i `docs/` så den serveres korrekt.
 
 ### 6.2 Sociale meta på alle sider
 
@@ -174,21 +176,20 @@ Tilføj som ekstra `application/ld+json`-blokke i `<head>` uden at fjerne eksist
 
 | Prioritet | Handling | Effekt |
 |-----------|----------|--------|
-| **P0** | Opret og commit `docs/og-image.png` (1200×630). | Korrekt delingspreview; ingen død `og:image`-URL. |
-| **P1** | Beslut sprogstrategi: oversæt OBS/Twitch-guides til engelsk *eller* hreflang + parallel indhold. | Klart sprogsignal. |
+| **P1** | Optimér `docs/og-image.png` til 1200×630 / <150 KB ([#62](https://github.com/JarlLyng/echolume/issues/62)). | Korrekt, let delingspreview. |
 | **P1** | Opdater `lastmod` i `sitemap.xml` når sider ændres (fx ved denne type release). | Friskhedssignal til crawlers. |
 | **P2** | Stærkere keyword i forsidens title/meta (f.eks. "Live Audio-Reactive Visuals for macOS"). | Bedre match på generiske søgninger. |
-| **P2** | BreadcrumbList på *alle* undersider der mangler det (hvis nogen). | Breadcrumb rich results. |
-| **P3** | HowTo-schema på how-it-works, obs-guide og twitch-guide. | HowTo-snippets i søgning. |
+| **P3** | `Article`-schema (`datePublished`/`dateModified`) på guide-siderne. | Freshness-signal. |
 | **P3** | Krydslinks mellem how-it-works ↔ twitch-guide/obs-guide hvor det giver mening. | Intern linking og brugerflow. |
+| ✅ Gjort | Sprog ensartet (engelsk + `lang="en"` overalt); HowTo + FAQPage på guides; interne links → `/`; død CSS fjernet. | — |
 
 ---
 
 ## 10. Kort opsummering
 
-- **Stærkt:** Teknisk SEO-basis (canonical, meta, OG/Twitter, sitemap med lastmod, schema inkl. FAQ og breadcrumbs på flere sider).
-- **Største hul:** Fysisk `og-image.png` mangler stadig i repo trods referencer i HTML.
-- **Næste skridt:** P0 (billede) + P1 (sprog + vedligehold `lastmod`).
+- **Stærkt:** Teknisk SEO-basis (canonical, meta, OG/Twitter, sitemap med lastmod, schema inkl. SoftwareApplication, HowTo, FAQPage og breadcrumbs); ensartet engelsk; konsistente interne links.
+- **Største hul:** `og-image.png` skal optimeres (størrelse/format — [#62](https://github.com/JarlLyng/echolume/issues/62)).
+- **Næste skridt:** optimér OG-billede + vedligehold `lastmod` ved indholdsændringer.
 
 ---
 

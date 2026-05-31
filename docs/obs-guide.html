@@ -58,6 +58,40 @@
   }
   </script>
 
+  <!-- FAQPage structured data (mirrors the on-page FAQ) -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    "mainEntity": [
+      {
+        "@type": "Question",
+        "name": "I can't hear stream audio in my headphones anymore",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Because OBS is routing monitoring audio to BlackHole, your headphones are bypassed. To hear the stream output, open Audio MIDI Setup on macOS, click the + button in the bottom left, and create a Multi-Output Device. Check both your headphones (or audio interface) and BlackHole 2ch. Then, in OBS Settings → Audio, select this Multi-Output Device as your Monitoring Device."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "Is there a delay between stream audio and Echolume visuals?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "No. Virtual loopback drivers like BlackHole run inside the macOS kernel and have zero latency. If you notice a delay, it is likely GPU throttling. Close unused background software to free up rendering cycles."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "My viewer commands are not affecting the visuals",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "To enable viewer interaction, make sure you configure your channel username under the Twitch chat tab in Setup and toggle the connection to active. Refer to the Twitch integration guide."
+        }
+      }
+    ]
+  }
+  </script>
+
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&amp;family=Outfit:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet">
@@ -67,13 +101,13 @@
 </head>
 <body>
   <header class="header">
-    <a href="index.html" class="logo">Echolume</a>
+    <a href="/" class="logo">Echolume</a>
     <nav class="nav" aria-label="Main Navigation">
-      <a href="index.html">Home</a>
+      <a href="/">Home</a>
       <a href="how-it-works.html">How it works</a>
       <a href="obs-guide.html" class="active">OBS Guide</a>
       <a href="twitch-guide.html">Twitch</a>
-      <a href="index.html#download">Download</a>
+      <a href="/#download">Download</a>
       <a href="privacy.html">Privacy</a>
       <a href="support.html">Support</a>
       <a href="https://github.com/JarlLyng/echolume" target="_blank" rel="noopener">GitHub</a>
@@ -82,7 +116,7 @@
 
   <main class="page-main">
     <nav class="breadcrumbs" aria-label="Breadcrumbs">
-      <a href="index.html">Echolume</a>
+      <a href="/">Echolume</a>
       <span class="separator"></span>
       <span>OBS Guide</span>
     </nav>
@@ -108,26 +142,26 @@
 
         <h3>1. Set up audio monitoring in OBS</h3>
         <ol class="legal-list">
-          <li>Open OBS Studio and navigate to **Settings &rarr; Audio**.</li>
-          <li>Under the **Advanced** section, find the **Monitoring Device** dropdown.</li>
-          <li>Select **BlackHole 2ch** as the monitoring device and click Apply.</li>
+          <li>Open OBS Studio and navigate to <strong>Settings &rarr; Audio</strong>.</li>
+          <li>Under the <strong>Advanced</strong> section, find the <strong>Monitoring Device</strong> dropdown.</li>
+          <li>Select <strong>BlackHole 2ch</strong> as the monitoring device and click Apply.</li>
         </ol>
 
         <h3>2. Enable monitoring on your target audio tracks</h3>
         <ol class="legal-list">
-          <li>In the OBS main interface, right-click anywhere in the **Audio Mixer** card.</li>
-          <li>Select **Advanced Audio Properties**.</li>
+          <li>In the OBS main interface, right-click anywhere in the <strong>Audio Mixer</strong> card.</li>
+          <li>Select <strong>Advanced Audio Properties</strong>.</li>
           <li>Locate the audio sources you want to drive the visuals (e.g., microphone feed, desktop music, game capture).</li>
-          <li>Change their **Audio Monitoring** state from *Monitor Off* to **Monitor and Output**.</li>
+          <li>Change their <strong>Audio Monitoring</strong> state from *Monitor Off* to <strong>Monitor and Output</strong>.</li>
         </ol>
         <p>This setting instructs OBS to broadcast the audio to your stream output *and* replicate it to BlackHole so Echolume can capture it.</p>
 
         <h3>3. Select BlackHole inside Echolume</h3>
         <ol class="legal-list">
           <li>Launch Echolume.</li>
-          <li>In the Audio input settings, select **BlackHole 2ch** from the dropdown menu.</li>
+          <li>In the Audio input settings, select <strong>BlackHole 2ch</strong> from the dropdown menu.</li>
           <li>Play audio in OBS and check that Echolume's visual level meter registers signals.</li>
-          <li>Adjust presets or abstraction parameters, and click **Ready**.</li>
+          <li>Adjust presets or abstraction parameters, and click <strong>Ready</strong>.</li>
         </ol>
       </section>
 
@@ -138,9 +172,9 @@
         <h3>Method A: Window Capture (Single display setups)</h3>
         <p>Use this method if you are running Echolume in a standard desktop window.</p>
         <ol class="legal-list">
-          <li>In OBS, click the **+** icon in the Sources dock and select **Window Capture**.</li>
+          <li>In OBS, click the <strong>+</strong> icon in the Sources dock and select <strong>Window Capture</strong>.</li>
           <li>Name the source (e.g., "Echolume Visualizer").</li>
-          <li>In the properties, select **[echolume] Echolume** from the Window dropdown.</li>
+          <li>In the properties, select <strong>[echolume] Echolume</strong> from the Window dropdown.</li>
           <li>Press OK. Crop or adjust the size to overlay your screen layout.</li>
         </ol>
 
@@ -148,9 +182,9 @@
         <p>Highly recommended for VJ performance and high-performance streams.</p>
         <ol class="legal-list">
           <li>Connect an external display to your Mac.</li>
-          <li>In Echolume's Setup panel, select the external display from the **Output Display** list.</li>
-          <li>Click **Ready** to project Echolume fullscreen onto the external monitor.</li>
-          <li>In OBS, add a **Display Capture** source, and select the external monitor as the target.</li>
+          <li>In Echolume's Setup panel, select the external display from the <strong>Output Display</strong> list.</li>
+          <li>Click <strong>Ready</strong> to project Echolume fullscreen onto the external monitor.</li>
+          <li>In OBS, add a <strong>Display Capture</strong> source, and select the external monitor as the target.</li>
         </ol>
       </section>
 
@@ -158,7 +192,7 @@
         <h2>Frequently Asked Questions</h2>
         <dl class="faq">
           <dt>I can't hear stream audio in my headphones anymore</dt>
-          <dd>Because OBS is routing monitoring audio to BlackHole, your headphones are bypassed. To hear the stream output, open **Audio MIDI Setup** on macOS, click the **+** button in the bottom left, and create a **Multi-Output Device**. Check both your headphones (or audio interface) and **BlackHole 2ch**. Then, in OBS Settings &rarr; Audio, select this Multi-Output Device as your Monitoring Device.</dd>
+          <dd>Because OBS is routing monitoring audio to BlackHole, your headphones are bypassed. To hear the stream output, open <strong>Audio MIDI Setup</strong> on macOS, click the <strong>+</strong> button in the bottom left, and create a <strong>Multi-Output Device</strong>. Check both your headphones (or audio interface) and <strong>BlackHole 2ch</strong>. Then, in OBS Settings &rarr; Audio, select this Multi-Output Device as your Monitoring Device.</dd>
 
           <dt>Is there a delay between stream audio and Echolume visuals?</dt>
           <dd>No. Virtual loopback drivers like BlackHole run inside the macOS kernel and have zero latency. If you notice a delay, it is likely GPU throttling. Close unused background software to free up rendering cycles.</dd>
@@ -173,7 +207,7 @@
   <footer class="footer">
     <p>Echolume — minimal UI, beautiful results.</p>
     <div class="footer-nav">
-      <a href="index.html">Home</a>
+      <a href="/">Home</a>
       <a href="how-it-works.html">How it works</a>
       <a href="obs-guide.html">OBS Guide</a>
       <a href="twitch-guide.html">Twitch</a>

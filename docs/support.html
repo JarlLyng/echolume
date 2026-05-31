@@ -85,9 +85,9 @@
 </head>
 <body>
   <header class="header">
-    <a href="index.html" class="logo">Echolume</a>
+    <a href="/" class="logo">Echolume</a>
     <nav class="nav" aria-label="Main Navigation">
-      <a href="index.html">Home</a>
+      <a href="/">Home</a>
       <a href="how-it-works.html">How it works</a>
       <a href="obs-guide.html">OBS Guide</a>
       <a href="twitch-guide.html">Twitch</a>
@@ -99,7 +99,7 @@
 
   <main class="page-main">
     <nav class="breadcrumbs" aria-label="Breadcrumbs">
-      <a href="index.html">Echolume</a>
+      <a href="/">Echolume</a>
       <span class="separator"></span>
       <span>Support</span>
     </nav>
@@ -115,16 +115,16 @@
           <dd>On macOS, access to all audio inputs (including external audio interfaces, USB soundcards, and microphones) is categorized under "Microphone" permissions in Privacy &amp; Security. Echolume reads inputs locally for real-time mathematical analysis (FFT and peak levels). It never stores, records, or transmits audio data anywhere. Visuals run 100% locally.</dd>
 
           <dt>Can I capture system audio (e.g., Spotify, Chrome) directly?</dt>
-          <dd>macOS sandboxing does not allow direct hooks into general speaker output. To capture system audio, download a virtual loopback device like **BlackHole 2ch**. Route your system output to BlackHole, and set Echolume's input device to BlackHole. See the <a href="how-it-works.html">How it works guide</a> for setup details.</dd>
+          <dd>macOS sandboxing does not allow direct hooks into general speaker output. To capture system audio, download a virtual loopback device like <strong>BlackHole 2ch</strong>. Route your system output to BlackHole, and set Echolume's input device to BlackHole. See the <a href="how-it-works.html">How it works guide</a> for setup details.</dd>
 
           <dt>How do I register the bundled AUv3 DAW plugin?</dt>
-          <dd>The **EcholumeAudioTap** AUv3 plugin is embedded inside the main Echolume.app. Launching the main Echolume application once registers the plugin globally on macOS. If your DAW (Ableton, Logic) does not display it, try restarting the host DAW to trigger a fresh Audio Unit plug-in cache scan.</dd>
+          <dd>The <strong>EcholumeAudioTap</strong> AUv3 plugin is embedded inside the main Echolume.app. Launching the main Echolume application once registers the plugin globally on macOS. If your DAW (Ableton, Logic) does not display it, try restarting the host DAW to trigger a fresh Audio Unit plug-in cache scan.</dd>
 
           <dt>The DAW plugin is active but Echolume visuals aren't moving</dt>
-          <dd>Make sure you have enabled **OSC Input** in Echolume's Setup. Open Setup, scroll to the OSC panel, and toggle OSC to enabled on port **9000**. If it still does not react, verify that you do not have another application blocking UDP port 9000, and check that your macOS local firewall allows local loopback traffic.</dd>
+          <dd>Make sure you have enabled <strong>OSC Input</strong> in Echolume's Setup. Open Setup, scroll to the OSC panel, and toggle OSC to enabled on port <strong>9000</strong>. If it still does not react, verify that you do not have another application blocking UDP port 9000, and check that your macOS local firewall allows local loopback traffic.</dd>
 
           <dt>Does Echolume support MIDI controller mapping?</dt>
-          <dd>Yes. Open the **MIDI** section under Input &amp; Output settings and turn on **MIDI Learn**. Click a visual knob in Setup to arm it, then adjust a physical knob/slider on your MIDI controller. Echolume will detect the CC value and bind it. You can also map MIDI notes to triggers like Randomize, Panic Reset, Next Theme, and Previous Theme. Map presets easily to trigger visuals on stage.</dd>
+          <dd>Yes. Open the <strong>MIDI</strong> section under Input &amp; Output settings and turn on <strong>MIDI Learn</strong>. Click a visual knob in Setup to arm it, then adjust a physical knob/slider on your MIDI controller. Echolume will detect the CC value and bind it. You can also map MIDI notes to triggers like Randomize, Panic Reset, Next Theme, and Previous Theme. Map presets easily to trigger visuals on stage.</dd>
 
           <dt>Which macOS version is required?</dt>
           <dd>Echolume requires macOS 14 (Sonoma) or later to support SwiftUI overlays, Metal rendering shaders, and the sandboxed AUv3 bundle system.</dd>
@@ -145,7 +145,7 @@
   <footer class="footer">
     <p>Echolume — minimal UI, beautiful results.</p>
     <div class="footer-nav">
-      <a href="index.html">Home</a>
+      <a href="/">Home</a>
       <a href="how-it-works.html">How it works</a>
       <a href="obs-guide.html">OBS Guide</a>
       <a href="twitch-guide.html">Twitch</a>

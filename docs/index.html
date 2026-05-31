@@ -24,7 +24,6 @@
     "applicationCategory": "MultimediaApplication",
     "description": "A macOS application for live, audio-reactive 2D visuals rendered with Metal. Built for streaming, VJ performance, and DAW integration.",
     "softwareVersion": "1.0.0",
-    "fileSize": "MB",
     "releaseNotes": "Introduced EcholumeAudioTap AUv3 DAW plugin, OSC control, MIDI Learn, beat detection, Twitch commands, and presets.",
     "offers": {
       "@type": "Offer",
@@ -59,7 +58,7 @@
 </head>
 <body>
   <header class="header">
-    <a href="index.html" class="logo">Echolume</a>
+    <a href="/" class="logo">Echolume</a>
     <nav class="nav" aria-label="Main Navigation">
       <a href="#features">Features</a>
       <a href="how-it-works.html">How it works</a>
@@ -76,7 +75,7 @@
   <main>
     <section class="hero">
       <div class="hero-canvas-container">
-        <canvas id="hero-canvas"></canvas>
+        <canvas id="hero-canvas" aria-hidden="true" role="presentation"></canvas>
       </div>
       <p class="hero-tagline">Sound into light</p>
       <h1 class="hero-title">Live audio‑reactive visuals for macOS</h1>
@@ -169,6 +168,7 @@
     let mouseX = 0;
     let mouseY = 0;
     let active = true;
+    const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
     function resize() {
       canvas.width = canvas.offsetWidth;
@@ -188,7 +188,7 @@
     // Pause animation when page tab goes background (LCP & INP Optimization)
     document.addEventListener('visibilitychange', () => {
       active = !document.hidden;
-      if (active) animate();
+      if (active && !reduceMotion) animate();
     });
 
     // Card Hover Glow Effect
@@ -240,7 +240,8 @@
         }
         ctx.stroke();
       }
-      requestAnimationFrame(animate);
+      // Honor reduced-motion: draw a single static frame, don't loop.
+      if (!reduceMotion) requestAnimationFrame(animate);
     }
     animate();
   </script>

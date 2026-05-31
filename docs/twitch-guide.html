@@ -53,6 +53,40 @@
   }
   </script>
 
+  <!-- FAQPage structured data (mirrors the on-page FAQ) -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    "mainEntity": [
+      {
+        "@type": "Question",
+        "name": "Echolume fails to connect to chat (status indicator stays red)",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Verify that your Mac has active internet access. Check that your Twitch channel name is spelled correctly (it should match your Twitch username exactly, e.g., twitch_streamer). Ensure local firewall policies do not block outgoing secure WebSocket connections on port 443."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "Commands do not update the visuals",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Confirm that the global Twitch Chat toggle is enabled in Setup. Check the level meter to verify Echolume is active. Note that Echolume ignores commands if you are not currently in Ready (Live visual rendering) mode."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "Commands lag or viewer changes are ignored",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "To protect graphics performance, Echolume applies a strict global cooldown of 1 second between commands. If multiple viewers type commands simultaneously, excess commands are discarded. Viewer changes apply on top of active music analysis."
+        }
+      }
+    ]
+  }
+  </script>
+
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&amp;family=Outfit:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet">
@@ -62,13 +96,13 @@
 </head>
 <body>
   <header class="header">
-    <a href="index.html" class="logo">Echolume</a>
+    <a href="/" class="logo">Echolume</a>
     <nav class="nav" aria-label="Main Navigation">
-      <a href="index.html">Home</a>
+      <a href="/">Home</a>
       <a href="how-it-works.html">How it works</a>
       <a href="obs-guide.html">OBS Guide</a>
       <a href="twitch-guide.html" class="active">Twitch</a>
-      <a href="index.html#download">Download</a>
+      <a href="/#download">Download</a>
       <a href="privacy.html">Privacy</a>
       <a href="support.html">Support</a>
       <a href="https://github.com/JarlLyng/echolume" target="_blank" rel="noopener">GitHub</a>
@@ -77,7 +111,7 @@
 
   <main class="page-main">
     <nav class="breadcrumbs" aria-label="Breadcrumbs">
-      <a href="index.html">Echolume</a>
+      <a href="/">Echolume</a>
       <span class="separator"></span>
       <span>Twitch Guide</span>
     </nav>
@@ -88,24 +122,24 @@
 
       <section>
         <h2>How it works</h2>
-        <p>Echolume uses a native WebSocket client to connect directly to public Twitch IRC chat streams (<code>wss://irc-ws.chat.twitch.tv:443</code>). The connection is completely **anonymous and read-only** (registering as a guest <code>justinfan*</code> account). Echolume never requires your password, streaming keys, or Twitch OAuth logins, making the integration highly secure.</p>
+        <p>Echolume uses a native WebSocket client to connect directly to public Twitch IRC chat streams (<code>wss://irc-ws.chat.twitch.tv:443</code>). The connection is completely <strong>anonymous and read-only</strong> (registering as a guest <code>justinfan*</code> account). Echolume never requires your password, streaming keys, or Twitch OAuth logins, making the integration highly secure.</p>
       </section>
 
       <section>
         <h2>Setup guide</h2>
         <ol class="legal-list">
           <li>Launch Echolume on your Mac.</li>
-          <li>In the right-hand **Visuals &amp; Integrations** panel, locate the **Twitch Chat** section.</li>
-          <li>Toggle **Twitch Chat** to enabled.</li>
+          <li>In the right-hand <strong>Visuals &amp; Integrations</strong> panel, locate the <strong>Twitch Chat</strong> section.</li>
+          <li>Toggle <strong>Twitch Chat</strong> to enabled.</li>
           <li>Enter your Twitch username in the Channel Name field (do not include the # symbol or URLs).</li>
           <li>Echolume connects automatically. A status pill changes colors to indicate connectivity (green for connected, yellow for retrying, red for failed, gray for disabled).</li>
-          <li>Click **Ready** to enter fullscreen live visual rendering.</li>
+          <li>Click <strong>Ready</strong> to enter fullscreen live visual rendering.</li>
         </ol>
       </section>
 
       <section>
         <h2>Twitch chat commands reference</h2>
-        <p>Your viewers can type the following commands in your channel chat to drive visuals. Commands are rate-limited to **1 command per second** globally to prevent chat spam from thrashing visuals.</p>
+        <p>Your viewers can type the following commands in your channel chat to drive visuals. Commands are rate-limited to <strong>1 command per second</strong> globally to prevent chat spam from thrashing visuals.</p>
 
         <div class="comparison-table-wrapper">
           <table class="comparison-table">
@@ -160,7 +194,7 @@
       <section>
         <h2>Streaming workflow with OBS Studio</h2>
         <div class="callout callout-info">
-          <strong>Best performance:</strong> Visual rendering uses your Mac's graphics card. Running Echolume fullscreen on a secondary display and using OBS **Display Capture** yields better framerates than window captures.
+          <strong>Best performance:</strong> Visual rendering uses your Mac's graphics card. Running Echolume fullscreen on a secondary display and using OBS <strong>Display Capture</strong> yields better framerates than window captures.
         </div>
         <p>To broadcast interactive visuals to your stream:</p>
         <ol class="legal-list">
@@ -178,7 +212,7 @@
           <dd>Verify that your Mac has active internet access. Check that your Twitch channel name is spelled correctly (it should match your Twitch username exactly, e.g., <code>twitch_streamer</code>). Ensure local firewall policies do not block outgoing secure WebSocket connections on port 443.</dd>
 
           <dt>Commands do not update the visuals</dt>
-          <dd>Confirm that the global Twitch Chat toggle is enabled in Setup. Check the level meter to verify Echolume is active. Note that Echolume ignores commands if you are not currently in **Ready** (Live visual rendering) mode.</dd>
+          <dd>Confirm that the global Twitch Chat toggle is enabled in Setup. Check the level meter to verify Echolume is active. Note that Echolume ignores commands if you are not currently in <strong>Ready</strong> (Live visual rendering) mode.</dd>
 
           <dt>Commands lag or viewer changes are ignored</dt>
           <dd>To protect graphics performance, Echolume applies a strict global cooldown of 1 second between commands. If multiple viewers type commands simultaneously, excess commands are discarded. Viewer changes apply on top of active music analysis.</dd>
@@ -190,7 +224,7 @@
   <footer class="footer">
     <p>Echolume — minimal UI, beautiful results.</p>
     <div class="footer-nav">
-      <a href="index.html">Home</a>
+      <a href="/">Home</a>
       <a href="how-it-works.html">How it works</a>
       <a href="obs-guide.html">OBS Guide</a>
       <a href="twitch-guide.html">Twitch</a>
