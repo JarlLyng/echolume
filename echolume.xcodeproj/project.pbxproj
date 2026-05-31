@@ -8,6 +8,7 @@
 
 /* Begin PBXBuildFile section */
 		2F0891822F4F27880017269C /* Sentry in Frameworks */ = {isa = PBXBuildFile; productRef = 2F0891812F4F27880017269C /* Sentry */; };
+		2F09CD902FCC5CAB00455D8F /* EcholumeAudioTap.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = 2F09CD662FCC5CAB00455D8F /* EcholumeAudioTap.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		2FA00001300000000017269C /* IAMJARLDesignTokens in Frameworks */ = {isa = PBXBuildFile; productRef = 2FA00002300000000017269C /* IAMJARLDesignTokens */; };
 /* End PBXBuildFile section */
 
@@ -26,14 +27,58 @@
 			remoteGlobalIDString = 2F0891502F4F27820017269C;
 			remoteInfo = echolume;
 		};
+		2F09CD8E2FCC5CAB00455D8F /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 2F0891492F4F27820017269C /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 2F09CD652FCC5CAB00455D8F;
+			remoteInfo = EcholumeAudioTap;
+		};
 /* End PBXContainerItemProxy section */
+
+/* Begin PBXCopyFilesBuildPhase section */
+		2F09CD912FCC5CAB00455D8F /* Embed Foundation Extensions */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 13;
+			files = (
+				2F09CD902FCC5CAB00455D8F /* EcholumeAudioTap.appex in Embed Foundation Extensions */,
+			);
+			name = "Embed Foundation Extensions";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
 		2F0891512F4F27820017269C /* echolume.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = echolume.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		2F08915E2F4F27880017269C /* echolumeTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = echolumeTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		2F0891682F4F27880017269C /* echolumeUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = echolumeUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		2F09CD662FCC5CAB00455D8F /* EcholumeAudioTap.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = EcholumeAudioTap.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 		2FA00010300000000017269C /* Sentry.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = Sentry.xcconfig; sourceTree = "<group>"; };
 /* End PBXFileReference section */
+
+/* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
+		2F09CD942FCC5CAB00455D8F /* Exceptions for "EcholumeAudioTap" folder in "EcholumeAudioTap" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Info.plist,
+			);
+			target = 2F09CD652FCC5CAB00455D8F /* EcholumeAudioTap */;
+		};
+/* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
+
+/* Begin PBXFileSystemSynchronizedGroupBuildPhaseMembershipExceptionSet section */
+		2F09CD962FCC5CAB00455D8F /* Exceptions for "EcholumeAudioTap" folder in "Copy Bundle Resources" phase from "EcholumeAudioTap" target */ = {
+			isa = PBXFileSystemSynchronizedGroupBuildPhaseMembershipExceptionSet;
+			buildPhase = 2F09CD642FCC5CAB00455D8F /* Resources */;
+			membershipExceptions = (
+				Common/DSP/EcholumeAudioTapAUProcessHelper.hpp,
+				Common/DSP/EcholumeAudioTapBufferedAudioBus.hpp,
+				DSP/EcholumeAudioTapDSPKernel.hpp,
+			);
+		};
+/* End PBXFileSystemSynchronizedGroupBuildPhaseMembershipExceptionSet section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		2F0891532F4F27820017269C /* echolume */ = {
@@ -49,6 +94,15 @@
 		2F08916B2F4F27880017269C /* echolumeUITests */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
 			path = echolumeUITests;
+			sourceTree = "<group>";
+		};
+		2F09CD672FCC5CAB00455D8F /* EcholumeAudioTap */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				2F09CD942FCC5CAB00455D8F /* Exceptions for "EcholumeAudioTap" folder in "EcholumeAudioTap" target */,
+				2F09CD962FCC5CAB00455D8F /* Exceptions for "EcholumeAudioTap" folder in "Copy Bundle Resources" phase from "EcholumeAudioTap" target */,
+			);
+			path = EcholumeAudioTap;
 			sourceTree = "<group>";
 		};
 /* End PBXFileSystemSynchronizedRootGroup section */
@@ -77,6 +131,13 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		2F09CD632FCC5CAB00455D8F /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
@@ -87,6 +148,7 @@
 				2F0891612F4F27880017269C /* echolumeTests */,
 				2F08916B2F4F27880017269C /* echolumeUITests */,
 				2FA00010300000000017269C /* Sentry.xcconfig */,
+				2F09CD672FCC5CAB00455D8F /* EcholumeAudioTap */,
 				2F0891522F4F27820017269C /* Products */,
 			);
 			sourceTree = "<group>";
@@ -97,6 +159,7 @@
 				2F0891512F4F27820017269C /* echolume.app */,
 				2F08915E2F4F27880017269C /* echolumeTests.xctest */,
 				2F0891682F4F27880017269C /* echolumeUITests.xctest */,
+				2F09CD662FCC5CAB00455D8F /* EcholumeAudioTap.appex */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -111,10 +174,12 @@
 				2F08914D2F4F27820017269C /* Sources */,
 				2F08914E2F4F27820017269C /* Frameworks */,
 				2F08914F2F4F27820017269C /* Resources */,
+				2F09CD912FCC5CAB00455D8F /* Embed Foundation Extensions */,
 			);
 			buildRules = (
 			);
 			dependencies = (
+				2F09CD8F2FCC5CAB00455D8F /* PBXTargetDependency */,
 			);
 			fileSystemSynchronizedGroups = (
 				2F0891532F4F27820017269C /* echolume */,
@@ -174,6 +239,28 @@
 			productReference = 2F0891682F4F27880017269C /* echolumeUITests.xctest */;
 			productType = "com.apple.product-type.bundle.ui-testing";
 		};
+		2F09CD652FCC5CAB00455D8F /* EcholumeAudioTap */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 2F09CD952FCC5CAB00455D8F /* Build configuration list for PBXNativeTarget "EcholumeAudioTap" */;
+			buildPhases = (
+				2F09CD622FCC5CAB00455D8F /* Sources */,
+				2F09CD632FCC5CAB00455D8F /* Frameworks */,
+				2F09CD642FCC5CAB00455D8F /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			fileSystemSynchronizedGroups = (
+				2F09CD672FCC5CAB00455D8F /* EcholumeAudioTap */,
+			);
+			name = EcholumeAudioTap;
+			packageProductDependencies = (
+			);
+			productName = EcholumeAudioTap;
+			productReference = 2F09CD662FCC5CAB00455D8F /* EcholumeAudioTap.appex */;
+			productType = "com.apple.product-type.app-extension";
+		};
 /* End PBXNativeTarget section */
 
 /* Begin PBXProject section */
@@ -181,7 +268,7 @@
 			isa = PBXProject;
 			attributes = {
 				BuildIndependentTargetsInParallel = 1;
-				LastSwiftUpdateCheck = 2620;
+				LastSwiftUpdateCheck = 2650;
 				LastUpgradeCheck = 2630;
 				TargetAttributes = {
 					2F0891502F4F27820017269C = {
@@ -194,6 +281,9 @@
 					2F0891672F4F27880017269C = {
 						CreatedOnToolsVersion = 26.2;
 						TestTargetID = 2F0891502F4F27820017269C;
+					};
+					2F09CD652FCC5CAB00455D8F = {
+						CreatedOnToolsVersion = 26.5;
 					};
 				};
 			};
@@ -218,6 +308,7 @@
 				2F0891502F4F27820017269C /* echolume */,
 				2F08915D2F4F27880017269C /* echolumeTests */,
 				2F0891672F4F27880017269C /* echolumeUITests */,
+				2F09CD652FCC5CAB00455D8F /* EcholumeAudioTap */,
 			);
 		};
 /* End PBXProject section */
@@ -238,6 +329,13 @@
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 		2F0891662F4F27880017269C /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		2F09CD642FCC5CAB00455D8F /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -268,6 +366,13 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		2F09CD622FCC5CAB00455D8F /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXSourcesBuildPhase section */
 
 /* Begin PBXTargetDependency section */
@@ -280,6 +385,11 @@
 			isa = PBXTargetDependency;
 			target = 2F0891502F4F27820017269C /* echolume */;
 			targetProxy = 2F0891692F4F27880017269C /* PBXContainerItemProxy */;
+		};
+		2F09CD8F2FCC5CAB00455D8F /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 2F09CD652FCC5CAB00455D8F /* EcholumeAudioTap */;
+			targetProxy = 2F09CD8E2FCC5CAB00455D8F /* PBXContainerItemProxy */;
 		};
 /* End PBXTargetDependency section */
 
@@ -591,6 +701,98 @@
 			};
 			name = Release;
 		};
+		2F09CD922FCC5CAB00455D8F /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CLANG_CXX_LANGUAGE_STANDARD = "c++20";
+				CLANG_CXX_LIBRARY = "libc++";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = KDWZ3WNLDK;
+				ENABLE_APP_SANDBOX = YES;
+				ENABLE_HARDENED_RUNTIME = YES;
+				ENABLE_OUTGOING_NETWORK_CONNECTIONS = YES;
+				ENABLE_USER_SELECTED_FILES = readonly;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = EcholumeAudioTap/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = EcholumeAudioTap;
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				IPHONEOS_DEPLOYMENT_TARGET = 26.5;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				"LD_RUNPATH_SEARCH_PATHS[sdk=macosx*]" = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+					"@executable_path/../../../../Frameworks",
+				);
+				MACOSX_DEPLOYMENT_TARGET = 14.0;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.iamjarl.echolume.EcholumeAudioTap;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = macosx;
+				SKIP_INSTALL = YES;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SUPPORTED_PLATFORMS = macosx;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_OBJC_BRIDGING_HEADER = "EcholumeAudioTap/Common/EcholumeAudioTap-Bridging-Header.h";
+				SWIFT_OBJC_INTEROP_MODE = objcxx;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2,7";
+				XROS_DEPLOYMENT_TARGET = 26.5;
+			};
+			name = Debug;
+		};
+		2F09CD932FCC5CAB00455D8F /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CLANG_CXX_LANGUAGE_STANDARD = "c++20";
+				CLANG_CXX_LIBRARY = "libc++";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = KDWZ3WNLDK;
+				ENABLE_APP_SANDBOX = YES;
+				ENABLE_HARDENED_RUNTIME = YES;
+				ENABLE_OUTGOING_NETWORK_CONNECTIONS = YES;
+				ENABLE_USER_SELECTED_FILES = readonly;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = EcholumeAudioTap/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = EcholumeAudioTap;
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				IPHONEOS_DEPLOYMENT_TARGET = 26.5;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				"LD_RUNPATH_SEARCH_PATHS[sdk=macosx*]" = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+					"@executable_path/../../../../Frameworks",
+				);
+				MACOSX_DEPLOYMENT_TARGET = 14.0;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.iamjarl.echolume.EcholumeAudioTap;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = macosx;
+				SKIP_INSTALL = YES;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SUPPORTED_PLATFORMS = macosx;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_OBJC_BRIDGING_HEADER = "EcholumeAudioTap/Common/EcholumeAudioTap-Bridging-Header.h";
+				SWIFT_OBJC_INTEROP_MODE = objcxx;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2,7";
+				XROS_DEPLOYMENT_TARGET = 26.5;
+			};
+			name = Release;
+		};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
@@ -626,6 +828,15 @@
 			buildConfigurations = (
 				2F0891792F4F27880017269C /* Debug */,
 				2F08917A2F4F27880017269C /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		2F09CD952FCC5CAB00455D8F /* Build configuration list for PBXNativeTarget "EcholumeAudioTap" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				2F09CD922FCC5CAB00455D8F /* Debug */,
+				2F09CD932FCC5CAB00455D8F /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;

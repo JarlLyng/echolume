@@ -139,6 +139,11 @@ final class AppModel: ObservableObject {
     @Published private(set) var oscEnabled = false
     @Published private(set) var oscPort: UInt16 = 9000
 
+    /// Timestamp of the last `/echolume/audio/*` packet from the AU plugin.
+    /// While recent, plugin audio drives the visuals/signal instead of the mic.
+    private var lastPluginAudioTime: CFAbsoluteTime = 0
+    var pluginAudioActive: Bool { CFAbsoluteTimeGetCurrent() - lastPluginAudioTime < 0.5 }
+
     /// Whether the menu bar extra is shown. Persisted; default on. Bound by the
     /// Settings toggle; drives the AppKit status item.
     @Published var menubarEnabled = true {
@@ -182,8 +187,12 @@ final class AppModel: ObservableObject {
                 self.debugLastPeak = snap.peak
                 self.debugLastFrames = snap.frameCount
                 self.debugChannelCount = snap.channelCount
-                self.rms = snap.rms
-                self.peak = snap.peak
+                // The AU plugin feeds rms directly when active; don't let the
+                // mic snapshot override it.
+                if !self.pluginAudioActive {
+                    self.rms = snap.rms
+                    self.peak = snap.peak
+                }
                 // ~ -46 dBFS: low enough that quiet/ambient mic input registers
                 // as signal (the meter already moves at these levels).
                 if self.rms > 0.005 {
@@ -256,17 +265,18 @@ final class AppModel: ObservableObject {
             connectTwitch()
         }
 
+        // Mic band updates are suppressed while plugin audio is driving.
         audioManager.lowPublisher
             .receive(on: DispatchQueue.main)
-            .sink { [weak self] v in self?.low = v; self?.pushSnapshot() }
+            .sink { [weak self] v in guard let self, !self.pluginAudioActive else { return }; self.low = v; self.pushSnapshot() }
             .store(in: &cancellables)
         audioManager.midPublisher
             .receive(on: DispatchQueue.main)
-            .sink { [weak self] v in self?.mid = v; self?.pushSnapshot() }
+            .sink { [weak self] v in guard let self, !self.pluginAudioActive else { return }; self.mid = v; self.pushSnapshot() }
             .store(in: &cancellables)
         audioManager.highPublisher
             .receive(on: DispatchQueue.main)
-            .sink { [weak self] v in self?.high = v; self?.pushSnapshot() }
+            .sink { [weak self] v in guard let self, !self.pluginAudioActive else { return }; self.high = v; self.pushSnapshot() }
             .store(in: &cancellables)
         audioManager.impactPublisher
             .receive(on: DispatchQueue.main)
@@ -276,7 +286,7 @@ final class AppModel: ObservableObject {
         audioManager.beatPublisher
             .receive(on: DispatchQueue.main)
             .sink { [weak self] beat in
-                guard let self else { return }
+                guard let self, !self.pluginAudioActive else { return }
                 self.bpm = beat.bpm
                 self.beatPhase = beat.beatPhase
                 self.beatConfidence = beat.confidence
@@ -791,7 +801,37 @@ final class AppModel: ObservableObject {
 
     /// Apply an incoming OSC message via the fixed /echolume/... namespace.
     private func handleOSC(_ message: OSCMessage) {
+        // Audio from the AU plugin drives the visuals/signal directly.
+        if message.address.hasPrefix("/echolume/audio/") {
+            handlePluginAudio(message)
+            return
+        }
         guard let action = OSCAction(message: message) else { return }
+        applyOSCAction(action)
+    }
+
+    /// Feed plugin audio analysis (`/echolume/audio/{level,low,mid,high,bpm}`)
+    /// directly into the visual pipeline + signal detection.
+    private func handlePluginAudio(_ message: OSCMessage) {
+        let v: Float
+        switch message.arguments.first {
+        case .float(let f): v = f
+        case .int(let i): v = Float(i)
+        default: return
+        }
+        lastPluginAudioTime = CFAbsoluteTimeGetCurrent()
+        switch message.address {
+        case "/echolume/audio/level": rms = max(0, min(1, v)); peak = rms
+        case "/echolume/audio/low": low = max(0, min(1, v))
+        case "/echolume/audio/mid": mid = max(0, min(1, v))
+        case "/echolume/audio/high": high = max(0, min(1, v))
+        case "/echolume/audio/bpm": bpm = max(0, v)
+        default: return
+        }
+        pushSnapshot()
+    }
+
+    private func applyOSCAction(_ action: OSCAction) {
         switch action {
         case .abstraction(let v): setAbstraction(v)
         case .energyBias(let v): setEnergyBias(v)

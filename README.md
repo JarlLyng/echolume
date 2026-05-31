@@ -271,6 +271,14 @@ Echolume estimates tempo from the low‑band onset envelope (autocorrelation ove
 
 ---
 
+## Audio plugin (beta)
+
+`EcholumeAudioTap` is an AUv3 audio‑effect bundled inside Echolume.app — installing the app auto‑registers it (no separate installer). Drop it on a track in Ableton (Live 11.3+) or any AU host; it passes audio through and forwards the analysed bands + host BPM to Echolume over OSC (loopback). Enable OSC in Echolume (port 9000) and the visuals react to that track — no BlackHole/loopback routing.
+
+> Note (beta): the plugin currently sends OSC from the render thread (best‑effort, non‑blocking). A v2 will move transport off the realtime thread.
+
+---
+
 ## OSC control
 
 Echolume can listen for **OSC over UDP** so it slots into TouchDesigner, Resolume, or any show-control rig. It's **opt-in**: enable it and set the port (default **9000**) in the OSC area of Input & Output. Enabling it requires the incoming-network sandbox entitlement (already configured).
