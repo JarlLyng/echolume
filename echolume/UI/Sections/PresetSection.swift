@@ -74,29 +74,39 @@ private struct PresetChip: View {
     @Environment(\.colorScheme) private var colorScheme
 
     var body: some View {
-        Button(action: onApply) {
-            HStack(spacing: DesignTokens.Spacing.xs) {
-                if let slot {
-                    Text("\(slot)")
-                        .font(.system(size: DesignTokens.Typography.Size.xs, weight: DesignTokens.Typography.Weight.bold))
-                        .foregroundStyle(DesignTokens.Common.primary(colorScheme))
+        HStack(spacing: DesignTokens.Spacing.xs) {
+            Button(action: onApply) {
+                HStack(spacing: DesignTokens.Spacing.xs) {
+                    if let slot {
+                        Text("\(slot)")
+                            .font(.system(size: DesignTokens.Typography.Size.xs, weight: DesignTokens.Typography.Weight.bold))
+                            .foregroundStyle(DesignTokens.Common.primary(colorScheme))
+                    }
+                    Text(preset.name)
+                        .font(.system(size: DesignTokens.Typography.Size.xs, weight: DesignTokens.Typography.Weight.semibold))
+                        .foregroundStyle(DesignTokens.Common.Text.primary(colorScheme))
+                        .lineLimit(1)
                 }
-                Text(preset.name)
-                    .font(.system(size: DesignTokens.Typography.Size.xs, weight: DesignTokens.Typography.Weight.semibold))
-                    .foregroundStyle(DesignTokens.Common.Text.primary(colorScheme))
-                    .lineLimit(1)
             }
-            .padding(.horizontal, DesignTokens.Spacing.sm)
-            .padding(.vertical, DesignTokens.Spacing.xs)
-            .background(DesignTokens.Common.Background.app(colorScheme))
-            .clipShape(RoundedRectangle(cornerRadius: DesignTokens.Radius.sm))
-            .overlay(
-                RoundedRectangle(cornerRadius: DesignTokens.Radius.sm)
-                    .strokeBorder(Color.white.opacity(0.10), lineWidth: 1)
-            )
+            .buttonStyle(.plain)
+            .help("Apply preset \"\(preset.name)\"" + (slot != nil ? " (⌘\(slot!))" : ""))
+
+            Button(action: onDelete) {
+                Image(systemName: "xmark.circle.fill")
+                    .font(.system(size: DesignTokens.Typography.Size.sm))
+                    .foregroundStyle(DesignTokens.Common.Text.tertiary(colorScheme))
+            }
+            .buttonStyle(.plain)
+            .help("Delete preset \"\(preset.name)\"")
         }
-        .buttonStyle(.plain)
-        .help("Apply preset \"\(preset.name)\"" + (slot != nil ? " (⌘\(slot!))" : ""))
+        .padding(.horizontal, DesignTokens.Spacing.sm)
+        .padding(.vertical, DesignTokens.Spacing.xs)
+        .background(DesignTokens.Common.Background.app(colorScheme))
+        .clipShape(RoundedRectangle(cornerRadius: DesignTokens.Radius.sm))
+        .overlay(
+            RoundedRectangle(cornerRadius: DesignTokens.Radius.sm)
+                .strokeBorder(Color.white.opacity(0.10), lineWidth: 1)
+        )
         .contextMenu {
             Button("Apply", action: onApply)
             Button("Delete", role: .destructive, action: onDelete)

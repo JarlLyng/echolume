@@ -50,6 +50,7 @@ struct EcholumeApp: App {
                     // on first launch with no saved frame, fall back to maximize.
                     DispatchQueue.main.async {
                         guard let window = NSApplication.shared.windows.first else { return }
+                        window.minSize = NSSize(width: 760, height: 620)
                         let autosaveName = "EcholumeMainWindow"
                         let hadSavedFrame = window.setFrameAutosaveName(autosaveName)
 

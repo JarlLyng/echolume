@@ -184,7 +184,9 @@ final class AppModel: ObservableObject {
                 self.debugChannelCount = snap.channelCount
                 self.rms = snap.rms
                 self.peak = snap.peak
-                if self.rms > 0.02 {
+                // ~ -46 dBFS: low enough that quiet/ambient mic input registers
+                // as signal (the meter already moves at these levels).
+                if self.rms > 0.005 {
                     self.noSignalSeconds = 0
                     self.signalOkSeconds += 0.1
                     if self.signalOkSeconds >= 0.5 { self.hasSignal = true }
@@ -569,6 +571,19 @@ final class AppModel: ObservableObject {
             selectedScene = newScene
             UserDefaults.standard.set(newScene.rawValue, forKey: Self.userDefaultsSceneKey)
         }
+
+        // Randomize the performance knobs too (the button lives in Performance).
+        // Knobs span a musical mid-range; glitch is kept lower so it isn't always heavy.
+        abstraction = Float.random(in: 0.2 ... 0.9)
+        energyBias = Float.random(in: 0.2 ... 0.9)
+        motion = Float.random(in: 0.2 ... 0.9)
+        noise = Float.random(in: 0.2 ... 0.9)
+        glitch = Float.random(in: 0.0 ... 0.5)
+        UserDefaults.standard.set(Double(abstraction), forKey: Self.userDefaultsAbstractionKey)
+        UserDefaults.standard.set(Double(energyBias), forKey: Self.userDefaultsEnergyBiasKey)
+        UserDefaults.standard.set(Double(motion), forKey: Self.userDefaultsMotionKey)
+        UserDefaults.standard.set(Double(noise), forKey: Self.userDefaultsNoiseKey)
+        UserDefaults.standard.set(Double(glitch), forKey: Self.userDefaultsGlitchKey)
 
         pushSnapshot()
     }
