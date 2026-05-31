@@ -16,7 +16,7 @@ import Darwin
 #endif
 
 private let kTapBufferSize: UInt32 = 512
-private let kRingCapacity = 4096
+private let kRingCapacity = 4096   // must stay a power of two: index math uses & (cap-1)
 private let kFFTWindowSize = 2048
 private let kFFTBacklogLimit = kFFTWindowSize * 2
 private let kRestartDebounceMs: Int = 250
@@ -246,7 +246,7 @@ final class AudioManager {
                     let s = ptr[i]
                     sumSq += s * s
                     if abs(s) > peak { peak = abs(s) }
-                    self.ringBuffer[w % cap] = s
+                    self.ringBuffer[w & (cap - 1)] = s
                     w += 1
                 }
             } else {
@@ -256,7 +256,7 @@ final class AudioManager {
                     let s = (ptr0[i] + ptr1[i]) * 0.5
                     sumSq += s * s
                     if abs(s) > peak { peak = abs(s) }
-                    self.ringBuffer[w % cap] = s
+                    self.ringBuffer[w & (cap - 1)] = s
                     w += 1
                 }
             }
@@ -323,9 +323,20 @@ final class AudioManager {
         if available > kFFTBacklogLimit {
             r = w - kFFTWindowSize
         }
+        // Copy the FFT window out of the ring with at most two block copies
+        // (kRingCapacity is a power of two and kFFTWindowSize <= kRingCapacity,
+        // so the window wraps at most once). Avoids 2048 per-sample modulos.
         let cap = kRingCapacity
-        for i in 0 ..< kFFTWindowSize {
-            processBuffer[i] = ringBuffer[(r + i) % cap]
+        let start = r & (cap - 1)
+        let firstChunk = min(kFFTWindowSize, cap - start)
+        processBuffer.withUnsafeMutableBufferPointer { dst in
+            ringBuffer.withUnsafeBufferPointer { src in
+                guard let d = dst.baseAddress, let s = src.baseAddress else { return }
+                d.update(from: s + start, count: firstChunk)
+                if firstChunk < kFFTWindowSize {
+                    (d + firstChunk).update(from: s, count: kFFTWindowSize - firstChunk)
+                }
+            }
         }
         ringReadIndex = r + kFFTWindowSize
         ringLock.unlock()

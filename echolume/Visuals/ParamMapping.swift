@@ -42,6 +42,11 @@ final class ParamMapping {
     private var impulse: Float = 0
     private var glitchPhase: Float = 0
 
+    /// Cached nudged palette — recomputed only when theme/seed change, not per frame.
+    private var cachedPalette: [SIMD4<Float>] = []
+    private var cachedPaletteSeed: UInt32 = .max
+    private var cachedPaletteThemeID: UInt32 = .max
+
     /// Produce VisualParams from current snapshot and settings. Call from render thread.
     func map(
         snapshot: AnalyzerSnapshot,
@@ -103,7 +108,12 @@ final class ParamMapping {
         let trailAmount = mix(0.1, 0.8, absClamp)
         let reactivity = min(1, mix(low, high, biasClamp) * 1.2)
 
-        let pal = theme.nudgedPalette(seed: seed)
+        if seed != cachedPaletteSeed || theme.id != cachedPaletteThemeID {
+            cachedPalette = theme.nudgedPalette(seed: seed)
+            cachedPaletteSeed = seed
+            cachedPaletteThemeID = theme.id
+        }
+        let pal = cachedPalette
         let p0 = pal.count > 0 ? pal[0] : SIMD4<Float>(0.2, 0.2, 0.3, 1)
         let p1 = pal.count > 1 ? pal[1] : p0
         let p2 = pal.count > 2 ? pal[2] : p1
