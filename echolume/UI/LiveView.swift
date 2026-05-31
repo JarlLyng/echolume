@@ -54,26 +54,22 @@ struct LiveView: View {
             }
 
             if !appModel.hasSignal {
-                VStack {
-                    HStack {
-                        Text("NO SIGNAL")
-                            .font(.system(size: DesignTokens.Typography.Size.sm, weight: DesignTokens.Typography.Weight.bold))
-                            .foregroundStyle(.white)
-                            .padding(8)
-                            .background(Color.orange.opacity(0.9))
-                            .clipShape(RoundedRectangle(cornerRadius: DesignTokens.Radius.sm))
-                        Spacer()
-                    }
-                    HStack {
-                        Text("Check input device / routing")
-                            .font(.system(size: DesignTokens.Typography.Size.xs))
-                            .foregroundStyle(.white.opacity(0.9))
-                        Spacer()
-                    }
-                    .padding(.horizontal, 8)
+                // Centered at the top so it never overlaps the Back button (left)
+                // or the level meter (right).
+                VStack(spacing: 4) {
+                    Text("NO SIGNAL")
+                        .font(.system(size: DesignTokens.Typography.Size.sm, weight: DesignTokens.Typography.Weight.bold))
+                        .foregroundStyle(.white)
+                        .padding(8)
+                        .background(Color.orange.opacity(0.9))
+                        .clipShape(RoundedRectangle(cornerRadius: DesignTokens.Radius.sm))
+                    Text("Check input device / routing")
+                        .font(.system(size: DesignTokens.Typography.Size.xs))
+                        .foregroundStyle(.white.opacity(0.9))
                     Spacer()
                 }
-                .padding(DesignTokens.Spacing.lg)
+                .frame(maxWidth: .infinity, alignment: .center)
+                .padding(.top, 64)
             }
 
             if !appModel.debugEngineRunning {

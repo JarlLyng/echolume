@@ -29,6 +29,7 @@ struct TwitchSection: View {
                     EmptyView()
                 }
                 .toggleStyle(.switch)
+                .controlSize(.mini)
                 .tint(DesignTokens.Common.primary(colorScheme))
                 .labelsHidden()
 

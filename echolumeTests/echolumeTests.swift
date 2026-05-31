@@ -652,6 +652,39 @@ struct MidiMappingStoreTests {
     }
 }
 
+// MARK: - Randomize
+
+@MainActor
+struct RandomizeTests {
+
+    @Test func randomizeKeepsKnobsInRange() {
+        let model = AppModel()
+        for _ in 0 ..< 20 {
+            model.randomize()
+            #expect(model.abstraction >= 0 && model.abstraction <= 1)
+            #expect(model.energyBias >= 0 && model.energyBias <= 1)
+            #expect(model.motion >= 0 && model.motion <= 1)
+            #expect(model.noise >= 0 && model.noise <= 1)
+            #expect(model.glitch >= 0 && model.glitch <= 1)
+        }
+    }
+
+    @Test func randomizeMovesAtLeastOneKnobOverRuns() {
+        // Randomize now touches the performance knobs (not just the look), so
+        // across several runs at least one knob value should change.
+        let model = AppModel()
+        model.randomize()
+        let first = [model.abstraction, model.energyBias, model.motion, model.noise, model.glitch]
+        var changed = false
+        for _ in 0 ..< 10 {
+            model.randomize()
+            let next = [model.abstraction, model.energyBias, model.motion, model.noise, model.glitch]
+            if next != first { changed = true; break }
+        }
+        #expect(changed)
+    }
+}
+
 // MARK: - PresetStore
 
 @MainActor
