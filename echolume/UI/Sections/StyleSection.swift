@@ -21,9 +21,10 @@ struct StyleSection: View {
 
             ThemeSwatchPicker(appModel: appModel)
 
-            HStack(spacing: DesignTokens.Spacing.md) {
+            HStack(alignment: .top, spacing: DesignTokens.Spacing.md) {
                 shapePicker
                 scenePicker
+                Spacer(minLength: 0)
             }
         }
         .padding(DesignTokens.Spacing.md)
@@ -49,7 +50,7 @@ struct StyleSection: View {
             .pickerStyle(.menu)
             .tint(DesignTokens.Common.primary(colorScheme))
         }
-        .frame(maxWidth: .infinity, alignment: .leading)
+        .frame(width: 170, alignment: .leading)
     }
 
     private var scenePicker: some View {
@@ -68,6 +69,6 @@ struct StyleSection: View {
             .pickerStyle(.menu)
             .tint(DesignTokens.Common.primary(colorScheme))
         }
-        .frame(maxWidth: .infinity, alignment: .leading)
+        .frame(width: 170, alignment: .leading)
     }
 }
