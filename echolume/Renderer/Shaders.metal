@@ -357,6 +357,111 @@ float4 renderGrid(constant Uniforms& u, float2 uv) {
     return applyGlitch(col, uv, t, u);
 }
 
+// Shared scene tail: shape modulation, fine noise, reactivity, impulse,
+// palette, and glitch — matches the inline tail in renderRadial/Flow/Grid.
+float4 finishScene(float4 col, float2 uv, float t, constant Uniforms& u, float impulse) {
+    float shape = getShapeValue(uv, t, u);
+    float absClamp = clamp(u.abstraction, 0.0, 1.0);
+    col.rgb *= mix(1.0, 0.4 + 0.6 * shape, 0.3 + 0.5 * absClamp);
+    float noiseTex = noise(uv * 12.0 + t * 0.5, t, u.seed + 20u);
+    col.rgb += (noiseTex - 0.5) * u.noiseStrength * 0.15;
+    float react = clamp(u.reactivity, 0.0, 1.0);
+    float level = clamp(u.level, 0.0, 1.0);
+    col *= (0.2 + 0.75 * level * (0.5 + 0.5 * react));
+    col.rgb += impulse * 0.18;
+    col = applyPalette(col, absClamp, u);
+    col.rgb = clamp(col.rgb, 0.0, 0.95);
+    return applyGlitch(col, uv, t, u);
+}
+
+// Common per-scene setup: time, warped UV, and clamped audio bands.
+static inline float2 warpedUV(constant Uniforms& u, float2 uv, float t) {
+    float warp = mix(0.0, 1.5, clamp(u.noise, 0.0, 1.0));
+    return uv + warp * float2(noise(uv * 4.0 + t, t, u.seed) - 0.5,
+                              noise(uv * 4.0 + 2.1 + t, t, u.seed + 5u) - 0.5);
+}
+
+// Scene: Spiral — rotating logarithmic arms; arm count from bass, twist from mid.
+float4 renderSpiral(constant Uniforms& u, float2 uv) {
+    float t = u.time * max(0.25, u.speedMul);
+    float low = clamp(u.low, 0.0, 1.0), mid = clamp(u.mid, 0.0, 1.0), high = clamp(u.high, 0.0, 1.0);
+    float impact = clamp(u.impact, 0.0, 1.0);
+    float2 c = warpedUV(u, uv, t) - 0.5;
+    float dist = length(c);
+    float angle = atan2(c.y, c.x);
+    float arms = 3.0 + floor(low * 5.0);
+    float twist = 4.0 + mid * 8.0;
+    float spiral = 0.5 + 0.5 * sin(angle * arms + log(dist + 0.05) * twist - t * (1.0 + low * 2.0) + u.lfo1);
+    float fine = (0.5 + 0.5 * sin(dist * 30.0 - t * 4.0 + u.lfo3 * 3.0)) * high;
+    float core = 1.0 - smoothstep(0.0, 0.15 + 0.2 * low, dist);
+    float band = smoothstep(0.0, 0.5, spiral);
+    float r = 0.2 + 0.5 * band + 0.2 * core + 0.1 * fine + impact * 0.2;
+    float g = 0.15 + 0.35 * band + 0.15 * core + 0.15 * fine + high * 0.1;
+    float b = 0.3 + 0.4 * band + 0.25 * core + 0.1 * fine;
+    return finishScene(float4(r, g, b, 1.0), uv, t, u, clamp(u.impulse, 0.0, 1.0));
+}
+
+// Scene: Tunnel — radial perspective depth with inward-scrolling rings + spokes.
+float4 renderTunnel(constant Uniforms& u, float2 uv) {
+    float t = u.time * max(0.25, u.speedMul);
+    float low = clamp(u.low, 0.0, 1.0), high = clamp(u.high, 0.0, 1.0);
+    float impact = clamp(u.impact, 0.0, 1.0);
+    float2 c = warpedUV(u, uv, t) - 0.5;
+    float dist = length(c) + 0.0001;
+    float angle = atan2(c.y, c.x);
+    float depth = 0.25 / dist;
+    float spokes = 4.0 + floor(high * 8.0);
+    float rings = 0.5 + 0.5 * sin(depth * 10.0 - t * (2.0 + low * 4.0) + u.lfo1);
+    float spoke = 0.5 + 0.5 * sin(angle * spokes + t * 0.5 + u.lfo2);
+    float glow = 1.0 - smoothstep(0.0, 0.6, dist);
+    float pattern = rings * (0.6 + 0.4 * spoke);
+    float r = 0.2 + 0.5 * pattern + 0.2 * glow + impact * 0.2;
+    float g = 0.15 + 0.35 * pattern + 0.2 * glow + high * 0.1;
+    float b = 0.3 + 0.45 * pattern + 0.25 * glow;
+    return finishScene(float4(r, g, b, 1.0), uv, t, u, clamp(u.impulse, 0.0, 1.0));
+}
+
+// Scene: Kaleidoscope — angle mirror-folded into N segments → mandala symmetry.
+float4 renderKaleidoscope(constant Uniforms& u, float2 uv) {
+    float t = u.time * max(0.25, u.speedMul);
+    float low = clamp(u.low, 0.0, 1.0), mid = clamp(u.mid, 0.0, 1.0);
+    float impact = clamp(u.impact, 0.0, 1.0);
+    uint seed = u.seed;
+    float2 c = warpedUV(u, uv, t) - 0.5;
+    float dist = length(c);
+    float angle = atan2(c.y, c.x);
+    float seg = 3.0 + floor(mid * 6.0);
+    float segAngle = 6.2831853 / seg;
+    float a = abs(fract(angle / segAngle + 0.5) - 0.5) * segAngle;
+    float2 kuv = float2(cos(a), sin(a)) * dist;
+    float field = 0.5 + 0.5 * sin(kuv.x * 10.0 + t + u.lfo1) * cos(kuv.y * 10.0 - t * 0.8 + u.lfo2);
+    float n2 = noise(kuv * 6.0 + t * 0.5, t, seed + 7u);
+    float radial = 0.5 + 0.5 * sin(dist * 18.0 - t * 2.0 + low * 4.0);
+    float pattern = field * 0.6 + n2 * 0.4;
+    float r = 0.2 + 0.5 * pattern + 0.2 * radial + impact * 0.2;
+    float g = 0.18 + 0.35 * pattern + 0.2 * radial;
+    float b = 0.3 + 0.45 * pattern + 0.2 * radial;
+    return finishScene(float4(r, g, b, 1.0), uv, t, u, clamp(u.impulse, 0.0, 1.0));
+}
+
+// Scene: Plasma — classic sum-of-sines field; band frequencies modulate octaves.
+float4 renderPlasma(constant Uniforms& u, float2 uv) {
+    float t = u.time * max(0.25, u.speedMul);
+    float low = clamp(u.low, 0.0, 1.0), mid = clamp(u.mid, 0.0, 1.0), high = clamp(u.high, 0.0, 1.0);
+    float2 p = (warpedUV(u, uv, t) - 0.5) * 6.0;
+    float fa = 1.0 + low * 2.0, fb = 1.0 + mid * 2.0, fc = 1.0 + high * 2.0;
+    float v = sin(p.x * fa + t)
+            + sin(p.y * fb + t * 0.8)
+            + sin((p.x + p.y) * fc * 0.7 + t * 0.6)
+            + sin(length(p) * 2.0 - t * 1.5);
+    v *= 0.25;
+    float ph = v * 3.14159 + u.lfo1;
+    float r = 0.5 + 0.5 * sin(ph);
+    float g = 0.5 + 0.5 * sin(ph + 2.094);
+    float b = 0.5 + 0.5 * sin(ph + 4.188);
+    return finishScene(float4(r, g, b, 1.0), uv, t, u, clamp(u.impulse, 0.0, 1.0));
+}
+
 // Scene color for the current frame (no feedback). Shared by the feedback pass
 // and the single-pass fallback.
 float4 sceneColor(constant Uniforms& u, float2 uv) {
@@ -364,7 +469,11 @@ float4 sceneColor(constant Uniforms& u, float2 uv) {
     float4 col;
     if (sceneType == 0) col = renderRadial(u, uv);
     else if (sceneType == 1) col = renderFlow(u, uv);
-    else col = renderGrid(u, uv);
+    else if (sceneType == 2) col = renderGrid(u, uv);
+    else if (sceneType == 3) col = renderSpiral(u, uv);
+    else if (sceneType == 4) col = renderTunnel(u, uv);
+    else if (sceneType == 5) col = renderKaleidoscope(u, uv);
+    else col = renderPlasma(u, uv);
 
     // Subtle tempo-synced pulse: a small brightness lift on each beat. Bounded
     // (<=8%) so it accents rather than dominates; no-op without a tempo lock.
