@@ -43,6 +43,9 @@ struct LevelMeterView: View {
             }
             .frame(height: h)
         }
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel("Input level")
+        .accessibilityValue("\(Int((min(1, max(0, rms)) * 100).rounded())) percent, peak \(Int((min(1, max(0, peak)) * 100).rounded())) percent")
     }
 }
 

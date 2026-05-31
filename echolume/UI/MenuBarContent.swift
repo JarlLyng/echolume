@@ -7,6 +7,7 @@
 //  under UI test and trips the SceneBuilder compiler.
 //
 
+import IAMJARLDesignTokens
 import SwiftUI
 
 /// Preferences pane (⌘,). Currently just the menu bar toggle; a natural home
@@ -18,7 +19,7 @@ struct SettingsView: View {
         Form {
             Toggle("Show menu bar icon", isOn: $appModel.menubarEnabled)
         }
-        .padding(20)
+        .padding(DesignTokens.Spacing.xl)
         .frame(width: 320)
     }
 }

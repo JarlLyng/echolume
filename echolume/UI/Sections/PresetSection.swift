@@ -98,6 +98,7 @@ private struct PresetChip: View {
             }
             .buttonStyle(.plain)
             .help("Delete preset \"\(preset.name)\"")
+            .accessibilityLabel("Delete preset \(preset.name)")
         }
         .padding(.horizontal, DesignTokens.Spacing.sm)
         .padding(.vertical, DesignTokens.Spacing.xs)

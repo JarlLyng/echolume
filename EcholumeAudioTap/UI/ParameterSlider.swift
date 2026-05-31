@@ -23,7 +23,11 @@ struct ParameterSlider: View {
     }
     
     var body: some View {
-        VStack {
+        // Note: the EcholumeAudioTap AUv3 extension intentionally does NOT link
+        // the IAMJARLDesignTokens SPM package (keeps the app-extension lean; the
+        // AU host controls view sizing). UI here uses plain SwiftUI with
+        // consistent spacing instead of design tokens.
+        VStack(spacing: 8) {
             Slider(
                 value: $param.value,
                 in: param.min...param.max,
@@ -34,8 +38,10 @@ struct ParameterSlider: View {
                 EmptyView()
             }
             .accessibility(identifier: param.displayName)
+            .accessibilityLabel(param.displayName)
             Text("\(param.displayName): \(param.value, specifier: specifier)")
+                .font(.system(size: 12, weight: .medium))
         }
-        .padding()
+        .padding(16)
     }
 }
