@@ -6,6 +6,9 @@
 #include <metal_stdlib>
 using namespace metal;
 
+// Must match kSpectrumBins in FFT.swift.
+#define SPECTRUM_BINS 64
+
 struct Uniforms {
     float time;
     float2 resolution;
@@ -462,9 +465,49 @@ float4 renderPlasma(constant Uniforms& u, float2 uv) {
     return finishScene(float4(r, g, b, 1.0), uv, t, u, clamp(u.impulse, 0.0, 1.0));
 }
 
+// Scene: Spectrum Ring — a radial equalizer. Each angle maps to a (mirrored)
+// log-spaced FFT bin; bars grow outward from a base ring by that bin's magnitude.
+float4 renderSpectrumRing(constant Uniforms& u, float2 uv, device const float* spectrum) {
+    float t = u.time * max(0.25, u.speedMul);
+
+    float2 p = uv - 0.5;
+    p.x *= u.resolution.x / max(1.0, u.resolution.y);   // aspect-correct → true circle
+    float rot = t * 0.05 + u.lfo1 * 0.1;                // slow drift
+    float ca = cos(rot), sa = sin(rot);
+    p = float2(p.x * ca - p.y * sa, p.x * sa + p.y * ca);
+
+    float r = length(p);
+    float ang = atan2(p.y, p.x);                        // -pi..pi
+    float a01 = (ang + 3.14159265) / 6.28318530;        // 0..1
+    float folded = 1.0 - abs(2.0 * a01 - 1.0);          // symmetric 0..1..0
+
+    float fb = folded * float(SPECTRUM_BINS - 1);
+    int i0 = int(fb);
+    int i1 = min(i0 + 1, SPECTRUM_BINS - 1);
+    float amp = clamp(mix(spectrum[i0], spectrum[i1], fract(fb)), 0.0, 1.0);
+
+    float r0 = 0.16 + 0.02 * clamp(u.low, 0.0, 1.0);    // inner radius pulses with bass
+    float outer = r0 + 0.26 * amp;                      // bar tip
+
+    float body = smoothstep(0.0, 0.008, r - r0) * smoothstep(0.0, 0.008, outer - r);
+    float baseRing = smoothstep(0.012, 0.0, abs(r - r0));
+    float tip = smoothstep(0.02, 0.0, abs(r - outer)) * (0.4 + 0.6 * amp);
+    // discrete-bar separation around the ring
+    float bars = 0.6 + 0.4 * smoothstep(0.5, 0.2, abs(fract(folded * float(SPECTRUM_BINS)) - 0.5));
+
+    float intensity = (body * 0.7 * bars + baseRing * 0.8 + tip) * (0.5 + 0.5 * amp);
+
+    float3 c = mix(u.palette0.rgb, u.palette1.rgb, amp);
+    c = mix(c, u.palette2.rgb, folded * 0.5);
+    float3 col = c * intensity;
+    col += u.palette0.rgb * smoothstep(r0, 0.0, r) * (0.15 + 0.5 * clamp(u.level, 0.0, 1.0));   // center glow
+
+    return applyGlitch(float4(clamp(col, 0.0, 0.95), 1.0), uv, t, u);
+}
+
 // Scene color for the current frame (no feedback). Shared by the feedback pass
 // and the single-pass fallback.
-float4 sceneColor(constant Uniforms& u, float2 uv) {
+float4 sceneColor(constant Uniforms& u, float2 uv, device const float* spectrum) {
     int sceneType = int(u.sceneType);
     float4 col;
     if (sceneType == 0) col = renderRadial(u, uv);
@@ -473,7 +516,8 @@ float4 sceneColor(constant Uniforms& u, float2 uv) {
     else if (sceneType == 3) col = renderSpiral(u, uv);
     else if (sceneType == 4) col = renderTunnel(u, uv);
     else if (sceneType == 5) col = renderKaleidoscope(u, uv);
-    else col = renderPlasma(u, uv);
+    else if (sceneType == 6) col = renderPlasma(u, uv);
+    else col = renderSpectrumRing(u, uv, spectrum);
 
     // Subtle tempo-synced pulse: a small brightness lift on each beat. Bounded
     // (<=8%) so it accents rather than dominates; no-op without a tempo lock.
@@ -486,9 +530,10 @@ float4 sceneColor(constant Uniforms& u, float2 uv) {
 // Single-pass fallback (unused when the feedback pipeline is active).
 fragment float4 fullscreenQuadFragment(
     VertexOut in [[stage_in]],
-    constant Uniforms& u [[buffer(0)]]
+    constant Uniforms& u [[buffer(0)]],
+    device const float* spectrum [[buffer(1)]]
 ) {
-    return sceneColor(u, in.uv);
+    return sceneColor(u, in.uv, spectrum);
 }
 
 // Feedback pass: blend this frame's scene over a decayed copy of the previous
@@ -497,10 +542,11 @@ fragment float4 fullscreenQuadFragment(
 fragment float4 feedbackFragment(
     VertexOut in [[stage_in]],
     constant Uniforms& u [[buffer(0)]],
+    device const float* spectrum [[buffer(1)]],
     texture2d<float> prevTex [[texture(0)]],
     sampler s [[sampler(0)]]
 ) {
-    float4 scene = sceneColor(u, in.uv);
+    float4 scene = sceneColor(u, in.uv, spectrum);
     float2 echoUV = (in.uv - 0.5) * 0.997 + 0.5;
     // Offscreen textures store logical uv at sample-v = 1 - uv.y; flip to read back aligned.
     float3 prev = prevTex.sample(s, float2(echoUV.x, 1.0 - echoUV.y)).rgb * u.trailPersistence;

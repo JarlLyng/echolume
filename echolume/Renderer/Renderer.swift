@@ -55,6 +55,9 @@ final class Renderer: NSObject, MTKViewDelegate {
     private var presentPipeline: MTLRenderPipelineState
     private let sampler: MTLSamplerState
     private var vertexBuffer: MTLBuffer
+    /// kSpectrumBins floats, refilled each frame from the provider and bound at
+    /// fragment buffer index 1 for spectrum-style scenes.
+    private let spectrumBuffer: MTLBuffer
     private let startTime = CACurrentMediaTime()
     private weak var paramsProvider: VisualParamsProvider?
 
@@ -85,6 +88,11 @@ final class Renderer: NSObject, MTKViewDelegate {
             return nil
         }
         vertexBuffer = buf
+
+        guard let specBuf = device.makeBuffer(length: kSpectrumBins * MemoryLayout<Float>.stride, options: .storageModeShared) else {
+            return nil
+        }
+        spectrumBuffer = specBuf
 
         guard let library = device.makeDefaultLibrary(),
               let vertexFunction = library.makeFunction(name: "fullscreenQuadVertex"),
@@ -196,6 +204,9 @@ final class Renderer: NSObject, MTKViewDelegate {
             bpm: p.bpm
         )
 
+        // Refill the spectrum buffer from the analyzer for spectrum-style scenes.
+        provider.copySpectrum(into: spectrumBuffer.contents().assumingMemoryBound(to: Float.self))
+
         // Panic Reset clears the trails.
         if provider.consumeTrailReset() { clearPending = true }
 
@@ -207,6 +218,7 @@ final class Renderer: NSObject, MTKViewDelegate {
                 enc.setRenderPipelineState(pipelineState)
                 enc.setVertexBuffer(vertexBuffer, offset: 0, index: 0)
                 enc.setFragmentBytes(&uniforms, length: MemoryLayout<ShaderUniforms>.stride, index: 0)
+                enc.setFragmentBuffer(spectrumBuffer, offset: 0, index: 1)
                 enc.drawPrimitives(type: .triangle, vertexStart: 0, vertexCount: 6)
                 enc.endEncoding()
             }
@@ -233,6 +245,7 @@ final class Renderer: NSObject, MTKViewDelegate {
             enc.setRenderPipelineState(feedbackPipeline)
             enc.setVertexBuffer(vertexBuffer, offset: 0, index: 0)
             enc.setFragmentBytes(&uniforms, length: MemoryLayout<ShaderUniforms>.stride, index: 0)
+            enc.setFragmentBuffer(spectrumBuffer, offset: 0, index: 1)
             enc.setFragmentTexture(prev, index: 0)
             enc.setFragmentSamplerState(sampler, index: 0)
             enc.drawPrimitives(type: .triangle, vertexStart: 0, vertexCount: 6)
