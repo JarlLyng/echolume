@@ -7,12 +7,12 @@
 
 import SwiftUI
 
-/// A SwiftUI Slider container which is bound to an ObservableAUParameter
-///
-/// This view wraps a SwiftUI Slider, and provides it relevant data from the Parameter, like the minimum and maximum values.
+/// A SwiftUI Slider bound to an ObservableAUParameter, styled to match Echolume
+/// (lime accent on a dark surface). Shows the parameter name, current value, and
+/// the min/max range.
 struct ParameterSlider: View {
     @State var param: ObservableAUParameter
-    
+
     var specifier: String {
         switch param.unit {
         case .midiNoteNumber:
@@ -21,27 +21,35 @@ struct ParameterSlider: View {
             return "%.2f"
         }
     }
-    
+
     var body: some View {
-        // Note: the EcholumeAudioTap AUv3 extension intentionally does NOT link
-        // the IAMJARLDesignTokens SPM package (keeps the app-extension lean; the
-        // AU host controls view sizing). UI here uses plain SwiftUI with
-        // consistent spacing instead of design tokens.
-        VStack(spacing: 8) {
+        VStack(alignment: .leading, spacing: PluginStyle.Space.sm) {
+            HStack {
+                Text(param.displayName)
+                    .font(.system(size: 12, weight: .semibold))
+                    .foregroundStyle(PluginStyle.textPrimary)
+                Spacer()
+                Text("\(param.value, specifier: specifier)")
+                    .font(.system(size: 12, weight: .semibold, design: .monospaced))
+                    .foregroundStyle(PluginStyle.accent)
+            }
+
             Slider(
                 value: $param.value,
                 in: param.min...param.max,
-                onEditingChanged: param.onEditingChanged,
-                minimumValueLabel: Text("\(param.min, specifier: specifier)"),
-                maximumValueLabel: Text("\(param.max, specifier: specifier)")
-            ) {
-                EmptyView()
-            }
+                onEditingChanged: param.onEditingChanged
+            )
+            .tint(PluginStyle.accent)
             .accessibility(identifier: param.displayName)
             .accessibilityLabel(param.displayName)
-            Text("\(param.displayName): \(param.value, specifier: specifier)")
-                .font(.system(size: 12, weight: .medium))
+
+            HStack {
+                Text("\(param.min, specifier: specifier)")
+                Spacer()
+                Text("\(param.max, specifier: specifier)")
+            }
+            .font(.system(size: 9))
+            .foregroundStyle(PluginStyle.textSecondary)
         }
-        .padding(16)
     }
 }
