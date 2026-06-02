@@ -304,6 +304,11 @@ final class AppModel: ObservableObject {
             }
             .store(in: &cancellables)
 
+        audioManager.spectrumPublisher
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] bins in self?.visualParamsProvider.updateSpectrum(bins) }
+            .store(in: &cancellables)
+
         midi.onMessage = { [weak self] msg in self?.handleMidi(msg) }
         midi.start()
 

@@ -13,6 +13,9 @@ let kFFTSize = 2048
 let kFFTHalfN = 1024
 let kMagnitudeCount = 513
 
+/// Number of log-spaced spectrum bins exposed to the renderer (e.g. spectrum-ring scene).
+let kSpectrumBins = 64
+
 func magnitudeSpectrumToBands(
     magnitude: UnsafePointer<Float>,
     binCount: Int,

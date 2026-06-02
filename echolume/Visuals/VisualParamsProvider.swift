@@ -24,6 +24,7 @@ final class VisualParamsProvider: @unchecked Sendable {
     private var hasSignal: Bool = true
     private var resetTransientsRequested: Bool = false
     private var trailResetRequested: Bool = false
+    private var spectrum = [Float](repeating: 0, count: kSpectrumBins)
     private let mapping = ParamMapping()
 
     /// Call from main thread when analyzer or user settings change.
@@ -40,6 +41,21 @@ final class VisualParamsProvider: @unchecked Sendable {
         self.noise = max(0, min(1, noise))
         self.glitch = max(0, min(1, glitch))
         self.hasSignal = hasSignal
+        lock.unlock()
+    }
+
+    /// Update the spectrum bins (once per FFT frame). Call from main thread.
+    func updateSpectrum(_ bins: [Float]) {
+        lock.lock()
+        let n = min(bins.count, spectrum.count)
+        for i in 0 ..< n { spectrum[i] = bins[i] }
+        lock.unlock()
+    }
+
+    /// Copy the current spectrum into `dest` (length kSpectrumBins). Call from the render thread.
+    func copySpectrum(into dest: UnsafeMutablePointer<Float>) {
+        lock.lock()
+        for i in 0 ..< spectrum.count { dest[i] = spectrum[i] }
         lock.unlock()
     }
 

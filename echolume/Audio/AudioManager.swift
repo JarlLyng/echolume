@@ -114,6 +114,7 @@ final class AudioManager {
     var highPublisher: AnyPublisher<Float, Never> { analyzer.highPublisher.eraseToAnyPublisher() }
     var impactPublisher: AnyPublisher<Float, Never> { analyzer.impactPublisher.eraseToAnyPublisher() }
     var beatPublisher: AnyPublisher<BeatTracker.Output, Never> { analyzer.beatPublisher.eraseToAnyPublisher() }
+    var spectrumPublisher: AnyPublisher<[Float], Never> { analyzer.spectrumPublisher.eraseToAnyPublisher() }
 
     /// Register a tap-tempo tap. Serialized onto the FFT queue so all beat
     /// tracker access happens on one thread.
