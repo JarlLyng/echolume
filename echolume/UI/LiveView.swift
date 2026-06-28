@@ -136,6 +136,7 @@ struct LiveView: View {
             Image(systemName: "exclamationmark.triangle.fill")
                 .font(.system(size: 40))
                 .foregroundStyle(DesignTokens.ColorToken.State.warning)
+                .accessibilityHidden(true)
             Text("Renderer error")
                 .font(.system(size: DesignTokens.Typography.Size.lg, weight: DesignTokens.Typography.Weight.bold))
                 .foregroundStyle(DesignTokens.Common.Text.primary(colorScheme))

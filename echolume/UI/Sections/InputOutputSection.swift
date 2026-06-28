@@ -63,6 +63,7 @@ struct InputOutputSection: View {
             }
             .pickerStyle(.menu)
             .tint(DesignTokens.Common.primary(colorScheme))
+            .accessibilityLabel("Audio input device")
 
             if appModel.debugChannelCount >= 2 {
                 let pairCount = appModel.debugChannelCount / 2
@@ -91,6 +92,7 @@ struct InputOutputSection: View {
             Image(systemName: appModel.hasSignal ? "checkmark.circle.fill" : "exclamationmark.triangle.fill")
                 .font(.system(size: DesignTokens.Typography.Size.sm))
                 .foregroundStyle(appModel.hasSignal ? DesignTokens.Common.primary(colorScheme) : DesignTokens.ColorToken.State.warning)
+                .accessibilityHidden(true)
             Text(appModel.hasSignal ? "Signal" : "No signal")
                 .font(.system(size: DesignTokens.Typography.Size.xs, weight: DesignTokens.Typography.Weight.regular))
                 .foregroundStyle(DesignTokens.Common.Text.tertiary(colorScheme))
@@ -104,6 +106,7 @@ struct InputOutputSection: View {
         HStack(spacing: DesignTokens.Spacing.sm) {
             Image(systemName: "exclamationmark.triangle.fill")
                 .foregroundStyle(DesignTokens.ColorToken.State.warning)
+                .accessibilityHidden(true)
             Text(appModel.debugLastError ?? "Audio not running")
                 .font(.system(size: DesignTokens.Typography.Size.xs))
                 .foregroundStyle(DesignTokens.Common.Text.secondary(colorScheme))
@@ -141,6 +144,7 @@ private struct OutputDisplayPicker: View {
                     .pickerStyle(.menu)
                     .tint(DesignTokens.Common.primary(colorScheme))
                     .disabled(true)
+                    .accessibilityLabel("Output display")
                 } else {
                     Picker("", selection: Binding(
                         get: { appModel.selectedDisplayID },
@@ -154,6 +158,7 @@ private struct OutputDisplayPicker: View {
                     }
                     .pickerStyle(.menu)
                     .tint(DesignTokens.Common.primary(colorScheme))
+                    .accessibilityLabel("Output display")
                 }
             }
         }

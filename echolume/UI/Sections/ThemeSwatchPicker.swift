@@ -23,13 +23,17 @@ struct ThemeSwatchPicker: View {
             ScrollView(.horizontal, showsIndicators: false) {
                 HStack(spacing: DesignTokens.Spacing.sm) {
                     ForEach(Array(ThemeLibrary.themes.enumerated()), id: \.offset) { index, theme in
-                        ThemeSwatch(
-                            theme: theme,
-                            isSelected: index == appModel.selectedThemeIndex
-                        )
-                        .onTapGesture {
+                        Button {
                             appModel.setThemeIndex(index)
+                        } label: {
+                            ThemeSwatch(
+                                theme: theme,
+                                isSelected: index == appModel.selectedThemeIndex
+                            )
                         }
+                        .buttonStyle(.plain)
+                        .accessibilityLabel("\(theme.name) theme")
+                        .accessibilityAddTraits(index == appModel.selectedThemeIndex ? .isSelected : [])
                     }
                 }
                 .padding(.vertical, 2) // room for selected ring
