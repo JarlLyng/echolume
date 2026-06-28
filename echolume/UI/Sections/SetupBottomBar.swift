@@ -38,6 +38,7 @@ struct SetupBottomBar: View {
             }
             .buttonStyle(.plain)
             .keyboardShortcut(.return, modifiers: [])
+            .accessibilityHint("Starts the live visual output")
         }
         .padding(.horizontal, DesignTokens.Spacing.xxl)
         .padding(.vertical, DesignTokens.Spacing.lg)

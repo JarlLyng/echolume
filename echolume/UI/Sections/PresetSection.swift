@@ -90,6 +90,9 @@ private struct PresetChip: View {
             }
             .buttonStyle(.plain)
             .help("Apply preset \"\(preset.name)\"" + (slot != nil ? " (⌘\(slot!))" : ""))
+            .accessibilityLabel(slot != nil
+                ? "Apply preset \(preset.name), shortcut Command \(slot!)"
+                : "Apply preset \(preset.name)")
 
             Button(action: onDelete) {
                 Image(systemName: "xmark.circle.fill")

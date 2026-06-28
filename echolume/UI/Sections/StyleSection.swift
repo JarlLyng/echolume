@@ -49,6 +49,7 @@ struct StyleSection: View {
             }
             .pickerStyle(.menu)
             .tint(DesignTokens.Common.primary(colorScheme))
+            .accessibilityLabel("Shape style")
         }
         .frame(width: 170, alignment: .leading)
     }
@@ -68,6 +69,7 @@ struct StyleSection: View {
             }
             .pickerStyle(.menu)
             .tint(DesignTokens.Common.primary(colorScheme))
+            .accessibilityLabel("Scene")
         }
         .frame(width: 170, alignment: .leading)
     }

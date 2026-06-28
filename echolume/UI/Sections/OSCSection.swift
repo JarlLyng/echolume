@@ -51,6 +51,7 @@ struct OSCSection: View {
                     .textFieldStyle(.roundedBorder)
                     .frame(width: 80)
                     .onSubmit { commitPort() }
+                    .accessibilityLabel("OSC listener port")
             }
 
             Text("Send to /echolume/… (knob/abstraction, theme, randomize, preset…)")
