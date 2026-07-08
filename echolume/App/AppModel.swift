@@ -480,7 +480,10 @@ final class AppModel: ObservableObject {
         if selectedDeviceID == nil, let defaultID = systemDefaultInputDeviceID(), audioDevices.contains(where: { $0.id == defaultID }) {
             selectedDeviceID = defaultID
         } else if selectedDeviceID != nil, !audioDevices.contains(where: { $0.id == selectedDeviceID }) {
-            selectedDeviceID = audioDevices.first?.id
+            // Vanished device: prefer the system default input over the first
+            // list entry — alphabetical order can land on a silent loopback
+            // driver (e.g. "BlackHole 2ch"), which reads as a "No signal" bug.
+            selectedDeviceID = systemDefaultInputDeviceID() ?? audioDevices.first?.id
         }
     }
 
@@ -501,7 +504,9 @@ final class AppModel: ObservableObject {
     /// Call when app starts or SetupView appears. Requests mic permission; starts engine with selected device.
     func requestMicrophonePermissionAndStartAudio() {
         refreshAudioDevices()
-        if selectedDeviceID == nil { selectedDeviceID = audioDevices.first?.id ?? systemDefaultInputDeviceID() }
+        // Prefer the system default input; alphabetical first-in-list can be a
+        // silent loopback driver (e.g. "BlackHole 2ch") — see #109.
+        if selectedDeviceID == nil { selectedDeviceID = systemDefaultInputDeviceID() ?? audioDevices.first?.id }
         audioManager.selectedChannelPairIndex = selectedChannelPair
         let status = AVCaptureDevice.authorizationStatus(for: .audio)
         switch status {
