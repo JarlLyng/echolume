@@ -43,6 +43,7 @@ struct TempoSection: View {
                 .toggleStyle(.switch)
                 .controlSize(.mini)
                 .tint(DesignTokens.Common.primary(colorScheme))
+                .fixedSize()
             }
         }
         .padding(.top, DesignTokens.Spacing.xs)

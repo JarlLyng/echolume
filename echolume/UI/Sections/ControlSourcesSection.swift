@@ -37,9 +37,11 @@ struct ControlSourcesSection: View {
     }
 
     /// A subtly-filled tile so each control input reads as a distinct cell.
+    /// `maxHeight: .infinity` makes every tile fill the grid row's height (set
+    /// by the tallest tile) so the cards in a row line up to equal heights.
     private func tile<Content: View>(@ViewBuilder _ content: () -> Content) -> some View {
         content()
-            .frame(maxWidth: .infinity, alignment: .leading)
+            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
             .padding(DesignTokens.Spacing.sm)
             .background(DesignTokens.Common.Background.app(colorScheme))
             .clipShape(RoundedRectangle(cornerRadius: DesignTokens.Radius.sm))
