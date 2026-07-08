@@ -160,6 +160,7 @@ enum SceneType {
     case tunnel
     case kaleidoscope
     case plasma
+    case spectrumRing
 }
 ```
 
