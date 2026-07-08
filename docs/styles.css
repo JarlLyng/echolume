@@ -270,6 +270,51 @@ a:hover {
   line-height: 1.5;
 }
 
+/* Screenshot showcase */
+.showcase {
+  max-width: 68rem;
+  margin: 0 auto;
+  padding: 2rem 2rem 3rem;
+}
+
+.showcase-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 1.5rem;
+  align-items: start;
+}
+
+.shot {
+  margin: 0;
+}
+
+.shot.shot-wide {
+  grid-column: 1 / -1;
+}
+
+.shot img {
+  width: 100%;
+  height: auto;
+  display: block;
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow-md);
+  background: #000;
+}
+
+.shot figcaption {
+  margin-top: 0.65rem;
+  font-size: 0.9rem;
+  color: var(--text-tertiary);
+  text-align: center;
+}
+
+@media (max-width: 640px) {
+  .showcase-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
 .feature-grid {
   list-style: none;
   padding: 0;
