@@ -13,11 +13,14 @@ and this project aims to follow [Semantic Versioning](https://semver.org/spec/v2
 
 ### Added
 - VoiceOver / accessibility support across the UI: adjustable knobs, labeled
-  level meter, and labels on icon-only controls.
+  level meter, labeled pickers, and labels on icon-only controls.
+- Spectrum Ring scene (N-bin FFT spectrum to the shaders) — an 8th scene.
+- New square-wave app icon (dark full-bleed variant as the default).
+- Privacy manifest (`PrivacyInfo.xcprivacy`) declaring required-reason API use.
 - Privacy-friendly, cookieless Umami analytics on the marketing site.
 
 ### Changed
-- Updated the IAMJARL design-system package to 1.0.0.
+- Updated the IAMJARL design-system package to 1.1.0.
 - Spacebar = Randomize now triggers only in Live (on Setup, Space behaves
   normally instead of overwriting a dialed-in look).
 - LiveView overlay redrawn with consistent scrims + light text so it stays
@@ -29,6 +32,9 @@ and this project aims to follow [Semantic Versioning](https://semver.org/spec/v2
 - Off-screen Metal views now pause and honor the display's actual refresh rate.
 
 ### Fixed
+- Audio input auto-selection preferred the alphabetically-first device, which
+  could land on a silent loopback driver (e.g. BlackHole) and read as a
+  permanent "No signal". Now prefers the system default input.
 - Marketing site: literal `**markdown**` rendering as visible asterisks; hero
   animation now respects `prefers-reduced-motion`; invalid JSON-LD placeholder
   removed and FAQ schema added to the guide pages.
