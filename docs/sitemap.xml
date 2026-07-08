@@ -1,10 +1,27 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
+        xmlns:image="http://www.google.com/schemas/sitemap-image/1.1">
   <url>
     <loc>https://echolume.iamjarl.com/</loc>
-    <lastmod>2026-05-31</lastmod>
+    <lastmod>2026-07-09</lastmod>
     <changefreq>weekly</changefreq>
     <priority>1.0</priority>
+    <image:image>
+      <image:loc>https://echolume.iamjarl.com/screenshots/visual-neon-ring.jpg</image:loc>
+      <image:title>Echolume Spectrum Ring scene — Neon Lines theme</image:title>
+    </image:image>
+    <image:image>
+      <image:loc>https://echolume.iamjarl.com/screenshots/setup.jpg</image:loc>
+      <image:title>Echolume Setup screen — input, themes and performance controls</image:title>
+    </image:image>
+    <image:image>
+      <image:loc>https://echolume.iamjarl.com/screenshots/plugin-daw.jpg</image:loc>
+      <image:title>EcholumeAudioTap AUv3 plugin in a DAW</image:title>
+    </image:image>
+    <image:image>
+      <image:loc>https://echolume.iamjarl.com/screenshots/visual-techno-ring.jpg</image:loc>
+      <image:title>Echolume beat-synced Spectrum Ring — Techno Club theme</image:title>
+    </image:image>
   </url>
   <url>
     <loc>https://echolume.iamjarl.com/how-it-works.html</loc>
