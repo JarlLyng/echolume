@@ -101,22 +101,40 @@
       <span class="eyebrow">The visuals</span>
       <h2 class="section-title">Visuals that move with your music</h2>
       <p class="section-subtitle">Real-time, audio-reactive scenes rendered in Metal — beat-synced, low-latency, and built to fill a screen behind your set.</p>
-      <div class="showcase-grid">
-        <figure class="shot shot-wide">
-          <img src="screenshots/visual-neon-ring.jpg" width="1600" height="1000" loading="lazy" decoding="async"
-               alt="Echolume rendering its Spectrum Ring scene in the Neon Lines theme — a glowing green ring reacting to live audio, fullscreen on macOS.">
-          <figcaption>Spectrum Ring · Neon Lines theme</figcaption>
-        </figure>
-        <figure class="shot">
-          <img src="screenshots/visual-techno-ring.jpg" width="1600" height="1000" loading="lazy" decoding="async"
-               alt="Beat-synced Spectrum Ring visuals in Echolume's Techno Club theme, rendered in Metal with cyan and magenta trails.">
-          <figcaption>Beat-synced · Techno Club theme</figcaption>
-        </figure>
-        <figure class="shot">
-          <img src="screenshots/setup.jpg" width="1600" height="1000" loading="lazy" decoding="async"
-               alt="Echolume's Setup screen showing audio input selection, the visual theme swatch picker, scene and shape menus, and five performance knobs.">
-          <figcaption>One screen — pick an input, choose a look, hit Ready</figcaption>
-        </figure>
+      <div class="carousel">
+        <div class="carousel-viewport">
+          <div class="carousel-track" id="shots-track" tabindex="0" role="group" aria-label="Echolume screenshots">
+            <div class="cslide">
+              <img src="screenshots/setup.jpg" width="1600" height="1000" loading="lazy" decoding="async"
+                   data-caption="The app — one screen to dial in your look, then hit Ready"
+                   alt="Echolume's Setup screen: audio input, the visual theme swatch picker, scene and shape menus, and five performance knobs — all on one screen.">
+            </div>
+            <div class="cslide">
+              <img src="screenshots/visual-neon-ring.jpg" width="1600" height="1000" loading="lazy" decoding="async"
+                   data-caption="Spectrum Ring scene · Neon Lines theme"
+                   alt="Echolume's Spectrum Ring scene in the Neon Lines theme — a glowing green ring reacting to live audio.">
+            </div>
+            <div class="cslide">
+              <img src="screenshots/visual-spiral.jpg" width="1600" height="1004" loading="lazy" decoding="async"
+                   data-caption="Spiral scene · Summer theme"
+                   alt="Echolume's Spiral scene in the Summer theme — warm orange arms swirling to the beat.">
+            </div>
+            <div class="cslide">
+              <img src="screenshots/visual-grid.jpg" width="1600" height="1004" loading="lazy" decoding="async"
+                   data-caption="Grid scene · Techno Club theme"
+                   alt="Echolume's Grid scene in the Techno Club theme — a magenta mesh flexing with the music.">
+            </div>
+            <div class="cslide">
+              <img src="screenshots/visual-plasma.jpg" width="1600" height="1004" loading="lazy" decoding="async"
+                   data-caption="Plasma scene · Winter theme"
+                   alt="Echolume's Plasma scene in the Winter theme — soft pastel blues and purples drifting.">
+            </div>
+          </div>
+          <button class="c-arrow c-prev" type="button" aria-label="Previous screenshot">&lsaquo;</button>
+          <button class="c-arrow c-next" type="button" aria-label="Next screenshot">&rsaquo;</button>
+        </div>
+        <p class="c-caption" id="shots-caption">The app — one screen to dial in your look, then hit Ready</p>
+        <div class="c-dots" id="shots-dots" role="tablist" aria-label="Choose screenshot"></div>
       </div>
     </section>
 
@@ -252,6 +270,70 @@
         });
       }, { threshold: 0.12, rootMargin: '0px 0px -8% 0px' });
       document.querySelectorAll('.reveal').forEach(function (el) { io.observe(el); });
+    })();
+
+    // Screenshot carousel
+    (function () {
+      var track = document.getElementById('shots-track');
+      if (!track) return;
+      var slides = Array.prototype.slice.call(track.querySelectorAll('.cslide'));
+      var prev = document.querySelector('.c-prev');
+      var next = document.querySelector('.c-next');
+      var dotsWrap = document.getElementById('shots-dots');
+      var caption = document.getElementById('shots-caption');
+      var current = -1;
+
+      slides.forEach(function (s, i) {
+        var b = document.createElement('button');
+        b.type = 'button';
+        b.setAttribute('role', 'tab');
+        b.setAttribute('aria-label', 'Screenshot ' + (i + 1));
+        b.addEventListener('click', function () { goTo(i); });
+        dotsWrap.appendChild(b);
+      });
+      var dots = Array.prototype.slice.call(dotsWrap.children);
+
+      function update(i) {
+        if (i === current) return;
+        current = i;
+        dots.forEach(function (d, j) { d.classList.toggle('active', j === i); });
+        var img = slides[i].querySelector('img');
+        if (caption && img) caption.textContent = img.getAttribute('data-caption') || '';
+        if (prev) prev.disabled = (i === 0);
+        if (next) next.disabled = (i === slides.length - 1);
+      }
+
+      function goTo(i) {
+        i = Math.max(0, Math.min(slides.length - 1, i));
+        slides[i].scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
+        update(i);
+      }
+
+      if (prev) prev.addEventListener('click', function () { goTo(current - 1); });
+      if (next) next.addEventListener('click', function () { goTo(current + 1); });
+
+      var raf;
+      track.addEventListener('scroll', function () {
+        if (raf) cancelAnimationFrame(raf);
+        raf = requestAnimationFrame(function () {
+          var tr = track.getBoundingClientRect();
+          var center = tr.left + tr.width / 2;
+          var best = 0, bestDist = Infinity;
+          slides.forEach(function (s, i) {
+            var r = s.getBoundingClientRect();
+            var d = Math.abs(r.left + r.width / 2 - center);
+            if (d < bestDist) { bestDist = d; best = i; }
+          });
+          update(best);
+        });
+      }, { passive: true });
+
+      track.addEventListener('keydown', function (e) {
+        if (e.key === 'ArrowRight') { e.preventDefault(); goTo(current + 1); }
+        else if (e.key === 'ArrowLeft') { e.preventDefault(); goTo(current - 1); }
+      });
+
+      update(0);
     })();
 
     const canvas = document.getElementById('hero-canvas');
