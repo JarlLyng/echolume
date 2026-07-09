@@ -13,6 +13,9 @@
   <meta property="og:image" content="https://echolume.iamjarl.com/og-image.png">
   <meta name="twitter:card" content="summary_large_image">
   <meta name="theme-color" content="#D0FF00">
+  <link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="favicon-16.png">
+  <link rel="apple-touch-icon" href="apple-touch-icon.png">
 
   <!-- Structured Data for Software Application (GEO and SEO search enhancements) -->
   <script type="application/ld+json">
@@ -55,6 +58,13 @@
   <!-- Umami analytics (privacy-friendly, cookieless) -->
   <script defer src="https://umami-iamjarl.vercel.app/script.js" data-website-id="09a6bdeb-cb4b-4156-8674-aaff69e3fee9"></script>
   <link rel="stylesheet" href="styles.css">
+  <script>
+    // Arm scroll-reveal before first paint (only if motion is allowed), so
+    // .reveal elements never flash visible then hide. No JS = fully visible.
+    if (!window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+      document.documentElement.className += " reveal-ready";
+    }
+  </script>
 </head>
 <body>
   <header class="header">
@@ -74,6 +84,7 @@
 
   <main>
     <section class="hero">
+      <div class="hero-bg" aria-hidden="true"></div>
       <div class="hero-canvas-container">
         <canvas id="hero-canvas" aria-hidden="true" role="presentation"></canvas>
       </div>
@@ -86,7 +97,7 @@
       <a href="#download" class="cta">Get Echolume</a>
     </section>
 
-    <section id="showcase" class="showcase">
+    <section id="showcase" class="showcase reveal">
       <h2 class="section-title">See it in action</h2>
       <p class="section-subtitle">Real-time visuals driven by live audio — from a single microphone to a full DAW rig.</p>
       <div class="showcase-grid">
@@ -113,7 +124,7 @@
       </div>
     </section>
 
-    <section id="features" class="features">
+    <section id="features" class="features reveal">
       <h2 class="section-title">Built for performance</h2>
       <p class="section-subtitle">Low-latency rendering and advanced control integrations, tailored for visual artists, musicians, and streamers.</p>
       <ul class="feature-grid">
@@ -160,10 +171,13 @@
       </ul>
     </section>
 
-    <section id="download" class="download">
+    <section id="download" class="download reveal">
       <h2 class="section-title">Download Echolume</h2>
       <p class="download-desc">Echolume is a standalone application requiring macOS 14 (Sonoma) or later. The AUv3 plugin requires an AUv3-compatible host like Ableton Live 11.3+ or Logic Pro.</p>
-      <a href="https://apps.apple.com/app/id6759684323" class="cta cta-store">Download on the Mac App Store</a>
+      <a href="https://apps.apple.com/app/id6759684323" class="btn-store">
+        <svg viewBox="0 0 384 512" aria-hidden="true"><path d="M318.7 268.7c-.2-36.7 16.4-64.4 50-84.8-18.8-26.9-47.2-41.7-84.7-44.6-35.5-2.8-74.3 20.7-88.5 20.7-15 0-49.4-19.7-76.4-19.7C63.3 141.2 4 184.8 4 273.5q0 39.3 14.4 81.2c12.8 36.7 59 126.7 107.2 125.2 25.2-.6 43-17.9 75.8-17.9 31.8 0 48.3 17.9 76.4 17.9 48.6-.7 90.4-82.5 102.6-119.3-65.2-30.7-61.7-90-61.7-91.9zm-56.6-164.2c27.3-32.4 24.8-61.9 24-72.5-24.1 1.4-52 16.4-67.9 34.9-17.5 19.8-27.8 44.3-25.6 71.9 26.1 2 49.9-11.4 69.5-34.3z"/></svg>
+        <span>Download on the Mac App Store</span>
+      </a>
       <p class="download-note">Launching on the Mac App Store — a one-time purchase ($19.99), yours forever. The bundled AUv3 plugin registers automatically on first launch.</p>
     </section>
   </main>
@@ -189,6 +203,21 @@
 
   <!-- Canvas Audio-Reactive Simulation Script -->
   <script>
+    // Scroll reveal: add `.in` as sections enter the viewport.
+    (function () {
+      if (!document.documentElement.classList.contains('reveal-ready')) return;
+      if (!('IntersectionObserver' in window)) {
+        document.querySelectorAll('.reveal').forEach(function (el) { el.classList.add('in'); });
+        return;
+      }
+      var io = new IntersectionObserver(function (entries) {
+        entries.forEach(function (e) {
+          if (e.isIntersecting) { e.target.classList.add('in'); io.unobserve(e.target); }
+        });
+      }, { threshold: 0.12, rootMargin: '0px 0px -8% 0px' });
+      document.querySelectorAll('.reveal').forEach(function (el) { io.observe(el); });
+    })();
+
     const canvas = document.getElementById('hero-canvas');
     const ctx = canvas.getContext('2d');
     let time = 0;
