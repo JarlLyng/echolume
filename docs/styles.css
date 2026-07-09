@@ -185,10 +185,12 @@ a:hover {
   content: "";
   position: absolute;
   inset: 0;
-  background-image: linear-gradient(180deg, rgba(10, 10, 10, 0.55), rgba(10, 10, 10, 0.9)), url("images/hero-bg.jpg");
+  background-image:
+    linear-gradient(90deg, rgba(10, 10, 10, 0.94) 28%, rgba(10, 10, 10, 0.45) 100%),
+    linear-gradient(0deg, rgba(10, 10, 10, 0.85), rgba(10, 10, 10, 0.35) 60%),
+    url("images/hero-bg.jpg");
   background-size: cover;
   background-position: center;
-  opacity: 0.5;
 }
 
 .hero-canvas-container {
@@ -439,6 +441,145 @@ a:hover {
   color: var(--text-muted);
   font-size: 0.95rem;
   line-height: 1.6;
+}
+
+/* Eyebrow label above section titles */
+.eyebrow {
+  display: inline-block;
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.18em;
+  color: var(--accent);
+  margin-bottom: 0.9rem;
+}
+
+/* DAW / plugin section — split copy + screenshot */
+.daw {
+  max-width: 68rem;
+  margin: 0 auto;
+  padding: 4rem 2rem;
+}
+
+.daw-grid {
+  display: grid;
+  grid-template-columns: 1.05fr 0.95fr;
+  gap: 3.5rem;
+  align-items: center;
+}
+
+.daw-copy .section-title {
+  margin-top: 0;
+}
+
+.daw-copy .section-title::before {
+  display: none;
+}
+
+.daw-copy p {
+  color: var(--text-muted);
+  font-size: 1.1rem;
+  line-height: 1.6;
+  margin: 0;
+  max-width: 34rem;
+}
+
+.daw-points {
+  list-style: none;
+  padding: 0;
+  margin: 1.75rem 0 0;
+}
+
+.daw-points li {
+  position: relative;
+  padding-left: 1.75rem;
+  margin-bottom: 0.85rem;
+  color: var(--text);
+}
+
+.daw-points li::before {
+  content: "✓";
+  position: absolute;
+  left: 0;
+  top: -1px;
+  color: var(--accent);
+  font-weight: 700;
+}
+
+.daw-shot {
+  margin: 0;
+}
+
+.daw-shot img {
+  width: 100%;
+  height: auto;
+  display: block;
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow-md);
+  background: #0a0a0a;
+}
+
+@media (max-width: 760px) {
+  .daw-grid {
+    grid-template-columns: 1fr;
+    gap: 2rem;
+  }
+}
+
+/* Use-case atmosphere band */
+.usecase {
+  max-width: 68rem;
+  margin: 0 auto;
+  padding: 4rem 2rem 5rem;
+}
+
+.usecase-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1.25rem;
+}
+
+.usecase-card {
+  position: relative;
+  margin: 0;
+  border-radius: var(--radius);
+  overflow: hidden;
+  border: 1px solid var(--border);
+}
+
+.usecase-card img {
+  width: 100%;
+  height: 270px;
+  object-fit: cover;
+  display: block;
+  transition: transform 0.6s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+.usecase-card:hover img {
+  transform: scale(1.05);
+}
+
+.usecase-card figcaption {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  padding: 2.5rem 1.25rem 1.1rem;
+  font-family: var(--font-heading);
+  font-weight: 600;
+  font-size: 1.05rem;
+  color: #ffffff;
+  background: linear-gradient(to top, rgba(0, 0, 0, 0.85), transparent);
+}
+
+@media (max-width: 760px) {
+  .usecase-grid {
+    grid-template-columns: 1fr;
+  }
+  .usecase-card img {
+    height: 220px;
+  }
 }
 
 /* Download */
