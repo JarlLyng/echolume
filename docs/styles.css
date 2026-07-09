@@ -146,6 +146,13 @@ a:hover {
   box-shadow: none;
 }
 
+/* Header CTA needs explicit dark text — `.nav a` (translucent white) would
+   otherwise out-specify `.cta` and render an unreadable label on lime. */
+.nav a.cta-nav,
+.nav a.cta-nav:hover {
+  color: #000000;
+}
+
 .github-icon {
   display: inline-block;
   vertical-align: middle;
@@ -154,12 +161,34 @@ a:hover {
 /* Hero */
 .hero {
   position: relative;
-  max-width: 52rem;
+  max-width: 68rem;
   margin: 0 auto;
-  padding: 8rem 2rem 6rem;
-  text-align: center;
+  padding: 8rem 2rem 5rem;
+  text-align: left;
   overflow: hidden;
   z-index: 1;
+}
+
+/* Optional atmosphere image behind the hero. Drop a file at
+   images/hero-bg.jpg and it appears automatically; until then the
+   radial gradient below is the fallback. */
+.hero-bg {
+  position: absolute;
+  inset: 0;
+  z-index: -2;
+  background:
+    radial-gradient(70% 80% at 75% 30%, rgba(208, 255, 0, 0.10), transparent 60%),
+    radial-gradient(60% 70% at 20% 80%, rgba(120, 80, 255, 0.08), transparent 60%);
+}
+
+.hero-bg::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background-image: linear-gradient(180deg, rgba(10, 10, 10, 0.55), rgba(10, 10, 10, 0.9)), url("images/hero-bg.jpg");
+  background-size: cover;
+  background-position: center;
+  opacity: 0.5;
 }
 
 .hero-canvas-container {
@@ -202,10 +231,14 @@ a:hover {
 
 .hero-desc {
   color: var(--text-muted);
-  margin: 0 auto 2.5rem;
+  margin: 0 0 2.5rem;
   font-size: clamp(1.1rem, 2.5vw, 1.25rem);
   line-height: 1.6;
-  max-width: 40rem;
+  max-width: 42rem;
+}
+
+.hero-title {
+  max-width: 20ch;
 }
 
 .hero-more {
@@ -253,20 +286,31 @@ a:hover {
 
 .section-title {
   font-family: var(--font-heading);
-  font-size: 2.2rem;
+  font-size: clamp(1.9rem, 4vw, 2.4rem);
   font-weight: 700;
   letter-spacing: -0.02em;
-  margin: 0 0 1rem;
-  text-align: center;
+  margin: 0 0 0.85rem;
+  text-align: left;
   color: #ffffff;
 }
 
+.section-title::before {
+  content: "";
+  display: block;
+  width: 40px;
+  height: 3px;
+  border-radius: 2px;
+  background: var(--accent);
+  margin-bottom: 1.1rem;
+  box-shadow: 0 0 16px rgba(208, 255, 0, 0.4);
+}
+
 .section-subtitle {
-  font-size: 1.05rem;
+  font-size: 1.1rem;
   color: var(--text-muted);
-  text-align: center;
-  max-width: 32rem;
-  margin: 0 auto 3.5rem;
+  text-align: left;
+  max-width: 40rem;
+  margin: 0 0 3rem;
   line-height: 1.5;
 }
 
@@ -300,13 +344,23 @@ a:hover {
   border: 1px solid var(--border);
   box-shadow: var(--shadow-md);
   background: #000;
+  transition: transform 0.35s cubic-bezier(0.2, 0.8, 0.2, 1),
+              box-shadow 0.35s ease, border-color 0.35s ease;
+}
+
+.shot:hover img {
+  transform: translateY(-4px);
+  border-color: var(--border-hover);
+  box-shadow: var(--shadow-md), 0 0 40px rgba(208, 255, 0, 0.06);
 }
 
 .shot figcaption {
-  margin-top: 0.65rem;
+  margin-top: 0.85rem;
   font-size: 0.9rem;
   color: var(--text-tertiary);
-  text-align: center;
+  text-align: left;
+  padding-left: 0.9rem;
+  border-left: 2px solid var(--border-hover);
 }
 
 @media (max-width: 640px) {
@@ -389,26 +443,54 @@ a:hover {
 
 /* Download */
 .download {
-  max-width: 40rem;
+  max-width: 68rem;
   margin: 0 auto;
-  padding: 6rem 2rem;
-  text-align: center;
+  padding: 5rem 2rem 6rem;
+  text-align: left;
 }
 
 .download-desc {
   color: var(--text-muted);
-  margin: 0 auto 2rem;
-  font-size: 1.1rem;
-  max-width: 28rem;
+  margin: 0 0 2rem;
+  font-size: 1.15rem;
+  max-width: 38rem;
 }
 
-.cta-store {
-  margin-bottom: 1.5rem;
+/* App Store download button — dark badge, white text for maximum
+   legibility (the old lime button had poor contrast for its label). */
+.btn-store {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.7rem;
+  padding: 0.95rem 1.8rem;
+  background: #161616;
+  color: #ffffff;
+  font-weight: 600;
+  font-size: 1.05rem;
+  border: 1px solid var(--border-hover);
+  border-radius: 14px;
+  transition: all 0.25s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+.btn-store svg {
+  width: 22px;
+  height: 22px;
+  fill: #ffffff;
+  flex-shrink: 0;
+}
+
+.btn-store:hover {
+  color: #ffffff;
+  border-color: var(--accent);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 28px rgba(0, 0, 0, 0.5), 0 0 26px rgba(208, 255, 0, 0.12);
 }
 
 .download-note {
-  font-size: 0.85rem;
+  font-size: 0.9rem;
   color: var(--text-tertiary);
+  margin-top: 1.5rem;
+  max-width: 34rem;
 }
 
 /* Comparison Table Styling (for GEO extraction) */
@@ -483,10 +565,16 @@ a:hover {
 .footer {
   padding: 4rem 2rem;
   border-top: 1px solid var(--border);
-  text-align: center;
+  text-align: left;
   color: var(--text-muted);
   font-size: 0.9rem;
   background: rgba(0, 0, 0, 0.2);
+}
+
+.footer > * {
+  max-width: 68rem;
+  margin-left: auto;
+  margin-right: auto;
 }
 
 .footer p {
@@ -504,7 +592,7 @@ a:hover {
 .footer-nav {
   display: flex;
   flex-wrap: wrap;
-  justify-content: center;
+  justify-content: flex-start;
   gap: 1.5rem;
   margin: 1.5rem 0;
 }
@@ -694,6 +782,27 @@ a:hover {
   }
 }
 
+/* Scroll reveal — only armed once JS adds `reveal-ready` to <html> (and only
+   when motion is allowed), so content is always visible without JS. */
+.reveal-ready .reveal {
+  opacity: 0;
+  transform: translateY(26px);
+  transition: opacity 0.7s cubic-bezier(0.2, 0.8, 0.2, 1),
+              transform 0.7s cubic-bezier(0.2, 0.8, 0.2, 1);
+  will-change: opacity, transform;
+}
+
+.reveal-ready .reveal.in {
+  opacity: 1;
+  transform: none;
+}
+
+/* Stagger children of a revealed grid slightly for a premium feel. */
+.reveal-ready .reveal .feature,
+.reveal-ready .reveal .shot {
+  transition-delay: calc(var(--i, 0) * 60ms);
+}
+
 /* Accessibility: honor users who prefer reduced motion */
 @media (prefers-reduced-motion: reduce) {
   html {
@@ -705,5 +814,9 @@ a:hover {
     animation-duration: 0.01ms !important;
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
+  }
+  .reveal-ready .reveal {
+    opacity: 1;
+    transform: none;
   }
 }
