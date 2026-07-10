@@ -10,7 +10,7 @@ A macOS app for **live, audio‑reactive 2D visuals** rendered with **Metal**. E
 
 > Design goals: **stable**, **low‑latency**, **minimal UI**, **beautiful results with few controls**, and a **clean architecture** that's deterministic to extend.
 
-**Other repo docs:** [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) covers the layering, type contracts, milestones, and development conventions. `SEO_STRATEGY.md` (Danish) covers SEO for the GitHub Pages site in `docs/` only.
+**Other repo docs:** [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) covers the layering, type contracts, milestones, and development conventions. SEO, audience, and marketing strategy live in the private IAMJARL strategy hub (folder `Echolume/`), not in this repo.
 
 ---
 
