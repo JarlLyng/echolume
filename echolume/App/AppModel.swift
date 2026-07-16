@@ -70,6 +70,8 @@ final class AppModel: ObservableObject {
         case oscEnabled = "echolume.oscEnabled"
         case oscPort = "echolume.oscPort"
         case menubarEnabled = "echolume.menubarEnabled"
+        case meaningfulSessions = "echolume.meaningfulSessions"
+        case lastReviewPromptDate = "echolume.lastReviewPromptDate"
     }
 
     /// Persist a settings value. Centralizes the write so setters don't repeat
@@ -415,7 +417,46 @@ final class AppModel: ObservableObject {
         }
     }
 
+    // MARK: - App Store review prompt
+
+    /// Bumped when a review request should be shown. A SwiftUI view observes
+    /// this and calls the RequestReviewAction (which itself rate-limits and may
+    /// choose not to show the prompt).
+    @Published private(set) var reviewRequestToken = 0
+
+    /// Wall-clock start of the current Live session (nil when not live).
+    private var liveEnteredAt: CFAbsoluteTime?
+
+    /// A "meaningful" Live session lasts at least this long — a real
+    /// performance, not an accidental Ready → Back. Only these count.
+    private let kMeaningfulSessionSeconds: CFAbsoluteTime = 90
+    /// Ask for a review only after this many meaningful sessions…
+    private let kSessionsBeforeReview = 3
+    /// …and never more often than this (Apple also caps at ~3/year).
+    private let kMinDaysBetweenPrompts: Double = 120
+
+    /// Called from `exitLive()`. If the session was long enough, count it and,
+    /// once the thresholds are met, ask a SwiftUI view to request a review on a
+    /// positive moment (never at launch).
+    private func maybePromptReviewAfterSession() {
+        guard let start = liveEnteredAt else { return }
+        guard CFAbsoluteTimeGetCurrent() - start >= kMeaningfulSessionSeconds else { return }
+
+        let defaults = UserDefaults.standard
+        let sessions = defaults.integer(forKey: DefaultsKey.meaningfulSessions.rawValue) + 1
+        defaults.set(sessions, forKey: DefaultsKey.meaningfulSessions.rawValue)
+        guard sessions >= kSessionsBeforeReview else { return }
+
+        let now = Date().timeIntervalSince1970
+        let last = defaults.double(forKey: DefaultsKey.lastReviewPromptDate.rawValue)
+        guard last == 0 || now - last > kMinDaysBetweenPrompts * 86_400 else { return }
+
+        defaults.set(now, forKey: DefaultsKey.lastReviewPromptDate.rawValue)
+        reviewRequestToken += 1
+    }
+
     func enterLive() {
+        liveEnteredAt = CFAbsoluteTimeGetCurrent()
         guard let selected = selectedDisplay else {
             enterFullscreenOnMainWindow()
             return
@@ -455,6 +496,8 @@ final class AppModel: ObservableObject {
         }
         liveOnExternal = false
         state = .setup
+        maybePromptReviewAfterSession()
+        liveEnteredAt = nil
     }
 
     /// Called when the external Live window closes (e.g. system or user).

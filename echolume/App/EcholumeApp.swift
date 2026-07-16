@@ -4,6 +4,7 @@
 //
 
 import AppKit
+import StoreKit
 import SwiftUI
 
 @main
@@ -81,6 +82,7 @@ private struct DebugInspectorMenuButton: View {
 
 private struct RootView: View {
     @ObservedObject var appModel: AppModel
+    @Environment(\.requestReview) private var requestReview
 
     /// Show Setup when in setup, or when Live is on external (Setup stays on main).
     private var showSetup: Bool {
@@ -100,6 +102,9 @@ private struct RootView: View {
         }
         .animation(.easeInOut(duration: 0.2), value: appModel.state)
         .animation(.easeInOut(duration: 0.2), value: appModel.liveOnExternal)
+        .onChange(of: appModel.reviewRequestToken) { _, _ in
+            requestReview()
+        }
         .onKeyPress { key in
             let ch = key.characters
             // Spacebar = Randomize, but only in Live. On Setup it would nuke a
