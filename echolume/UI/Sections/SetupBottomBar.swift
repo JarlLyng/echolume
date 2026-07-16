@@ -9,6 +9,10 @@ import IAMJARLDesignTokens
 import SwiftUI
 
 struct SetupBottomBar: View {
+    /// Top-shadow styling for the sticky bar (named, not magic — #71).
+    private static let shadowOpacity = 0.15
+    private static let shadowRadius: CGFloat = 8
+    private static let shadowYOffset: CGFloat = -2
     @ObservedObject var appModel: AppModel
     @Environment(\.colorScheme) private var colorScheme
 
@@ -44,7 +48,7 @@ struct SetupBottomBar: View {
         .padding(.vertical, DesignTokens.Spacing.lg)
         .background(
             DesignTokens.Common.Background.app(colorScheme)
-                .shadow(color: .black.opacity(0.15), radius: 8, y: -2)
+                .shadow(color: .black.opacity(Self.shadowOpacity), radius: Self.shadowRadius, y: Self.shadowYOffset)
         )
     }
 }

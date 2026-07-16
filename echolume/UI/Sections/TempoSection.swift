@@ -11,6 +11,8 @@ import IAMJARLDesignTokens
 import SwiftUI
 
 struct TempoSection: View {
+    /// Status-dot diameter (named, not magic — #71).
+    private static let statusDotSize: CGFloat = 6
     @ObservedObject var appModel: AppModel
     @Environment(\.colorScheme) private var colorScheme
 
@@ -23,7 +25,7 @@ struct TempoSection: View {
 
                 Circle()
                     .fill(lockColor)
-                    .frame(width: 6, height: 6)
+                    .frame(width: Self.statusDotSize, height: Self.statusDotSize)
 
                 Text(bpmLabel)
                     .font(.system(size: DesignTokens.Typography.Size.xs, weight: DesignTokens.Typography.Weight.semibold))

@@ -9,6 +9,9 @@ import IAMJARLDesignTokens
 import SwiftUI
 
 struct LevelMeterView: View {
+    /// Meter bar heights (named, not magic — #71).
+    private static let barHeightCompact: CGFloat = 4
+    private static let barHeight: CGFloat = 8
     let rms: Float
     let peak: Float
     var compact: Bool = false
@@ -18,7 +21,7 @@ struct LevelMeterView: View {
         let rmsC = DesignTokens.Common.primary(colorScheme)
         let peakC = DesignTokens.Common.Text.primary(colorScheme)
         let bgC = DesignTokens.Common.Background.muted(colorScheme)
-        let h = compact ? 4.0 : 8.0
+        let h = compact ? Self.barHeightCompact : Self.barHeight
         let corner = compact ? DesignTokens.Radius.sm / 2 : DesignTokens.Radius.sm
 
         VStack(alignment: .leading, spacing: compact ? 2 : DesignTokens.Spacing.xs) {
