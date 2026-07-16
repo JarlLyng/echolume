@@ -14,11 +14,6 @@
 #import <span>
 #import <cmath>
 #import <cstring>
-#import <sys/socket.h>
-#import <netinet/in.h>
-#import <arpa/inet.h>
-#import <fcntl.h>
-#import <unistd.h>
 
 #import "EcholumeAudioTapParameterAddresses.h"
 #import "EcholumeAudioTapBufferedAudioBus.hpp"
@@ -31,42 +26,12 @@ class EcholumeAudioTapDSPKernel {
 public:
     void initialize(int inputChannelCount, int outputChannelCount, double inSampleRate) {
         mSampleRate = inSampleRate;
-        // Open a non-blocking loopback UDP socket to the echolume OSC listener.
-        // Non-blocking so a full send buffer never stalls the render thread.
-        if (mSocket < 0) {
-            mSocket = socket(AF_INET, SOCK_DGRAM, 0);
-            if (mSocket >= 0) {
-                fcntl(mSocket, F_SETFL, O_NONBLOCK);
-                std::memset(&mDst, 0, sizeof(mDst));
-                mDst.sin_family = AF_INET;
-                mDst.sin_port = htons(9000);
-                mDst.sin_addr.s_addr = inet_addr("127.0.0.1");
-            }
-        }
     }
 
     void deInitialize() {
-        if (mSocket >= 0) { close(mSocket); mSocket = -1; }
     }
 
-    // Send one OSC float message ("/addr ,f <value>") to echolume. Best-effort,
-    // non-blocking; drops the packet if the socket buffer is full.
-    void sendOSCFloat(const char *address, float value) {
-        if (mSocket < 0) { return; }
-        uint8_t buf[64];
-        size_t i = 0;
-        size_t alen = std::strlen(address);
-        if (alen + 1 + 8 > sizeof(buf)) { return; }
-        std::memcpy(buf, address, alen); i = alen;
-        buf[i++] = 0;
-        while (i % 4 != 0) { buf[i++] = 0; }      // pad address
-        buf[i++] = ','; buf[i++] = 'f'; buf[i++] = 0; buf[i++] = 0;  // ",f" type tag
-        uint32_t bits; std::memcpy(&bits, &value, 4);
-        bits = htonl(bits);                        // big-endian float32
-        std::memcpy(buf + i, &bits, 4); i += 4;
-        sendto(mSocket, buf, i, 0, (const struct sockaddr *)&mDst, sizeof(mDst));
-    }
-    
+
     // MARK: - Bypass
     bool isBypassed() {
         return mBypassed;
@@ -164,16 +129,9 @@ public:
             mOutLow = (float)std::fmin(1.0, rLow / (mNormLow + 1e-5));
             mOutMid = (float)std::fmin(1.0, rMid / (mNormMid + 1e-5));
             mOutHigh = (float)std::fmin(1.0, rHigh / (mNormHigh + 1e-5));
-
-            // Forward to echolume over OSC every other buffer (~50–90 Hz).
-            // Best-effort, non-blocking. (v2: move off the render thread.)
-            if ((++mSendCounter & 1) == 0) {
-                sendOSCFloat("/echolume/audio/level", mOutLevel);
-                sendOSCFloat("/echolume/audio/low", mOutLow);
-                sendOSCFloat("/echolume/audio/mid", mOutMid);
-                sendOSCFloat("/echolume/audio/high", mOutHigh);
-                if (mOutBPM > 0) { sendOSCFloat("/echolume/audio/bpm", mOutBPM); }
-            }
+            // The render thread only writes these floats; the Swift-side OSC
+            // sender polls them (~60 Hz) and does the actual network I/O, so no
+            // syscall ever runs on the realtime path.
         }
 
         // Pass the audio through unchanged (a tap, not a gate).
@@ -184,7 +142,7 @@ public:
         }
     }
 
-    // MARK: - Analysis output (read from the Swift OSC sender; benign single-float races)
+    // MARK: - Analysis output (polled by the Swift OSC sender; benign single-float races)
     float outLevel() const { return mOutLevel; }
     float outLow()   const { return mOutLow; }
     float outMid()   const { return mOutMid; }
@@ -259,13 +217,8 @@ public:
     // Analysis state (render thread only).
     double mLPlow = 0.0, mLPmid = 0.0;
     double mNormLevel = 1e-4, mNormLow = 1e-4, mNormMid = 1e-4, mNormHigh = 1e-4;
-    // Latest normalized features, read by the Swift OSC sender (~60 Hz).
+    // Latest normalized features, polled by the Swift OSC sender (~60 Hz).
     float mOutLevel = 0, mOutLow = 0, mOutMid = 0, mOutHigh = 0, mOutBPM = 0;
-
-    // OSC transport (render thread, best-effort non-blocking UDP).
-    int mSocket = -1;
-    struct sockaddr_in mDst {};
-    unsigned mSendCounter = 0;
 
     bool mBypassed = false;
     AUAudioFrameCount mMaxFramesToRender = 1024;

@@ -109,7 +109,7 @@ private struct PresetChip: View {
         .clipShape(RoundedRectangle(cornerRadius: DesignTokens.Radius.sm))
         .overlay(
             RoundedRectangle(cornerRadius: DesignTokens.Radius.sm)
-                .strokeBorder(Color.white.opacity(0.10), lineWidth: 1)
+                .strokeBorder(DesignTokens.Common.Border.subtle(colorScheme), lineWidth: 1)
         )
         .contextMenu {
             Button("Apply", action: onApply)

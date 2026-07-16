@@ -43,6 +43,9 @@ struct ThemeSwatchPicker: View {
 }
 
 private struct ThemeSwatch: View {
+    /// Palette-strip dimensions (named, not magic — #71).
+    static let swatchWidth: CGFloat = 64
+    static let swatchHeight: CGFloat = 40
     let theme: Theme
     let isSelected: Bool
     @Environment(\.colorScheme) private var colorScheme
@@ -57,12 +60,12 @@ private struct ThemeSwatch: View {
                         startPoint: .leading,
                         endPoint: .trailing
                     ))
-                    .frame(width: 64, height: 40)
+                    .frame(width: ThemeSwatch.swatchWidth, height: ThemeSwatch.swatchHeight)
             }
             .overlay(
                 RoundedRectangle(cornerRadius: DesignTokens.Radius.sm)
                     .strokeBorder(
-                        isSelected ? DesignTokens.Common.primary(colorScheme) : Color.white.opacity(0.10),
+                        isSelected ? DesignTokens.Common.primary(colorScheme) : DesignTokens.Common.Border.subtle(colorScheme),
                         lineWidth: isSelected ? 2 : 1
                     )
             )

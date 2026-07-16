@@ -10,6 +10,8 @@ import IAMJARLDesignTokens
 import SwiftUI
 
 struct TwitchSection: View {
+    /// Status-dot diameter (named, not magic — #71).
+    private static let statusDotSize: CGFloat = 8
     @ObservedObject var appModel: AppModel
     @Environment(\.colorScheme) private var colorScheme
 
@@ -96,7 +98,7 @@ struct TwitchSection: View {
         HStack(spacing: DesignTokens.Spacing.xs) {
             Circle()
                 .fill(statusColor)
-                .frame(width: 8, height: 8)
+                .frame(width: Self.statusDotSize, height: Self.statusDotSize)
             Text(statusLabel)
                 .font(.system(size: DesignTokens.Typography.Size.xs))
                 .foregroundStyle(DesignTokens.Common.Text.tertiary(colorScheme))

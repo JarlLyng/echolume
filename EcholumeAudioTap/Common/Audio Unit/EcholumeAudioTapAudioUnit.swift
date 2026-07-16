@@ -14,6 +14,10 @@ public class EcholumeAudioTapAudioUnit: AUAudioUnit, @unchecked Sendable
     var processHelper: AUProcessHelper?
     var inputBus = BufferedInputBus()
 
+    /// Sends the kernel's analysis to Echolume over loopback OSC from a ~60 Hz
+    /// timer, keeping syscalls off the realtime render thread (#51).
+    private var oscSender: PluginOSCSender?
+
 	private var outputBus: AUAudioUnitBus?
     private var _inputBusses: AUAudioUnitBusArray!
     private var _outputBusses: AUAudioUnitBusArray!
@@ -98,16 +102,28 @@ public class EcholumeAudioTapAudioUnit: AUAudioUnit, @unchecked Sendable
         kernel.initialize(Int32(inputChannelCount), Int32(outputChannelCount), outputBus!.format.sampleRate)
         processHelper?.setChannelCount(UInt32(inputChannelCount), UInt32(outputChannelCount))
 
+        // Start the off-render-thread OSC forwarder (#51). The closure reads
+        // the kernel's latest analysis floats; the sender does the network I/O
+        // on its own utility queue.
+        let sender = PluginOSCSender { [weak self] in
+            guard let self else { return (0, 0, 0, 0, 0) }
+            return (self.kernel.outLevel(), self.kernel.outLow(), self.kernel.outMid(), self.kernel.outHigh(), self.kernel.outBPM())
+        }
+        sender.start()
+        oscSender = sender
+
         try super.allocateRenderResources()
 	}
 
     // Deallocate resources allocated in allocateRenderResourcesAndReturnError:
     // Subclassers should call the superclass implementation.
     public override func deallocateRenderResources() {
-        
+
         // Deallocate your resources.
+        oscSender?.stop()
+        oscSender = nil
         kernel.deInitialize()
-        
+
         super.deallocateRenderResources()
     }
 

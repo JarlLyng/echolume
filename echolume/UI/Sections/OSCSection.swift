@@ -11,6 +11,8 @@ import IAMJARLDesignTokens
 import SwiftUI
 
 struct OSCSection: View {
+    /// Status-dot diameter (design nit: named, not magic — #71).
+    private static let statusDotSize: CGFloat = 6
     @ObservedObject var appModel: AppModel
     @ObservedObject var server: OSCServer
     @Environment(\.colorScheme) private var colorScheme
@@ -29,7 +31,7 @@ struct OSCSection: View {
                     .foregroundStyle(DesignTokens.Common.Text.tertiary(colorScheme))
                 Circle()
                     .fill(statusColor)
-                    .frame(width: 6, height: 6)
+                    .frame(width: Self.statusDotSize, height: Self.statusDotSize)
                 Text(statusText)
                     .font(.system(size: DesignTokens.Typography.Size.xs))
                     .foregroundStyle(DesignTokens.Common.Text.tertiary(colorScheme))
