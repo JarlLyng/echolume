@@ -231,9 +231,11 @@ final class Renderer: NSObject, MTKViewDelegate {
         let curr = accum[1 - accumIndex]
 
         if clearPending {
-            clear(prev, commandBuffer: commandBuffer)
-            clear(curr, commandBuffer: commandBuffer)
-            clearPending = false
+            let clearedPrev = clear(prev, commandBuffer: commandBuffer)
+            let clearedCurr = clear(curr, commandBuffer: commandBuffer)
+            // Only consider it done if both clears actually encoded; otherwise
+            // keep it pending so the next frame retries (no stale trails).
+            if clearedPrev && clearedCurr { clearPending = false }
         }
 
         // Pass 1: scene blended over decayed previous frame → curr.
@@ -293,13 +295,19 @@ final class Renderer: NSObject, MTKViewDelegate {
         clearPending = true
     }
 
-    private func clear(_ texture: MTLTexture, commandBuffer: MTLCommandBuffer) {
+    /// Returns false if the clear encoder couldn't be created, so the caller
+    /// can keep `clearPending` set and retry next frame instead of leaving
+    /// stale trails behind.
+    @discardableResult
+    private func clear(_ texture: MTLTexture, commandBuffer: MTLCommandBuffer) -> Bool {
         let d = MTLRenderPassDescriptor()
         d.colorAttachments[0].texture = texture
         d.colorAttachments[0].loadAction = .clear
         d.colorAttachments[0].clearColor = MTLClearColor(red: 0, green: 0, blue: 0, alpha: 1)
         d.colorAttachments[0].storeAction = .store
-        commandBuffer.makeRenderCommandEncoder(descriptor: d)?.endEncoding()
+        guard let enc = commandBuffer.makeRenderCommandEncoder(descriptor: d) else { return false }
+        enc.endEncoding()
+        return true
     }
 
     /// Fractional part in 0..<1 (handles negatives).

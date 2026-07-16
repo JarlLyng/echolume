@@ -23,6 +23,29 @@ struct ControlSourcesSection: View {
                 .font(.system(size: DesignTokens.Typography.Size.sm, weight: DesignTokens.Typography.Weight.semibold))
                 .foregroundStyle(DesignTokens.Common.Text.secondary(colorScheme))
 
+            if appModel.showControlOnboarding {
+                HStack(alignment: .top, spacing: DesignTokens.Spacing.sm) {
+                    Text("New here? Map a hardware controller with MIDI Learn, drive Echolume live over OSC or Twitch chat, and save looks as presets you can recall with ⌘1–⌘9.")
+                        .font(.system(size: DesignTokens.Typography.Size.xs))
+                        .foregroundStyle(DesignTokens.Common.Text.secondary(colorScheme))
+                        .fixedSize(horizontal: false, vertical: true)
+                    Spacer(minLength: 0)
+                    Button("Got it") { appModel.dismissControlOnboarding() }
+                        .font(.system(size: DesignTokens.Typography.Size.xs, weight: DesignTokens.Typography.Weight.semibold))
+                        .foregroundStyle(DesignTokens.Common.primary(colorScheme))
+                        .buttonStyle(.plain)
+                }
+                .padding(DesignTokens.Spacing.sm)
+                .background(
+                    RoundedRectangle(cornerRadius: DesignTokens.Radius.sm)
+                        .fill(DesignTokens.Common.primary(colorScheme).opacity(0.08))
+                )
+                .overlay(
+                    RoundedRectangle(cornerRadius: DesignTokens.Radius.sm)
+                        .strokeBorder(DesignTokens.Common.primary(colorScheme).opacity(0.2), lineWidth: 1)
+                )
+            }
+
             LazyVGrid(columns: columns, alignment: .leading, spacing: DesignTokens.Spacing.md) {
                 tile { TwitchSection(appModel: appModel) }
                 tile { MidiSection(appModel: appModel) }

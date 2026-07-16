@@ -72,6 +72,7 @@ final class AppModel: ObservableObject {
         case menubarEnabled = "echolume.menubarEnabled"
         case meaningfulSessions = "echolume.meaningfulSessions"
         case lastReviewPromptDate = "echolume.lastReviewPromptDate"
+        case onboardingDismissed = "echolume.onboardingDismissed"
     }
 
     /// Persist a settings value. Centralizes the write so setters don't repeat
@@ -155,6 +156,9 @@ final class AppModel: ObservableObject {
     /// While recent, plugin audio drives the visuals/signal instead of the mic.
     private var lastPluginAudioTime: CFAbsoluteTime = 0
     var pluginAudioActive: Bool { CFAbsoluteTimeGetCurrent() - lastPluginAudioTime < 0.5 }
+    /// Tracks the previous tick's plugin-audio state so we can detect when the
+    /// plugin stops feeding us and clear its lingering BPM.
+    private var wasPluginAudioActive = false
 
     /// Whether the menu bar extra is shown. Persisted; default on. Bound by the
     /// Settings toggle; drives the AppKit status item.
@@ -205,6 +209,14 @@ final class AppModel: ObservableObject {
                     self.rms = snap.rms
                     self.peak = snap.peak
                 }
+                // When the plugin stops feeding audio, don't let its last BPM
+                // linger — clear it so the mic beat tracker (or "— BPM") takes
+                // over instead of showing a stale tempo.
+                let pluginActive = self.pluginAudioActive
+                if self.wasPluginAudioActive, !pluginActive {
+                    self.bpm = 0
+                }
+                self.wasPluginAudioActive = pluginActive
                 // ~ -46 dBFS: low enough that quiet/ambient mic input registers
                 // as signal (the meter already moves at these levels).
                 if self.rms > 0.005 {
@@ -415,6 +427,17 @@ final class AppModel: ObservableObject {
         if let window = NSApp.windows.first(where: { $0.isMainWindow }), window.styleMask.contains(.fullScreen) {
             window.toggleFullScreen(nil)
         }
+    }
+
+    // MARK: - First-run onboarding
+
+    /// Shown once (until dismissed) to point new users at the advanced control
+    /// features that are otherwise easy to miss (MIDI Learn, presets, OSC/Twitch).
+    @Published var showControlOnboarding = !UserDefaults.standard.bool(forKey: DefaultsKey.onboardingDismissed.rawValue)
+
+    func dismissControlOnboarding() {
+        showControlOnboarding = false
+        UserDefaults.standard.set(true, forKey: DefaultsKey.onboardingDismissed.rawValue)
     }
 
     // MARK: - App Store review prompt
@@ -897,8 +920,8 @@ final class AppModel: ObservableObject {
         case .noise(let v): setNoise(v)
         case .glitch(let v): setGlitch(v)
         case .theme(let i): setThemeIndex(i)
-        case .scene(let i): if SceneType.allCases.indices.contains(i) { setScene(SceneType.allCases[i]) }
-        case .shape(let i): if VisualShapeStyle.allCases.indices.contains(i) { setShapeStyle(VisualShapeStyle.allCases[i]) }
+        case .scene(let i): setScene(SceneType.allCases[max(0, min(SceneType.allCases.count - 1, i))])
+        case .shape(let i): setShapeStyle(VisualShapeStyle.allCases[max(0, min(VisualShapeStyle.allCases.count - 1, i))])
         case .randomize: randomize()
         case .panic: panicReset()
         case .nextTheme: nextTheme()

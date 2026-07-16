@@ -56,7 +56,7 @@ struct OSCSection: View {
 
             Text("Send to /echolume/… (knob/abstraction, theme, randomize, preset…)")
                 .font(.system(size: DesignTokens.Typography.Size.xs))
-                .foregroundStyle(DesignTokens.Common.Text.tertiary(colorScheme))
+                .foregroundStyle(DesignTokens.Common.Text.secondary(colorScheme))
         }
         .padding(.top, DesignTokens.Spacing.xs)
         .onAppear { portText = String(appModel.oscPort) }
