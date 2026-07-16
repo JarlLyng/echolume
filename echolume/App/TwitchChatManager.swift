@@ -35,9 +35,19 @@ final class TwitchChatManager: ObservableObject {
     private var webSocketTask: URLSessionWebSocketTask?
     private var channel: String = ""
     private var retryCount = 0
-    private let maxRetries = 3
+    private let baseBackoff: TimeInterval = 2
+    private let maxBackoff: TimeInterval = 30
     private var lastCommandTime: Date = .distantPast
     private let cooldownInterval: TimeInterval = 1.0
+
+    // Liveness. A silently dropped TCP connection (no FIN) never produces a
+    // receive failure, so chat can look connected but be dead. Track the last
+    // received activity, probe periodically, and force a reconnect if it goes
+    // quiet past the idle timeout.
+    private var lastActivityTime: Date = .distantPast
+    private let keepAliveInterval: TimeInterval = 60
+    private let idleTimeout: TimeInterval = 180
+    private var livenessTask: Task<Void, Never>?
 
     func connect(channel: String) {
         disconnect()
@@ -52,6 +62,8 @@ final class TwitchChatManager: ObservableObject {
     }
 
     func disconnect() {
+        livenessTask?.cancel()
+        livenessTask = nil
         webSocketTask?.cancel(with: .goingAway, reason: nil)
         webSocketTask = nil
         status = .disconnected
@@ -66,6 +78,7 @@ final class TwitchChatManager: ObservableObject {
         let task = session.webSocketTask(with: url)
         webSocketTask = task
         task.resume()
+        lastActivityTime = Date()
 
         let nick = "justinfan\(Int.random(in: 10000...99999))"
         send("CAP REQ :twitch.tv/tags twitch.tv/commands")
@@ -74,6 +87,7 @@ final class TwitchChatManager: ObservableObject {
 
         Log.info("[Twitch] Connecting to #\(channel) as \(nick)")
         receiveLoop()
+        startLivenessMonitor()
     }
 
     private func send(_ text: String) {
@@ -91,6 +105,7 @@ final class TwitchChatManager: ObservableObject {
                 guard self.webSocketTask != nil else { return }
                 switch result {
                 case .success(let message):
+                    self.lastActivityTime = Date()
                     switch message {
                     case .string(let text):
                         for line in text.components(separatedBy: "\r\n") where !line.isEmpty {
@@ -179,18 +194,42 @@ final class TwitchChatManager: ObservableObject {
 
     private func handleDisconnect() {
         webSocketTask = nil
-        guard retryCount < maxRetries else {
-            status = .error("Connection lost")
-            Log.warn("[Twitch] Max retries reached")
-            return
-        }
+        livenessTask?.cancel()
+        livenessTask = nil
+        // Unbounded exponential backoff (capped). A streaming tool should keep
+        // trying to reconnect for the whole session rather than give up after a
+        // few tries; the user can stop it by toggling the channel off.
+        let delay = min(maxBackoff, baseBackoff * pow(2, Double(retryCount)))
         retryCount += 1
         status = .connecting
-        Log.info("[Twitch] Reconnecting (attempt \(retryCount)/\(maxRetries))")
-        Task {
-            try? await Task.sleep(for: .seconds(5))
-            guard self.status == .connecting else { return }
+        Log.info("[Twitch] Reconnecting in \(Int(delay))s (attempt \(retryCount))")
+        Task { [weak self] in
+            try? await Task.sleep(for: .seconds(delay))
+            guard let self, self.status == .connecting else { return }
             self.openConnection()
+        }
+    }
+
+    /// Periodically probe the connection. A live server answers our PING with a
+    /// PONG (which resets `lastActivityTime`); a silently dropped socket won't,
+    /// so once we've heard nothing for `idleTimeout` we force a reconnect.
+    private func startLivenessMonitor() {
+        livenessTask?.cancel()
+        let interval = keepAliveInterval
+        let timeout = idleTimeout
+        livenessTask = Task { [weak self] in
+            while !Task.isCancelled {
+                try? await Task.sleep(for: .seconds(interval))
+                guard let self, !Task.isCancelled, self.webSocketTask != nil else { return }
+                if Date().timeIntervalSince(self.lastActivityTime) > timeout {
+                    Log.warn("[Twitch] No activity for over \(Int(timeout))s — forcing reconnect")
+                    self.retryCount = 0
+                    self.webSocketTask?.cancel(with: .goingAway, reason: nil)
+                    self.handleDisconnect()
+                    return
+                }
+                self.send("PING :tmi.twitch.tv")
+            }
         }
     }
 }

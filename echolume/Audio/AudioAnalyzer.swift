@@ -57,6 +57,12 @@ final class AudioAnalyzer {
     init() {
         magnitudeBuffer = UnsafeMutablePointer.allocate(capacity: kMagnitudeCount)
         fftProcessor = FFTProcessor()
+        if fftProcessor == nil {
+            // vDSP FFT setup failed — without it, process() can only produce
+            // RMS/peak, so band + beat analysis is silently disabled. Log it
+            // once so the degraded mode is diagnosable (was previously silent).
+            Log.error("AudioAnalyzer: FFT setup failed (vDSP). Running RMS-only; frequency-band and beat analysis are unavailable.")
+        }
 
         // Log-spaced FFT-bin boundaries (skip DC; up to the last magnitude bin),
         // so the spectrum is musically distributed rather than linear-in-frequency.
