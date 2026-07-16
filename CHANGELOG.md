@@ -5,7 +5,34 @@ All notable changes to Echolume are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project aims to follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [1.0.1]
+
+### Added
+- In-app App Store review prompt: asked on a positive moment (after a real
+  Live session), never at launch, and at most once per 120 days (#97).
+- First-run callout in the Control section pointing at MIDI Learn, OSC/Twitch,
+  and presets; MIDI mapping hint now shows before Learn is enabled (#72).
+
+### Changed
+- The bundled AUv3 plugin now sends its OSC analysis from a dedicated ~60 Hz
+  sender thread instead of the realtime audio render thread, eliminating a
+  possible source of audible dropouts (#51).
+- OSC and Twitch command hints are easier to read (higher contrast), and
+  residual hardcoded design values now use tokens/named constants (#71, #72).
+
+### Fixed
+- Out-of-range OSC scene/shape indices are clamped instead of ignored (#67).
+- A failed trail-clear is retried next frame instead of leaving stale trails
+  (#67).
+- The plugin's last BPM no longer lingers after it stops feeding audio (#67).
+- FFT setup failure is now logged instead of silently degrading to RMS-only
+  visuals (#68).
+- Twitch chat now detects silently dropped connections (liveness probe) and
+  keeps reconnecting with exponential backoff instead of giving up (#69).
+
+## [1.0.0] — Mac App Store release (Jul 2026)
+
+First public release (app id 6759684323). Changes since the TestFlight beta:
 
 ### Removed
 - Sentry crash-reporting dependency. Echolume now relies on Apple's built-in
@@ -39,7 +66,7 @@ and this project aims to follow [Semantic Versioning](https://semver.org/spec/v2
   animation now respects `prefers-reduced-motion`; invalid JSON-LD placeholder
   removed and FAQ schema added to the guide pages.
 
-## [1.0.0] — TestFlight beta
+## [1.0.0-beta] — TestFlight beta
 
 Initial feature-complete beta (TestFlight). Highlights:
 
