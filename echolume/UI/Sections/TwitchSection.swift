@@ -47,7 +47,7 @@ struct TwitchSection: View {
 
                 Text("Viewers: !theme, !scene, !shape, !randomize, !glitch, !abstract")
                     .font(.system(size: DesignTokens.Typography.Size.xs))
-                    .foregroundStyle(DesignTokens.Common.Text.tertiary(colorScheme))
+                    .foregroundStyle(DesignTokens.Common.Text.secondary(colorScheme))
             }
         }
         .padding(.top, DesignTokens.Spacing.sm)

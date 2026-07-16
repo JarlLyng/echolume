@@ -51,6 +51,10 @@ struct MidiSection: View {
                 ForEach(MidiTarget.actions) { action in
                     actionRow(action)
                 }
+            } else {
+                Text("Turn on Learn, then click a knob and move a control to map it. Notes can trigger Randomize, Panic and theme changes.")
+                    .font(.system(size: DesignTokens.Typography.Size.xs))
+                    .foregroundStyle(DesignTokens.Common.Text.secondary(colorScheme))
             }
         }
         .padding(.top, DesignTokens.Spacing.xs)
