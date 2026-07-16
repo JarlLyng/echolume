@@ -15,7 +15,7 @@ low-latency, minimal UI, beautiful results with few controls.
 - **License:** [MIT](LICENSE) — open source.
 - **Price:** $19.99 USD one-time (no in-app purchases, no subscription, no ads). The
   portfolio's premium entry — never call it "free".
-- **Status:** submitted for App Store review (Jul 2026), pre-launch.
+- **Status:** live on the Mac App Store (app id 6759684323), 1.0.0 — launched Jul 2026.
 - **Requirements:** macOS 14+, Metal.
 
 ## Strategy lives in the private hub
