@@ -5,7 +5,7 @@ All notable changes to Echolume are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project aims to follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [1.0.1]
+## [1.0.1] — Mac App Store update (Jul 2026)
 
 ### Added
 - In-app App Store review prompt: asked on a positive moment (after a real
