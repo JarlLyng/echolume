@@ -26,6 +26,11 @@ and this project aims to follow [Semantic Versioning](https://semver.org/spec/v2
 - All Live overlay elements share one design: dark scrim, thin brand-lime
   outline, white text (#140).
 
+### Fixed
+- Opening the app now always shows the whole Setup UI: a too-small restored
+  window frame is grown once to full-UI size (kept fully on screen) instead
+  of clipping the lower sections behind a scroll.
+
 ## [1.0.1] — Mac App Store update (Jul 2026)
 
 ### Added
