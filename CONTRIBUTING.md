@@ -57,6 +57,11 @@ Use the `IAMJARLDesignTokens` SPM package for all colors, spacing, and typograph
 - `Log` (via `os.Logger`) instead of `print()`
 - No force-unwraps unless guarded by a precondition the compiler can't see
 - Wrap debug-only code in `#if DEBUG`
+- Style is checked with [SwiftLint](https://github.com/realm/SwiftLint) (`brew install swiftlint`, then run `swiftlint` from the repo root). The config lives in [`.swiftlint.yml`](.swiftlint.yml).
+
+## Code of Conduct
+
+This project follows the [Contributor Covenant](CODE_OF_CONDUCT.md). By taking part you agree to uphold it.
 
 ## Pull requests
 
@@ -65,6 +70,8 @@ Use the `IAMJARLDesignTokens` SPM package for all colors, spacing, and typograph
 3. Update relevant docs (README, marketing site, etc.) if behaviour changes
 4. Fill out the PR template (test plan checklist matters)
 5. Ensure the build succeeds and tests pass
+
+> **Note on reviews.** Echolume is maintained by a single person, so branch protection on `main` does not require an approving review (there is no second maintainer to give one). CI status checks still gate merges when CI is available. External contributions are reviewed by the maintainer before merge.
 
 ## Reporting security issues
 

@@ -1,19 +1,53 @@
-/* Echolume marketing site — matches IAMJARL design tokens (dark mode) */
+/* Echolume marketing site — mirrors the IAMJARL design tokens (dark mode).
+   The `--ij-*` custom properties are the source of truth; the shorter local
+   aliases below derive from them so existing rules keep working. */
 :root {
-  --bg: #0a0a0a;
-  --bg-card: rgba(255, 255, 255, 0.03);
-  --bg-card-hover: rgba(255, 255, 255, 0.06);
-  --text: #ffffff;
-  --text-muted: rgba(255, 255, 255, 0.75);
-  --text-tertiary: rgba(255, 255, 255, 0.45);
-  --accent: #d0ff00; /* Lime / Neon Yellow */
-  --border: rgba(255, 255, 255, 0.08);
-  --border-hover: rgba(255, 255, 255, 0.15);
-  --radius: 16px;
-  --radius-sm: 8px;
-  --font: "Inter", -apple-system, BlinkMacSystemFont, sans-serif;
-  --font-heading: "Outfit", -apple-system, BlinkMacSystemFont, sans-serif;
-  --shadow-md: 0 8px 24px rgba(0, 0, 0, 0.6);
+  /* IAMJARL design tokens */
+  --ij-color-bg: #0a0a0a;
+  --ij-color-surface: rgba(255, 255, 255, 0.03);
+  --ij-color-surface-hover: rgba(255, 255, 255, 0.06);
+  --ij-color-text: #ffffff;
+  --ij-color-text-muted: rgba(255, 255, 255, 0.75);
+  --ij-color-text-tertiary: rgba(255, 255, 255, 0.45);
+  --ij-color-primary: #d0ff00; /* Lime / Neon Yellow */
+  --ij-color-border: rgba(255, 255, 255, 0.08);
+  --ij-color-border-hover: rgba(255, 255, 255, 0.15);
+
+  --ij-radius-md: 16px;
+  --ij-radius-sm: 8px;
+
+  --ij-font-body: "Inter", -apple-system, BlinkMacSystemFont, sans-serif;
+  --ij-font-heading: "Outfit", -apple-system, BlinkMacSystemFont, sans-serif;
+
+  --ij-shadow-md: 0 8px 24px rgba(0, 0, 0, 0.6);
+
+  --ij-space-xs: 4px;
+  --ij-space-sm: 8px;
+  --ij-space-md: 16px;
+  --ij-space-lg: 24px;
+  --ij-space-xl: 48px;
+
+  --ij-line-tight: 1.25;
+  --ij-line-normal: 1.6;
+
+  --ij-duration-fast: 0.2s;
+  --ij-duration-base: 0.3s;
+
+  /* Local aliases (derive from the tokens above) */
+  --bg: var(--ij-color-bg);
+  --bg-card: var(--ij-color-surface);
+  --bg-card-hover: var(--ij-color-surface-hover);
+  --text: var(--ij-color-text);
+  --text-muted: var(--ij-color-text-muted);
+  --text-tertiary: var(--ij-color-text-tertiary);
+  --accent: var(--ij-color-primary);
+  --border: var(--ij-color-border);
+  --border-hover: var(--ij-color-border-hover);
+  --radius: var(--ij-radius-md);
+  --radius-sm: var(--ij-radius-sm);
+  --font: var(--ij-font-body);
+  --font-heading: var(--ij-font-heading);
+  --shadow-md: var(--ij-shadow-md);
 }
 
 * {
