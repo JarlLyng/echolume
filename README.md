@@ -8,6 +8,18 @@
 
 A macOS app for **live, audio‑reactive 2D visuals** rendered with **Metal**. Echolume is meant as a **performance tool**: choose an **audio input device** (audio interface inputs, loopback inputs, mic, etc.), pick a visual theme/scene, tweak a few performance knobs, hit **Ready**, and perform.
 
+<p align="center">
+  <img src="docs/screenshots/visual-neon-ring.jpg" alt="Echolume live visual — a neon spectrum ring reacting to audio" width="820">
+</p>
+
+<table>
+  <tr>
+    <td width="33%"><img src="docs/screenshots/setup.jpg" alt="Setup screen: pick an input, theme, and scene"></td>
+    <td width="33%"><img src="docs/screenshots/plugin-daw2.png" alt="The bundled AUv3 plugin on a track in a DAW"></td>
+    <td width="33%"><img src="docs/screenshots/visual-plasma.jpg" alt="A plasma scene rendered live in Metal"></td>
+  </tr>
+</table>
+
 > Design goals: **stable**, **low‑latency**, **minimal UI**, **beautiful results with few controls**, and a **clean architecture** that's deterministic to extend.
 
 **Other repo docs:** [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) covers the layering, type contracts, milestones, and development conventions. SEO, audience, and marketing strategy live in the private IAMJARL strategy hub (folder `Echolume/`), not in this repo.
@@ -22,7 +34,7 @@ A quick reference of what's shipped vs planned. For the intended design, layerin
 - Metal renderer for 2D visuals (procedural shapes + a two‑pass decaying feedback/trail accumulation; trail length follows Abstraction, cleared by Panic Reset).
 - Audio engine: input‑device enumeration, in‑app device switching, channel‑pair selection, safe fallback, live RMS/peak meter, FFT bands (low/mid/high).
 - SetupView and LiveView (fullscreen output, minimal overlay, no‑signal banner, Panic Reset).
-- 6 themes, **8 scenes** (radial, flow, grid, spiral, tunnel, kaleidoscope, plasma, spectrum ring), 5 shape styles, performance knobs, and Randomize.
+- 6 themes, **9 scenes** (radial, flow, grid, spiral, tunnel, kaleidoscope, plasma, spectrum ring, ridgeline), 5 shape styles, performance knobs, and Randomize.
 - External display output selection.
 - Twitch chat integration (anonymous read‑only IRC, viewer commands).
 - Preset system: save/recall/delete named visual configurations (UI, `⌘1–9`, `!preset` chat command).
@@ -96,7 +108,7 @@ Echolume estimates tempo from the low‑band onset envelope (autocorrelation ove
 
 ## Audio plugin (beta)
 
-`EcholumeAudioTap` is an AUv3 audio‑effect bundled inside Echolume.app — installing the app auto‑registers it (no separate installer). Drop it on a track in Ableton (Live 11.3+) or any AU host; it passes audio through and forwards the analysed bands + host BPM to Echolume over OSC (loopback). Enable OSC in Echolume (port 9000) and the visuals react to that track — no BlackHole/loopback routing.
+`EcholumeAudioTap` is an AUv3 audio‑effect bundled inside Echolume.app — installing the app auto‑registers it (no separate installer). Drop it on a track in Ableton (Live 11.3+) or any AU host; it passes audio through and forwards the analysed bands, a full 64‑bin spectrum, and the host BPM to Echolume over OSC (loopback), so every scene — including the per‑bin ones (Spectrum Ring, Ridgeline) — reacts to that track. Enable OSC in Echolume (port 9000) — no BlackHole/loopback routing.
 
 > Note (beta): the plugin currently sends OSC from the render thread (best‑effort, non‑blocking). A v2 will move transport off the realtime thread.
 

@@ -34,10 +34,36 @@ struct EcholumeApp: App {
 
                         // Validate restored frame intersects an attached screen.
                         // If the saved screen was disconnected, fall back to main.
-                        let frame = window.frame
+                        var frame = window.frame
                         let onScreen = NSScreen.screens.contains { $0.visibleFrame.intersects(frame) }
                         if !onScreen, let screen = NSScreen.main {
                             window.setFrame(screen.visibleFrame, display: true)
+                            return
+                        }
+
+                        // Opening the app should show the WHOLE Setup UI: a
+                        // too-small restored frame (e.g. saved before minSize
+                        // existed, or squeezed by an old bug) would clip the
+                        // lower sections behind a scroll. Grow it once to the
+                        // full-UI size, keeping the top-left corner in place
+                        // and staying within the screen.
+                        let fullUISize = NSSize(width: 1100, height: 960)
+                        if frame.width < fullUISize.width || frame.height < fullUISize.height {
+                            let topLeftY = frame.maxY
+                            frame.size.width = max(frame.width, fullUISize.width)
+                            frame.size.height = max(frame.height, fullUISize.height)
+                            frame.origin.y = topLeftY - frame.height
+                            // Keep the WHOLE window inside the screen's visible
+                            // area (constrainFrameRect only guarantees the title
+                            // bar, so a grown window could hang off the bottom).
+                            if let screen = window.screen ?? NSScreen.main {
+                                let vis = screen.visibleFrame
+                                frame.size.width = min(frame.width, vis.width)
+                                frame.size.height = min(frame.height, vis.height)
+                                frame.origin.x = max(vis.minX, min(frame.origin.x, vis.maxX - frame.width))
+                                frame.origin.y = max(vis.minY, min(frame.origin.y, vis.maxY - frame.height))
+                            }
+                            window.setFrame(frame, display: true)
                         }
                     }
                 }

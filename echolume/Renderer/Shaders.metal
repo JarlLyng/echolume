@@ -9,6 +9,9 @@ using namespace metal;
 // Must match kSpectrumBins in FFT.swift.
 #define SPECTRUM_BINS 64
 
+// Must match kSpectrumHistoryRows in FFT.swift. Row 0 is the newest spectrum.
+#define RIDGE_ROWS 48
+
 struct Uniforms {
     float time;
     float2 resolution;
@@ -505,9 +508,60 @@ float4 renderSpectrumRing(constant Uniforms& u, float2 uv, device const float* s
     return applyGlitch(float4(clamp(col, 0.0, 0.95), 1.0), uv, t, u);
 }
 
+// Scene: Ridgeline — a scrolling terrain built from past spectra (the classic
+// stacked-waveform plot). Row 0 is the newest frame and is drawn nearest; each
+// ridge's fill occludes the rows behind it, and old frames march away into the
+// distance. Genuinely different spatial structure: depth + per-bin history,
+// not a recolored fullscreen field.
+float4 renderRidgeline(constant Uniforms& u, float2 uv, device const float* history) {
+    float t = u.time * max(0.25, u.speedMul);
+    float pulse = beatPulse(u);
+    float3 halo = float3(0.0);
+
+    // Front to back with early exit: the first ridge whose fill contains the
+    // pixel decides the color — everything behind it is hidden.
+    for (int r = 0; r < RIDGE_ROWS; r++) {
+        float depth = float(r) / float(RIDGE_ROWS - 1);
+        float baseY = mix(0.14, 0.78, pow(depth, 0.92));
+        float xScale = mix(1.0, 0.76, depth);            // perspective taper
+        float x = (uv.x - 0.5) / xScale + 0.5;
+        if (x <= 0.0 || x >= 1.0) { continue; }          // outside this (narrower) row
+
+        float fb = x * float(SPECTRUM_BINS - 1);
+        int i0 = int(fb);
+        int i1 = min(i0 + 1, SPECTRUM_BINS - 1);
+        float amp = clamp(mix(history[r * SPECTRUM_BINS + i0], history[r * SPECTRUM_BINS + i1], fract(fb)), 0.0, 1.0);
+
+        float edge = smoothstep(0.0, 0.16, x) * smoothstep(1.0, 0.84, x);
+        float height = (0.015 + amp * (0.14 + 0.10 * u.reactivity)) * edge;
+        height *= 1.0 + 0.3 * pulse * (1.0 - depth);     // the beat lifts the front rows
+        float lineY = baseY + height;
+
+        float d = uv.y - lineY;                          // uv.y = 0 at the bottom
+        float thick = mix(0.0040, 0.0016, depth);
+        float line = exp(-(d * d) / (thick * thick));
+        float3 lineC = mix(u.palette1.rgb, u.palette0.rgb, amp);
+        lineC = mix(lineC, u.palette2.rgb, depth * 0.55);
+        float bright = mix(1.0, 0.30, depth) * (0.45 + 0.55 * amp);
+
+        if (d < thick) {
+            // On the line or inside its fill — this ridge hides the rest.
+            float3 fill = lineC * 0.02 * (1.0 - depth);
+            float3 col = fill + lineC * bright * line + halo;
+            return applyGlitch(float4(clamp(col, 0.0, 0.95), 1.0), uv, t, u);
+        }
+        halo += lineC * bright * line * 0.35;            // soft glow above the line
+    }
+
+    // Sky above every ridge: faint palette wash + a level glow at the horizon.
+    float3 sky = u.palette3.rgb * 0.04 * smoothstep(1.0, 0.5, uv.y);
+    sky += u.palette0.rgb * 0.05 * clamp(u.level, 0.0, 1.0) * smoothstep(0.95, 0.78, uv.y);
+    return applyGlitch(float4(clamp(sky + halo, 0.0, 0.95), 1.0), uv, t, u);
+}
+
 // Scene color for the current frame (no feedback). Shared by the feedback pass
 // and the single-pass fallback.
-float4 sceneColor(constant Uniforms& u, float2 uv, device const float* spectrum) {
+float4 sceneColor(constant Uniforms& u, float2 uv, device const float* spectrum, device const float* history) {
     int sceneType = int(u.sceneType);
     float4 col;
     if (sceneType == 0) col = renderRadial(u, uv);
@@ -517,7 +571,8 @@ float4 sceneColor(constant Uniforms& u, float2 uv, device const float* spectrum)
     else if (sceneType == 4) col = renderTunnel(u, uv);
     else if (sceneType == 5) col = renderKaleidoscope(u, uv);
     else if (sceneType == 6) col = renderPlasma(u, uv);
-    else col = renderSpectrumRing(u, uv, spectrum);
+    else if (sceneType == 7) col = renderSpectrumRing(u, uv, spectrum);
+    else col = renderRidgeline(u, uv, history);
 
     // Subtle tempo-synced pulse: a small brightness lift on each beat. Bounded
     // (<=8%) so it accents rather than dominates; no-op without a tempo lock.
@@ -531,9 +586,10 @@ float4 sceneColor(constant Uniforms& u, float2 uv, device const float* spectrum)
 fragment float4 fullscreenQuadFragment(
     VertexOut in [[stage_in]],
     constant Uniforms& u [[buffer(0)]],
-    device const float* spectrum [[buffer(1)]]
+    device const float* spectrum [[buffer(1)]],
+    device const float* history [[buffer(2)]]
 ) {
-    return sceneColor(u, in.uv, spectrum);
+    return sceneColor(u, in.uv, spectrum, history);
 }
 
 // Feedback pass: blend this frame's scene over a decayed copy of the previous
@@ -543,10 +599,11 @@ fragment float4 feedbackFragment(
     VertexOut in [[stage_in]],
     constant Uniforms& u [[buffer(0)]],
     device const float* spectrum [[buffer(1)]],
+    device const float* history [[buffer(2)]],
     texture2d<float> prevTex [[texture(0)]],
     sampler s [[sampler(0)]]
 ) {
-    float4 scene = sceneColor(u, in.uv, spectrum);
+    float4 scene = sceneColor(u, in.uv, spectrum, history);
     float2 echoUV = (in.uv - 0.5) * 0.997 + 0.5;
     // Offscreen textures store logical uv at sample-v = 1 - uv.y; flip to read back aligned.
     float3 prev = prevTex.sample(s, float2(echoUV.x, 1.0 - echoUV.y)).rgb * u.trailPersistence;

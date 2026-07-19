@@ -1,0 +1,62 @@
+# SwiftLint configuration for Echolume.
+# Style is intentionally moderate: catch real issues, avoid churn on a
+# solo-maintained codebase. Run locally with `swiftlint` (brew install swiftlint).
+
+included:
+  - echolume
+  - EcholumeAudioTap
+
+excluded:
+  - .build
+  - build
+  - DerivedData
+  - "**/*.generated.swift"
+
+# Rules that are off by default but worth having on.
+opt_in_rules:
+  - empty_count
+  - empty_string
+  - closure_spacing
+  - contains_over_first_not_nil
+  - first_where
+  - last_where
+  - redundant_nil_coalescing
+  - unused_import
+  - vertical_whitespace_closing_braces
+  - vertical_whitespace_opening_braces
+
+# Noisy rules disabled deliberately.
+disabled_rules:
+  - todo                 # TODOs are tracked as GitHub issues, not linted away.
+  - trailing_comma       # trailing commas in multiline literals are fine here.
+
+line_length:
+  warning: 140
+  error: 200
+  ignores_comments: true
+  ignores_urls: true
+
+type_body_length:
+  warning: 400
+  error: 600
+
+file_length:
+  warning: 600
+  error: 1000
+  ignore_comment_only_lines: true
+
+function_body_length:
+  warning: 80
+  error: 150
+
+# The Metal/audio code uses short, domain-conventional names (rms, fft, bpm, x, y).
+identifier_name:
+  min_length: 1
+  max_length:
+    warning: 50
+    error: 60
+  allowed_symbols: ["_"]
+
+cyclomatic_complexity:
+  warning: 15
+  error: 25
