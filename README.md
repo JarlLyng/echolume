@@ -8,6 +8,18 @@
 
 A macOS app for **live, audio‑reactive 2D visuals** rendered with **Metal**. Echolume is meant as a **performance tool**: choose an **audio input device** (audio interface inputs, loopback inputs, mic, etc.), pick a visual theme/scene, tweak a few performance knobs, hit **Ready**, and perform.
 
+<p align="center">
+  <img src="docs/screenshots/visual-neon-ring.jpg" alt="Echolume live visual — a neon spectrum ring reacting to audio" width="820">
+</p>
+
+<table>
+  <tr>
+    <td width="33%"><img src="docs/screenshots/setup.jpg" alt="Setup screen: pick an input, theme, and scene"></td>
+    <td width="33%"><img src="docs/screenshots/plugin-daw2.png" alt="The bundled AUv3 plugin on a track in a DAW"></td>
+    <td width="33%"><img src="docs/screenshots/visual-plasma.jpg" alt="A plasma scene rendered live in Metal"></td>
+  </tr>
+</table>
+
 > Design goals: **stable**, **low‑latency**, **minimal UI**, **beautiful results with few controls**, and a **clean architecture** that's deterministic to extend.
 
 **Other repo docs:** [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) covers the layering, type contracts, milestones, and development conventions. SEO, audience, and marketing strategy live in the private IAMJARL strategy hub (folder `Echolume/`), not in this repo.
