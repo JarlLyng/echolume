@@ -5,6 +5,21 @@ All notable changes to Echolume are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project aims to follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Added
+- New **Ridgeline** scene — a scrolling terrain of past spectra (the classic
+  stacked-waveform plot): 48 rows of 64-bin spectrum history march away in
+  perspective, front ridges occlude the rows behind, the beat lifts the front
+  rows, and the Motion knob sets the scroll speed (#91, first archetype).
+
+### Changed
+- The Live overlay (Back, Panic, level meter, banners) now fades out after
+  3 idle seconds like a fullscreen video player — mouse movement or a click
+  brings it back, and keyboard shortcuts keep working while hidden (#139).
+- All Live overlay elements share one design: dark scrim, thin brand-lime
+  outline, white text (#140).
+
 ## [1.0.1] — Mac App Store update (Jul 2026)
 
 ### Added
