@@ -16,6 +16,9 @@ struct LiveView: View {
     // visuals — colorScheme tokens track the app background, not the canvas.
     private let overlayScrim = Color.black.opacity(0.55)
     private let overlayText = Color.white
+    /// The brand lime, deliberately NOT scheme-aware: the overlay always sits
+    /// on dark visuals, so it always uses the dark-mode accent.
+    private let overlayAccent = DesignTokens.ColorToken.Dark.primary
 
     /// Live is a performance surface: the Back/Panic chrome fades out after a
     /// few idle seconds (like fullscreen video players) and returns on any
@@ -39,118 +42,105 @@ struct LiveView: View {
                 rendererErrorOverlay(err)
             }
 
-            // Overlay: Back + Panic hint + meter. Fades out when idle; the
-            // buttons are outlined scrims (not filled) so they read as chrome,
-            // not as part of the show.
-            VStack {
-                HStack {
-                    Button(action: { appModel.exitLive() }) {
-                        Text("Back")
-                            .font(.system(size: DesignTokens.Typography.Size.base, weight: DesignTokens.Typography.Weight.semibold))
-                            .foregroundStyle(overlayText)
-                            .padding(.horizontal, DesignTokens.Spacing.xl)
-                            .padding(.vertical, DesignTokens.Spacing.md)
-                            .frame(minHeight: 44)
-                            .background(overlayScrim)
-                            .clipShape(RoundedRectangle(cornerRadius: DesignTokens.Radius.md))
-                            .overlay(
-                                RoundedRectangle(cornerRadius: DesignTokens.Radius.md)
-                                    .strokeBorder(overlayText.opacity(0.35), lineWidth: 1)
-                            )
-                            .contentShape(Rectangle())
+            // Overlay chrome: everything that isn't the show fades out
+            // together when idle and shares one design language — dark scrim,
+            // 1pt lime outline, white text.
+            Group {
+                VStack {
+                    HStack {
+                        Button(action: { appModel.exitLive() }) {
+                            Text("Back")
+                                .font(.system(size: DesignTokens.Typography.Size.base, weight: DesignTokens.Typography.Weight.semibold))
+                                .foregroundStyle(overlayText)
+                                .padding(.horizontal, DesignTokens.Spacing.xl)
+                                .padding(.vertical, DesignTokens.Spacing.md)
+                                .frame(minHeight: 44)
+                                .modifier(LiveChromeSurface(accent: overlayAccent, scrim: overlayScrim))
+                                .contentShape(Rectangle())
+                        }
+                        .buttonStyle(.plain)
+                        .keyboardShortcut(.return, modifiers: [])
+                        .accessibilityLabel("Exit Live")
+                        Button(action: { appModel.panicReset() }) {
+                            Text("Panic (R)")
+                                .font(.system(size: DesignTokens.Typography.Size.base, weight: DesignTokens.Typography.Weight.semibold))
+                                .foregroundStyle(overlayText)
+                                .padding(.horizontal, DesignTokens.Spacing.xl)
+                                .padding(.vertical, DesignTokens.Spacing.md)
+                                .frame(minHeight: 44)
+                                .modifier(LiveChromeSurface(accent: overlayAccent, scrim: overlayScrim))
+                                .contentShape(Rectangle())
+                        }
+                        .buttonStyle(.plain)
+                        .keyboardShortcut("r", modifiers: [])
+                        .accessibilityLabel("Panic reset visuals")
+                        Spacer()
+                        if appModel.hasMicPermission {
+                            LevelMeterView(rms: appModel.rms, peak: appModel.peak, compact: true)
+                                .frame(width: 80, height: 14)
+                        }
                     }
-                    .buttonStyle(.plain)
-                    .keyboardShortcut(.return, modifiers: [])
-                    .accessibilityLabel("Exit Live")
-                    // Panic is the most important live control — it keeps the
-                    // warning tint (as outline + text) so it stays glanceable.
-                    Button(action: { appModel.panicReset() }) {
-                        Text("Panic (R)")
-                            .font(.system(size: DesignTokens.Typography.Size.base, weight: DesignTokens.Typography.Weight.semibold))
-                            .foregroundStyle(DesignTokens.ColorToken.State.warning)
-                            .padding(.horizontal, DesignTokens.Spacing.xl)
-                            .padding(.vertical, DesignTokens.Spacing.md)
-                            .frame(minHeight: 44)
-                            .background(overlayScrim)
-                            .clipShape(RoundedRectangle(cornerRadius: DesignTokens.Radius.md))
-                            .overlay(
-                                RoundedRectangle(cornerRadius: DesignTokens.Radius.md)
-                                    .strokeBorder(DesignTokens.ColorToken.State.warning.opacity(0.6), lineWidth: 1)
-                            )
-                            .contentShape(Rectangle())
+                    .padding(DesignTokens.Spacing.lg)
+                    .onHover { inside in
+                        pointerOverChrome = inside
+                        if inside { showChrome() } else { scheduleChromeHide() }
                     }
-                    .buttonStyle(.plain)
-                    .keyboardShortcut("r", modifiers: [])
-                    .accessibilityLabel("Panic reset visuals")
                     Spacer()
-                    if appModel.hasMicPermission {
-                        LevelMeterView(rms: appModel.rms, peak: appModel.peak, compact: true)
-                            .frame(width: 80, height: 14)
+                }
+
+                if !appModel.hasSignal {
+                    // Centered at the top so it never overlaps the Back button
+                    // (left) or the level meter (right).
+                    VStack {
+                        VStack(spacing: DesignTokens.Spacing.xs) {
+                            Text("NO SIGNAL")
+                                .font(.system(size: DesignTokens.Typography.Size.sm, weight: DesignTokens.Typography.Weight.bold))
+                                .foregroundStyle(DesignTokens.ColorToken.State.warning)
+                            Text("Check input device / routing")
+                                .font(.system(size: DesignTokens.Typography.Size.xs))
+                                .foregroundStyle(overlayText)
+                        }
+                        .padding(.horizontal, DesignTokens.Spacing.md)
+                        .padding(.vertical, DesignTokens.Spacing.sm)
+                        .modifier(LiveChromeSurface(accent: overlayAccent, scrim: overlayScrim))
+                        Spacer()
+                    }
+                    .frame(maxWidth: .infinity, alignment: .center)
+                    .padding(.top, 64)
+                    .accessibilityElement(children: .ignore)
+                    .accessibilityLabel("No audio signal. Check input device or routing.")
+                }
+
+                if !appModel.debugEngineRunning {
+                    VStack {
+                        Spacer()
+                        Text("Press ⌘R to restart audio")
+                            .font(.system(size: DesignTokens.Typography.Size.sm))
+                            .foregroundStyle(overlayText)
+                            .padding(.horizontal, DesignTokens.Spacing.md)
+                            .padding(.vertical, DesignTokens.Spacing.sm)
+                            .modifier(LiveChromeSurface(accent: overlayAccent, scrim: overlayScrim, cornerRadius: DesignTokens.Radius.sm))
+                            .padding(.bottom, 60)
                     }
                 }
-                .padding(DesignTokens.Spacing.lg)
-                .onHover { inside in
-                    pointerOverChrome = inside
-                    if inside { showChrome() } else { scheduleChromeHide() }
+
+                #if DEBUG
+                VStack {
+                    Spacer()
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text("Motion: \(String(format: "%.2f", appModel.motion))  Noise: \(String(format: "%.2f", appModel.noise))  Glitch: \(String(format: "%.2f", appModel.glitch))")
+                        Text("Impact: \(String(format: "%.2f", appModel.impact))  Peak: \(String(format: "%.2f", appModel.peak))")
+                    }
+                    .font(.system(size: DesignTokens.Typography.Size.xs, weight: DesignTokens.Typography.Weight.semibold))
+                    .foregroundStyle(overlayText)
+                    .padding(DesignTokens.Spacing.sm)
+                    .modifier(LiveChromeSurface(accent: overlayAccent, scrim: overlayScrim, cornerRadius: DesignTokens.Radius.sm))
+                    .padding(.bottom, 16)
                 }
-                Spacer()
+                #endif
             }
             .opacity(chromeVisible ? 1 : 0)
             .allowsHitTesting(chromeVisible)
-
-            if !appModel.hasSignal {
-                // Centered at the top so it never overlaps the Back button (left)
-                // or the level meter (right).
-                VStack {
-                    VStack(spacing: DesignTokens.Spacing.xs) {
-                        Text("NO SIGNAL")
-                            .font(.system(size: DesignTokens.Typography.Size.sm, weight: DesignTokens.Typography.Weight.bold))
-                            .foregroundStyle(DesignTokens.ColorToken.State.warning)
-                        Text("Check input device / routing")
-                            .font(.system(size: DesignTokens.Typography.Size.xs))
-                            .foregroundStyle(overlayText)
-                    }
-                    .padding(.horizontal, DesignTokens.Spacing.md)
-                    .padding(.vertical, DesignTokens.Spacing.sm)
-                    .background(overlayScrim)
-                    .clipShape(RoundedRectangle(cornerRadius: DesignTokens.Radius.md))
-                    Spacer()
-                }
-                .frame(maxWidth: .infinity, alignment: .center)
-                .padding(.top, 64)
-                .accessibilityElement(children: .ignore)
-                .accessibilityLabel("No audio signal. Check input device or routing.")
-            }
-
-            if !appModel.debugEngineRunning {
-                VStack {
-                    Spacer()
-                    Text("Press ⌘R to restart audio")
-                        .font(.system(size: DesignTokens.Typography.Size.sm))
-                        .foregroundStyle(overlayText)
-                        .padding(.horizontal, DesignTokens.Spacing.md)
-                        .padding(.vertical, DesignTokens.Spacing.sm)
-                        .background(overlayScrim)
-                        .clipShape(RoundedRectangle(cornerRadius: DesignTokens.Radius.sm))
-                        .padding(.bottom, 60)
-                }
-            }
-
-            #if DEBUG
-            VStack {
-                Spacer()
-                VStack(alignment: .leading, spacing: 4) {
-                    Text("Motion: \(String(format: "%.2f", appModel.motion))  Noise: \(String(format: "%.2f", appModel.noise))  Glitch: \(String(format: "%.2f", appModel.glitch))")
-                    Text("Impact: \(String(format: "%.2f", appModel.impact))  Peak: \(String(format: "%.2f", appModel.peak))")
-                }
-                .font(.system(size: DesignTokens.Typography.Size.xs, weight: DesignTokens.Typography.Weight.semibold))
-                .foregroundStyle(overlayText)
-                .padding(DesignTokens.Spacing.sm)
-                .background(overlayScrim)
-                .clipShape(RoundedRectangle(cornerRadius: DesignTokens.Radius.sm))
-                .padding(.bottom, 16)
-            }
-            #endif
         }
         .background(DesignTokens.Common.Background.app(colorScheme))
         .background(MouseActivityMonitor(onActivity: showChrome))
@@ -224,6 +214,24 @@ struct LiveView: View {
         .background(DesignTokens.Common.Background.card(colorScheme))
         .clipShape(RoundedRectangle(cornerRadius: DesignTokens.Radius.lg))
         .shadow(radius: 16)
+    }
+}
+
+/// The one design language for everything floating over the visuals: a dark
+/// translucent scrim with a thin brand-lime outline.
+private struct LiveChromeSurface: ViewModifier {
+    let accent: Color
+    let scrim: Color
+    var cornerRadius: CGFloat = DesignTokens.Radius.md
+
+    func body(content: Content) -> some View {
+        content
+            .background(scrim)
+            .clipShape(RoundedRectangle(cornerRadius: cornerRadius))
+            .overlay(
+                RoundedRectangle(cornerRadius: cornerRadius)
+                    .strokeBorder(accent.opacity(0.6), lineWidth: 1)
+            )
     }
 }
 
