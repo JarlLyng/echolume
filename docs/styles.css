@@ -193,49 +193,57 @@ a:hover {
 }
 
 /* Hero */
+/* Full-bleed hero: the live simulation IS the backdrop — the site performs
+   like the app. Text sits in an inner content column on top of a scrim. */
 .hero {
   position: relative;
-  max-width: 68rem;
-  margin: 0 auto;
-  padding: 8rem 2rem 5rem;
-  text-align: left;
   overflow: hidden;
+  min-height: min(88vh, 60rem);
+  display: flex;
+  align-items: center;
+  text-align: left;
   z-index: 1;
+  background: var(--bg);
 }
 
-/* Optional atmosphere image behind the hero. Drop a file at
-   images/hero-bg.jpg and it appears automatically; until then the
-   radial gradient below is the fallback. */
-.hero-bg {
-  position: absolute;
-  inset: 0;
-  z-index: -2;
-  background:
-    radial-gradient(70% 80% at 75% 30%, rgba(208, 255, 0, 0.10), transparent 60%),
-    radial-gradient(60% 70% at 20% 80%, rgba(120, 80, 255, 0.08), transparent 60%);
-}
-
-.hero-bg::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-  background-image:
-    linear-gradient(90deg, rgba(10, 10, 10, 0.94) 28%, rgba(10, 10, 10, 0.45) 100%),
-    linear-gradient(0deg, rgba(10, 10, 10, 0.85), rgba(10, 10, 10, 0.35) 60%),
-    url("images/hero-bg.jpg");
-  background-size: cover;
-  background-position: center;
+.hero-inner {
+  position: relative;
+  max-width: 68rem;
+  width: 100%;
+  margin: 0 auto;
+  padding: 8rem 2rem 6rem;
+  z-index: 2;
 }
 
 .hero-canvas-container {
   position: absolute;
-  top: 0;
-  left: 0;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+}
+
+#hero-canvas {
+  display: block;
   width: 100%;
   height: 100%;
-  z-index: -1;
-  opacity: 0.7;
+}
+
+/* Legibility scrim over the simulation, plus a fade into the next section. */
+.hero-scrim {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
   pointer-events: none;
+  background:
+    linear-gradient(90deg, rgba(10, 10, 10, 0.9) 0%, rgba(10, 10, 10, 0.62) 40%, rgba(10, 10, 10, 0.06) 78%),
+    linear-gradient(0deg, var(--bg) 0%, transparent 16%);
+}
+
+@media (max-width: 720px) {
+  .hero-scrim {
+    background:
+      linear-gradient(0deg, rgba(10, 10, 10, 0.9) 0%, rgba(10, 10, 10, 0.55) 55%, rgba(10, 10, 10, 0.2) 100%);
+  }
 }
 
 .hero-tagline {
@@ -255,7 +263,7 @@ a:hover {
 
 .hero-title {
   font-family: var(--font-heading);
-  font-size: clamp(2.5rem, 6vw, 4rem);
+  font-size: clamp(2.75rem, 7vw, 4.75rem);
   font-weight: 800;
   line-height: 1.1;
   margin: 0 0 1.5rem;

@@ -4,10 +4,8 @@ Drop image files here (repo path: `docs/images/`). They are served at
 `https://echolume.iamjarl.com/images/<filename>`.
 
 ## Currently wired
-- **`hero-bg.jpg`** — optional atmosphere image behind the hero. Landscape,
-  dark/moody works best (there's a dark gradient overlay on top). Recommended
-  ~2400×1400, JPEG, < ~300 KB. If absent, a gradient fallback shows — nothing
-  breaks.
+- The hero backdrop is now a live canvas simulation (no image slot) — see the
+  hero script in `index.html`. The old `hero-bg.jpg` atmosphere slot is gone.
 
 Add more slots by referencing new files from `styles.css` / `index.html`.
 Keep files web-optimized (resize + compress) so page speed stays high.
