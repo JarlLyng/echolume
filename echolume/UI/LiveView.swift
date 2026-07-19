@@ -3,6 +3,7 @@
 //  echolume
 //
 
+import AppKit
 import IAMJARLDesignTokens
 import SwiftUI
 
@@ -16,6 +17,16 @@ struct LiveView: View {
     private let overlayScrim = Color.black.opacity(0.55)
     private let overlayText = Color.white
 
+    /// Live is a performance surface: the Back/Panic chrome fades out after a
+    /// few idle seconds (like fullscreen video players) and returns on any
+    /// mouse movement. Keyboard shortcuts keep working while hidden because
+    /// the buttons stay in the hierarchy (opacity 0, hit-testing off).
+    private static let chromeIdleSeconds: Double = 3
+    @State private var chromeVisible = true
+    @State private var pointerOverChrome = false
+    @State private var chromeHideTask: Task<Void, Never>?
+    @State private var lastChromePoke = Date.distantPast
+
     var body: some View {
         ZStack {
             MetalView(
@@ -28,32 +39,44 @@ struct LiveView: View {
                 rendererErrorOverlay(err)
             }
 
-            // Overlay: Back + Panic hint + meter
+            // Overlay: Back + Panic hint + meter. Fades out when idle; the
+            // buttons are outlined scrims (not filled) so they read as chrome,
+            // not as part of the show.
             VStack {
                 HStack {
                     Button(action: { appModel.exitLive() }) {
                         Text("Back")
                             .font(.system(size: DesignTokens.Typography.Size.base, weight: DesignTokens.Typography.Weight.semibold))
-                            .foregroundStyle(DesignTokens.Common.OnPrimary.text(colorScheme))
-                            .padding(.horizontal, DesignTokens.Spacing.xl)
-                            .padding(.vertical, DesignTokens.Spacing.md)
-                            .background(DesignTokens.Common.primary(colorScheme))
-                            .clipShape(RoundedRectangle(cornerRadius: DesignTokens.Radius.md))
-                    }
-                    .buttonStyle(.plain)
-                    .keyboardShortcut(.return, modifiers: [])
-                    .accessibilityLabel("Exit Live")
-                    // Panic is the most important live control — make it the most
-                    // prominent, glanceable target (warning-tinted, >=44pt).
-                    Button(action: { appModel.panicReset() }) {
-                        Text("Panic (R)")
-                            .font(.system(size: DesignTokens.Typography.Size.base, weight: DesignTokens.Typography.Weight.semibold))
                             .foregroundStyle(overlayText)
                             .padding(.horizontal, DesignTokens.Spacing.xl)
                             .padding(.vertical, DesignTokens.Spacing.md)
                             .frame(minHeight: 44)
-                            .background(DesignTokens.ColorToken.State.warning)
+                            .background(overlayScrim)
                             .clipShape(RoundedRectangle(cornerRadius: DesignTokens.Radius.md))
+                            .overlay(
+                                RoundedRectangle(cornerRadius: DesignTokens.Radius.md)
+                                    .strokeBorder(overlayText.opacity(0.35), lineWidth: 1)
+                            )
+                            .contentShape(Rectangle())
+                    }
+                    .buttonStyle(.plain)
+                    .keyboardShortcut(.return, modifiers: [])
+                    .accessibilityLabel("Exit Live")
+                    // Panic is the most important live control — it keeps the
+                    // warning tint (as outline + text) so it stays glanceable.
+                    Button(action: { appModel.panicReset() }) {
+                        Text("Panic (R)")
+                            .font(.system(size: DesignTokens.Typography.Size.base, weight: DesignTokens.Typography.Weight.semibold))
+                            .foregroundStyle(DesignTokens.ColorToken.State.warning)
+                            .padding(.horizontal, DesignTokens.Spacing.xl)
+                            .padding(.vertical, DesignTokens.Spacing.md)
+                            .frame(minHeight: 44)
+                            .background(overlayScrim)
+                            .clipShape(RoundedRectangle(cornerRadius: DesignTokens.Radius.md))
+                            .overlay(
+                                RoundedRectangle(cornerRadius: DesignTokens.Radius.md)
+                                    .strokeBorder(DesignTokens.ColorToken.State.warning.opacity(0.6), lineWidth: 1)
+                            )
                             .contentShape(Rectangle())
                     }
                     .buttonStyle(.plain)
@@ -66,8 +89,14 @@ struct LiveView: View {
                     }
                 }
                 .padding(DesignTokens.Spacing.lg)
+                .onHover { inside in
+                    pointerOverChrome = inside
+                    if inside { showChrome() } else { scheduleChromeHide() }
+                }
                 Spacer()
             }
+            .opacity(chromeVisible ? 1 : 0)
+            .allowsHitTesting(chromeVisible)
 
             if !appModel.hasSignal {
                 // Centered at the top so it never overlaps the Back button (left)
@@ -124,10 +153,42 @@ struct LiveView: View {
             #endif
         }
         .background(DesignTokens.Common.Background.app(colorScheme))
+        .background(MouseActivityMonitor(onActivity: showChrome))
+        .onContinuousHover { phase in
+            if case .active = phase { showChrome() }
+        }
+        .onAppear { scheduleChromeHide() }
+        .onDisappear { chromeHideTask?.cancel() }
         .onExitCommand { appModel.exitLive() }
         .onKeyPress(.escape) {
             appModel.exitLive()
             return .handled
+        }
+    }
+
+    /// Reveal the chrome and restart the idle countdown. Throttled: mouse-moved
+    /// events arrive at pointer rate, and each poke would otherwise cancel and
+    /// recreate the hide task.
+    private func showChrome() {
+        if !chromeVisible {
+            withAnimation(.easeOut(duration: 0.15)) { chromeVisible = true }
+        }
+        let now = Date()
+        guard now.timeIntervalSince(lastChromePoke) > 0.25 else { return }
+        lastChromePoke = now
+        scheduleChromeHide()
+    }
+
+    /// Hide the chrome after the idle interval — unless the pointer is resting
+    /// on it (nothing should vanish under the cursor mid-click).
+    private func scheduleChromeHide() {
+        chromeHideTask?.cancel()
+        chromeHideTask = Task { @MainActor in
+            try? await Task.sleep(for: .seconds(Self.chromeIdleSeconds))
+            guard !Task.isCancelled, !pointerOverChrome else { return }
+            withAnimation(.easeOut(duration: 0.4)) { chromeVisible = false }
+            // A performance surface shouldn't show a parked cursor either.
+            NSCursor.setHiddenUntilMouseMoves(true)
         }
     }
 
@@ -163,6 +224,57 @@ struct LiveView: View {
         .background(DesignTokens.Common.Background.card(colorScheme))
         .clipShape(RoundedRectangle(cornerRadius: DesignTokens.Radius.lg))
         .shadow(radius: 16)
+    }
+}
+
+/// AppKit bridge for chrome auto-hide: SwiftUI's hover tracking alone can be
+/// unreliable over a fullscreen Metal surface, so this also listens for
+/// app-level mouse-moved and click events. Any of them counts as activity —
+/// including the first click while the chrome is hidden, so the controls are
+/// never unreachable.
+private struct MouseActivityMonitor: NSViewRepresentable {
+    let onActivity: () -> Void
+
+    func makeNSView(context: Context) -> MonitorView {
+        let view = MonitorView()
+        view.onActivity = onActivity
+        return view
+    }
+
+    func updateNSView(_ nsView: MonitorView, context: Context) {
+        nsView.onActivity = onActivity
+    }
+
+    final class MonitorView: NSView {
+        var onActivity: (() -> Void)?
+        private var monitor: Any?
+
+        override func viewDidMoveToWindow() {
+            super.viewDidMoveToWindow()
+            guard let window else {
+                removeMonitor()
+                return
+            }
+            // Without this, no mouse-moved events are generated at all.
+            window.acceptsMouseMovedEvents = true
+            if monitor == nil {
+                monitor = NSEvent.addLocalMonitorForEvents(matching: [.mouseMoved, .leftMouseDown, .rightMouseDown]) { [weak self] event in
+                    self?.onActivity?()
+                    return event
+                }
+            }
+        }
+
+        private func removeMonitor() {
+            if let monitor {
+                NSEvent.removeMonitor(monitor)
+                self.monitor = nil
+            }
+        }
+
+        deinit {
+            removeMonitor()
+        }
     }
 }
 
