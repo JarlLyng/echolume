@@ -87,17 +87,19 @@
 
   <main>
     <section class="hero">
-      <div class="hero-bg" aria-hidden="true"></div>
       <div class="hero-canvas-container">
         <canvas id="hero-canvas" aria-hidden="true" role="presentation"></canvas>
       </div>
-      <p class="hero-tagline">Sound into light</p>
-      <h1 class="hero-title">Live audio‑reactive visuals for macOS</h1>
-      <p class="hero-desc">Metal-powered 2D visuals that react to your sound in real time. Pick your input, choose a theme, hit Ready — and perform. Complete with DAW plugin, OSC and MIDI control.</p>
-      <div class="hero-more">
-        <a href="how-it-works.html">How to route DAW audio, interfaces, or microphones &rarr;</a>
+      <div class="hero-scrim" aria-hidden="true"></div>
+      <div class="hero-inner">
+        <p class="hero-tagline">Sound into light</p>
+        <h1 class="hero-title">Live audio‑reactive visuals for macOS</h1>
+        <p class="hero-desc">Metal-powered 2D visuals that react to your sound in real time. Pick your input, choose a theme, hit Ready — and perform. Complete with DAW plugin, OSC and MIDI control.</p>
+        <div class="hero-more">
+          <a href="how-it-works.html">How to route DAW audio, interfaces, or microphones &rarr;</a>
+        </div>
+        <a href="#download" class="cta">Get Echolume</a>
       </div>
-      <a href="#download" class="cta">Get Echolume</a>
     </section>
 
     <section id="showcase" class="showcase reveal">
@@ -107,11 +109,6 @@
       <div class="carousel">
         <div class="carousel-viewport">
           <div class="carousel-track" id="shots-track" tabindex="0" role="group" aria-label="Echolume screenshots">
-            <div class="cslide">
-              <img src="screenshots/setup.jpg" width="1600" height="1000" loading="lazy" decoding="async"
-                   data-caption="The app — one screen to dial in your look, then hit Ready"
-                   alt="Echolume's Setup screen: audio input, the visual theme swatch picker, scene and shape menus, and five performance knobs — all on one screen.">
-            </div>
             <div class="cslide">
               <img src="screenshots/visual-neon-ring.jpg" width="1600" height="1000" loading="lazy" decoding="async"
                    data-caption="Spectrum Ring scene · Neon Lines theme"
@@ -132,11 +129,16 @@
                    data-caption="Plasma scene · Winter theme"
                    alt="Echolume's Plasma scene in the Winter theme — soft pastel blues and purples drifting.">
             </div>
+            <div class="cslide">
+              <img src="screenshots/setup.jpg" width="1600" height="1000" loading="lazy" decoding="async"
+                   data-caption="And this is the whole interface — dial in a look, hit Ready"
+                   alt="Echolume's Setup screen: audio input, the visual theme swatch picker, scene and shape menus, and five performance knobs — all on one screen.">
+            </div>
           </div>
           <button class="c-arrow c-prev" type="button" aria-label="Previous screenshot">&lsaquo;</button>
           <button class="c-arrow c-next" type="button" aria-label="Next screenshot">&rsaquo;</button>
         </div>
-        <p class="c-caption" id="shots-caption">The app — one screen to dial in your look, then hit Ready</p>
+        <p class="c-caption" id="shots-caption">Spectrum Ring scene · Neon Lines theme</p>
         <div class="c-dots" id="shots-dots" role="tablist" aria-label="Choose screenshot"></div>
       </div>
     </section>
@@ -339,35 +341,6 @@
       update(0);
     })();
 
-    const canvas = document.getElementById('hero-canvas');
-    const ctx = canvas.getContext('2d');
-    let time = 0;
-    let mouseX = 0;
-    let mouseY = 0;
-    let active = true;
-    const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-
-    function resize() {
-      canvas.width = canvas.offsetWidth;
-      canvas.height = canvas.offsetHeight;
-    }
-    resize();
-    window.addEventListener('resize', resize);
-
-    // Track mouse coordinates over the hero area
-    const heroSection = document.querySelector('.hero');
-    heroSection.addEventListener('mousemove', (e) => {
-      const rect = canvas.getBoundingClientRect();
-      mouseX = e.clientX - rect.left;
-      mouseY = e.clientY - rect.top;
-    });
-
-    // Pause animation when page tab goes background (LCP & INP Optimization)
-    document.addEventListener('visibilitychange', () => {
-      active = !document.hidden;
-      if (active && !reduceMotion) animate();
-    });
-
     // Card Hover Glow Effect
     const cards = document.querySelectorAll('.feature');
     cards.forEach(card => {
@@ -380,47 +353,171 @@
       });
     });
 
-    function animate() {
-      if (!active) return;
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-      time += 0.012;
+    // Hero simulation — a canvas homage to the app's Spectrum Ring scene.
+    // Fake 3-band "spectrum" + a 124 BPM kick envelope drive a ring of radial
+    // spokes; trails come from fading the canvas instead of clearing it
+    // (the same idea as the app's decaying feedback pass, in miniature).
+    (function () {
+      const canvas = document.getElementById('hero-canvas');
+      if (!canvas) return;
+      const ctx = canvas.getContext('2d');
+      const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
-      const centerY = canvas.height * 0.55;
-      const waveCount = 5;
+      const SPOKES = 144;
+      const BPM = 124;
+      const DPR = Math.min(window.devicePixelRatio || 1, 1.5);
 
-      for (let i = 0; i < waveCount; i++) {
-        ctx.beginPath();
-        const offset = i * (Math.PI / 4.5);
-        const amplitude = (35 + i * 12) * (0.85 + Math.sin(time * 0.4 + i) * 0.15);
-        const freq = 0.003 - i * 0.0003;
-        const opacity = 0.12 - i * 0.02;
+      // Palettes lifted from the app's themes: [inner, outer] RGB stops.
+      const THEMES = [
+        { name: 'Neon Lines',  a: [208, 255, 0],   b: [0, 224, 199] },
+        { name: 'Techno Club', a: [255, 0, 170],   b: [0, 187, 255] },
+        { name: 'Summer',      a: [255, 168, 0],   b: [255, 64, 64] },
+        { name: 'Winter',      a: [120, 160, 255], b: [190, 120, 255] }
+      ];
+      const THEME_SECONDS = 12;
 
-        ctx.strokeStyle = `rgba(208, 255, 0, ${opacity})`;
-        ctx.lineWidth = 1.0 + (waveCount - i) * 0.4;
+      let w = 0, h = 0, cx = 0, cy = 0, baseR = 0;
+      let time = 0, rot = 0;
+      let mouseAngle = null, mouseBoost = 0;
+      let running = false, inView = true;
 
-        for (let x = 0; x < canvas.width; x += 10) {
-          const dx = x - mouseX;
-          const dy = centerY - mouseY;
-          const dist = Math.sqrt(dx * dx + dy * dy);
-          // Add reactive force near cursor
-          const force = Math.max(0, 1 - dist / 350);
-
-          const y = centerY +
-                    Math.sin(x * freq + time + offset) * amplitude * (1 + force * 0.7) +
-                    Math.cos(x * 0.008 - time * 1.5) * (10 * force);
-
-          if (x === 0) {
-            ctx.moveTo(x, y);
-          } else {
-            ctx.lineTo(x, y);
-          }
-        }
-        ctx.stroke();
+      function resize() {
+        w = canvas.offsetWidth;
+        h = canvas.offsetHeight;
+        canvas.width = Math.round(w * DPR);
+        canvas.height = Math.round(h * DPR);
+        ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+        const narrow = w < 720;
+        cx = narrow ? w * 0.5 : w * 0.7;
+        cy = narrow ? h * 0.4 : h * 0.52;
+        baseR = Math.min(w, h) * (narrow ? 0.2 : 0.23);
+        // Start from black so the first trails fade in cleanly.
+        ctx.fillStyle = '#0a0a0a';
+        ctx.fillRect(0, 0, w, h);
       }
-      // Honor reduced-motion: draw a single static frame, don't loop.
-      if (!reduceMotion) requestAnimationFrame(animate);
-    }
-    animate();
+
+      const heroSection = document.querySelector('.hero');
+      heroSection.addEventListener('mousemove', (e) => {
+        const rect = canvas.getBoundingClientRect();
+        const dx = (e.clientX - rect.left) - cx;
+        const dy = (e.clientY - rect.top) - cy;
+        mouseAngle = Math.atan2(dy, dx);
+        mouseBoost = 1;
+      });
+      heroSection.addEventListener('mouseleave', () => { mouseAngle = null; });
+
+      function lerp(a, b, t) { return a + (b - a) * t; }
+
+      function mixColor(c1, c2, t) {
+        return [Math.round(lerp(c1[0], c2[0], t)), Math.round(lerp(c1[1], c2[1], t)), Math.round(lerp(c1[2], c2[2], t))];
+      }
+
+      // Crossfaded palette stops for the current moment in the theme cycle.
+      function palette() {
+        const cycle = (time / THEME_SECONDS) % THEMES.length;
+        const i = Math.floor(cycle);
+        const frac = cycle - i;
+        // Ease only through the last 20% of each slot so themes hold, then blend.
+        const t = frac < 0.8 ? 0 : (frac - 0.8) / 0.2;
+        const cur = THEMES[i], nxt = THEMES[(i + 1) % THEMES.length];
+        return { a: mixColor(cur.a, nxt.a, t), b: mixColor(cur.b, nxt.b, t) };
+      }
+
+      // Fake spectrum: three overlapping "bands" travelling around the ring,
+      // kicked by the beat envelope on the low end.
+      function energyAt(i, kick, hat) {
+        const u = i / SPOKES;
+        const low = Math.pow(Math.abs(Math.sin(u * Math.PI * 2 + time * 0.7)), 3) * kick;
+        const mid = Math.pow(Math.abs(Math.sin(u * Math.PI * 6 - time * 1.3)), 2) * (0.35 + hat * 0.4);
+        const high = Math.abs(Math.sin(u * Math.PI * 14 + time * 2.1)) * (0.15 + hat * 0.25);
+        let e = low * 0.9 + mid * 0.5 + high * 0.3;
+        if (mouseAngle !== null) {
+          const spokeAngle = u * Math.PI * 2 + rot;
+          let d = Math.abs(((spokeAngle - mouseAngle) % (Math.PI * 2) + Math.PI * 3) % (Math.PI * 2) - Math.PI);
+          e += Math.max(0, 1 - d / 0.9) * 0.8 * mouseBoost;
+        }
+        return Math.min(e, 1.6);
+      }
+
+      function drawFrame() {
+        // Decaying feedback: fade, don't clear — this is what makes the trails.
+        ctx.globalCompositeOperation = 'source-over';
+        ctx.fillStyle = 'rgba(10, 10, 10, 0.16)';
+        ctx.fillRect(0, 0, w, h);
+
+        const beatPhase = (time * BPM / 60) % 1;
+        const kick = Math.exp(-5 * beatPhase);
+        const hat = Math.exp(-8 * (((beatPhase + 0.5) % 1)));
+        const pal = palette();
+        const R = baseR * (1 + kick * 0.06);
+
+        ctx.globalCompositeOperation = 'lighter';
+        ctx.lineCap = 'round';
+
+        for (let i = 0; i < SPOKES; i++) {
+          const angle = (i / SPOKES) * Math.PI * 2 + rot;
+          const e = energyAt(i, kick, hat);
+          const len = R * 0.12 + R * 0.65 * e;
+          const x0 = cx + Math.cos(angle) * R;
+          const y0 = cy + Math.sin(angle) * R;
+          const x1 = cx + Math.cos(angle) * (R + len);
+          const y1 = cy + Math.sin(angle) * (R + len);
+          const c = mixColor(pal.a, pal.b, i / SPOKES);
+
+          // Wide faint pass = glow, thin bright pass = core.
+          ctx.strokeStyle = 'rgba(' + c[0] + ',' + c[1] + ',' + c[2] + ',' + (0.05 + e * 0.05) + ')';
+          ctx.lineWidth = 5;
+          ctx.beginPath(); ctx.moveTo(x0, y0); ctx.lineTo(x1, y1); ctx.stroke();
+
+          ctx.strokeStyle = 'rgba(' + c[0] + ',' + c[1] + ',' + c[2] + ',' + (0.25 + e * 0.45) + ')';
+          ctx.lineWidth = 1.6;
+          ctx.beginPath(); ctx.moveTo(x0, y0); ctx.lineTo(x1, y1); ctx.stroke();
+        }
+
+        // Center disc pulsing with the kick, like the app's inner core.
+        const discR = R * 0.42 * (1 + kick * 0.12);
+        const g = ctx.createRadialGradient(cx, cy, 0, cx, cy, discR);
+        const pa = pal.a;
+        g.addColorStop(0, 'rgba(' + pa[0] + ',' + pa[1] + ',' + pa[2] + ',' + (0.10 + kick * 0.12) + ')');
+        g.addColorStop(1, 'rgba(' + pa[0] + ',' + pa[1] + ',' + pa[2] + ',0)');
+        ctx.fillStyle = g;
+        ctx.beginPath(); ctx.arc(cx, cy, discR, 0, Math.PI * 2); ctx.fill();
+
+        rot += 0.0015 + kick * 0.003;
+        mouseBoost *= 0.96;
+      }
+
+      function loop() {
+        if (!running) return;
+        time += 1 / 60;
+        drawFrame();
+        requestAnimationFrame(loop);
+      }
+
+      function setRunning(on) {
+        const next = on && inView && !document.hidden && !reduceMotion;
+        if (next && !running) { running = true; requestAnimationFrame(loop); }
+        if (!next) running = false;
+      }
+
+      resize();
+      window.addEventListener('resize', resize);
+
+      if (reduceMotion) {
+        // A single, calm frame: mid-energy ring, no loop.
+        time = 0.35;
+        for (let i = 0; i < 24; i++) { time += 1 / 60; drawFrame(); }
+      } else {
+        if ('IntersectionObserver' in window) {
+          new IntersectionObserver(function (entries) {
+            inView = entries[0].isIntersecting;
+            setRunning(true);
+          }, { threshold: 0.05 }).observe(heroSection);
+        }
+        document.addEventListener('visibilitychange', function () { setRunning(true); });
+        setRunning(true);
+      }
+    })();
   </script>
 </body>
 </html>
