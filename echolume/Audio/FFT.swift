@@ -16,6 +16,10 @@ let kMagnitudeCount = 513
 /// Number of log-spaced spectrum bins exposed to the renderer (e.g. spectrum-ring scene).
 let kSpectrumBins = 64
 
+/// Rows of spectrum history kept for scrolling-terrain scenes (ridgeline).
+/// Must match RIDGE_ROWS in Shaders.metal.
+let kSpectrumHistoryRows = 48
+
 func magnitudeSpectrumToBands(
     magnitude: UnsafePointer<Float>,
     binCount: Int,

@@ -16,6 +16,7 @@ enum SceneType: String, CaseIterable, Identifiable {
     case kaleidoscope
     case plasma
     case spectrumRing
+    case ridgeline
 
     var id: String { rawValue }
 
@@ -29,6 +30,7 @@ enum SceneType: String, CaseIterable, Identifiable {
         case .kaleidoscope: return "Kaleidoscope"
         case .plasma: return "Plasma"
         case .spectrumRing: return "Spectrum Ring"
+        case .ridgeline: return "Ridgeline"
         }
     }
 
@@ -43,6 +45,7 @@ enum SceneType: String, CaseIterable, Identifiable {
         case .kaleidoscope: return 5
         case .plasma: return 6
         case .spectrumRing: return 7
+        case .ridgeline: return 8
         }
     }
 

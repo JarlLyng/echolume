@@ -58,6 +58,16 @@ final class Renderer: NSObject, MTKViewDelegate {
     /// kSpectrumBins floats, refilled each frame from the provider and bound at
     /// fragment buffer index 1 for spectrum-style scenes.
     private let spectrumBuffer: MTLBuffer
+
+    /// kSpectrumHistoryRows × kSpectrumBins floats bound at fragment buffer
+    /// index 2 for scrolling-terrain scenes (ridgeline). Row 0 is the newest
+    /// spectrum; rows scroll back in time. The CPU-side ring avoids reordering
+    /// the GPU copy except when a new row lands.
+    private let historyBuffer: MTLBuffer
+    private var historyRing = [Float](repeating: 0, count: kSpectrumHistoryRows * kSpectrumBins)
+    private var historyHead = 0
+    private var historyAccum: Float = 0
+    private var lastHistoryTime: Float = -1
     private let startTime = CACurrentMediaTime()
     private weak var paramsProvider: VisualParamsProvider?
 
@@ -93,6 +103,11 @@ final class Renderer: NSObject, MTKViewDelegate {
             return nil
         }
         spectrumBuffer = specBuf
+
+        guard let histBuf = device.makeBuffer(length: kSpectrumHistoryRows * kSpectrumBins * MemoryLayout<Float>.stride, options: .storageModeShared) else {
+            return nil
+        }
+        historyBuffer = histBuf
 
         guard let library = device.makeDefaultLibrary(),
               let vertexFunction = library.makeFunction(name: "fullscreenQuadVertex"),
@@ -207,6 +222,10 @@ final class Renderer: NSObject, MTKViewDelegate {
         // Refill the spectrum buffer from the analyzer for spectrum-style scenes.
         provider.copySpectrum(into: spectrumBuffer.contents().assumingMemoryBound(to: Float.self))
 
+        // Advance the spectrum history for scrolling-terrain scenes. The Motion
+        // knob sets how fast the terrain scrolls away.
+        updateSpectrumHistory(time: p.time, motion: p.motion)
+
         // Panic Reset clears the trails.
         if provider.consumeTrailReset() { clearPending = true }
 
@@ -219,6 +238,7 @@ final class Renderer: NSObject, MTKViewDelegate {
                 enc.setVertexBuffer(vertexBuffer, offset: 0, index: 0)
                 enc.setFragmentBytes(&uniforms, length: MemoryLayout<ShaderUniforms>.stride, index: 0)
                 enc.setFragmentBuffer(spectrumBuffer, offset: 0, index: 1)
+                enc.setFragmentBuffer(historyBuffer, offset: 0, index: 2)
                 enc.drawPrimitives(type: .triangle, vertexStart: 0, vertexCount: 6)
                 enc.endEncoding()
             }
@@ -248,6 +268,7 @@ final class Renderer: NSObject, MTKViewDelegate {
             enc.setVertexBuffer(vertexBuffer, offset: 0, index: 0)
             enc.setFragmentBytes(&uniforms, length: MemoryLayout<ShaderUniforms>.stride, index: 0)
             enc.setFragmentBuffer(spectrumBuffer, offset: 0, index: 1)
+            enc.setFragmentBuffer(historyBuffer, offset: 0, index: 2)
             enc.setFragmentTexture(prev, index: 0)
             enc.setFragmentSamplerState(sampler, index: 0)
             enc.drawPrimitives(type: .triangle, vertexStart: 0, vertexCount: 6)
@@ -271,6 +292,33 @@ final class Renderer: NSObject, MTKViewDelegate {
 
     func mtkView(_ view: MTKView, drawableSizeWillChange size: CGSize) {
         ensureAccumTextures(width: Int(size.width), height: Int(size.height))
+    }
+
+    /// Push the current spectrum into the history ring at a rate set by the
+    /// Motion knob (slow terrain at 0, fast scroll at 1), then mirror the ring
+    /// into the GPU buffer ordered newest-first. Called once per frame from
+    /// draw(); ~12 KB of copies at most, only when a row actually advances.
+    private func updateSpectrumHistory(time: Float, motion: Float) {
+        let dt = lastHistoryTime < 0 ? 0 : min(max(time - lastHistoryTime, 0), 0.1)
+        lastHistoryTime = time
+        historyAccum += dt * (8 + 40 * max(0, min(1, motion)))
+        guard historyAccum >= 1 else { return }
+
+        let spec = spectrumBuffer.contents().assumingMemoryBound(to: Float.self)
+        while historyAccum >= 1 {
+            historyAccum -= 1
+            let base = historyHead * kSpectrumBins
+            for i in 0 ..< kSpectrumBins { historyRing[base + i] = spec[i] }
+            historyHead = (historyHead + 1) % kSpectrumHistoryRows
+        }
+
+        let dst = historyBuffer.contents().assumingMemoryBound(to: Float.self)
+        for row in 0 ..< kSpectrumHistoryRows {
+            let src = ((historyHead - 1 - row) % kSpectrumHistoryRows + kSpectrumHistoryRows) % kSpectrumHistoryRows
+            let s = src * kSpectrumBins
+            let d = row * kSpectrumBins
+            for i in 0 ..< kSpectrumBins { dst[d + i] = historyRing[s + i] }
+        }
     }
 
     /// Clear the trails on the next frame (panic reset / size change).
