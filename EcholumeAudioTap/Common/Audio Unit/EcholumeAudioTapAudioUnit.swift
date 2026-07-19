@@ -102,13 +102,18 @@ public class EcholumeAudioTapAudioUnit: AUAudioUnit, @unchecked Sendable
         kernel.initialize(Int32(inputChannelCount), Int32(outputChannelCount), outputBus!.format.sampleRate)
         processHelper?.setChannelCount(UInt32(inputChannelCount), UInt32(outputChannelCount))
 
-        // Start the off-render-thread OSC forwarder (#51). The closure reads
-        // the kernel's latest analysis floats; the sender does the network I/O
-        // on its own utility queue.
-        let sender = PluginOSCSender { [weak self] in
-            guard let self else { return (0, 0, 0, 0, 0) }
-            return (self.kernel.outLevel(), self.kernel.outLow(), self.kernel.outMid(), self.kernel.outHigh(), self.kernel.outBPM())
-        }
+        // Start the off-render-thread OSC forwarder (#51). The closures read
+        // the kernel's latest analysis floats / tap samples; the sender does
+        // the FFT and network I/O on its own utility queue.
+        let sender = PluginOSCSender(
+            readValues: { [weak self] in
+                guard let self else { return (0, 0, 0, 0, 0) }
+                return (self.kernel.outLevel(), self.kernel.outLow(), self.kernel.outMid(), self.kernel.outHigh(), self.kernel.outBPM())
+            },
+            fillTapWindow: { [weak self] dest, count in
+                self?.kernel.copyTapWindow(dest, UInt32(count))
+            }
+        )
         sender.start()
         oscSender = sender
 

@@ -320,7 +320,12 @@ final class AppModel: ObservableObject {
 
         audioManager.spectrumPublisher
             .receive(on: DispatchQueue.main)
-            .sink { [weak self] bins in self?.visualParamsProvider.updateSpectrum(bins) }
+            .sink { [weak self] bins in
+                // Like the band publishers above: the local input's spectrum
+                // must not overwrite the plugin's bins while it is driving.
+                guard let self, !self.pluginAudioActive else { return }
+                self.visualParamsProvider.updateSpectrum(bins)
+            }
             .store(in: &cancellables)
 
         midi.onMessage = { [weak self] msg in self?.handleMidi(msg) }
@@ -891,9 +896,28 @@ final class AppModel: ObservableObject {
         applyOSCAction(action)
     }
 
-    /// Feed plugin audio analysis (`/echolume/audio/{level,low,mid,high,bpm}`)
+    /// Feed plugin audio analysis (`/echolume/audio/{level,low,mid,high,bpm,spectrum}`)
     /// directly into the visual pipeline + signal detection.
     private func handlePluginAudio(_ message: OSCMessage) {
+        // Full 64-bin spectrum frame for per-bin scenes (Spectrum Ring,
+        // Ridgeline). The plugin sends the same shaped 0…1 bins the app's own
+        // analyzer produces, so no re-normalization is needed here.
+        if message.address == "/echolume/audio/spectrum" {
+            var bins = [Float]()
+            bins.reserveCapacity(message.arguments.count)
+            for arg in message.arguments {
+                switch arg {
+                case .float(let f): bins.append(max(0, min(1, f)))
+                case .int(let i): bins.append(max(0, min(1, Float(i))))
+                default: return
+                }
+            }
+            guard !bins.isEmpty else { return }
+            lastPluginAudioTime = CFAbsoluteTimeGetCurrent()
+            visualParamsProvider.updateSpectrum(bins)
+            return
+        }
+
         let v: Float
         switch message.arguments.first {
         case .float(let f): v = f

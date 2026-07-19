@@ -12,6 +12,12 @@ and this project aims to follow [Semantic Versioning](https://semver.org/spec/v2
   stacked-waveform plot): 48 rows of 64-bin spectrum history march away in
   perspective, front ridges occlude the rows behind, the beat lifts the front
   rows, and the Motion knob sets the scroll speed (#91, first archetype).
+- The AUv3 plugin now sends a **full 64-bin spectrum** over OSC
+  (`/echolume/audio/spectrum`) alongside the bands and host BPM, so the
+  per-bin scenes (Spectrum Ring, Ridgeline) react fully when a DAW track
+  drives the visuals. The FFT runs on the plugin's utility thread, never the
+  realtime render thread; the app's own input analysis stays suppressed while
+  the plugin is driving (#91).
 
 ### Changed
 - The Live overlay (Back, Panic, level meter, banners) now fades out after

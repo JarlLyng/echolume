@@ -132,6 +132,15 @@ public:
             // The render thread only writes these floats; the Swift-side OSC
             // sender polls them (~60 Hz) and does the actual network I/O, so no
             // syscall ever runs on the realtime path.
+
+            // Mirror channel 0 into the tap ring for the off-thread spectrum
+            // FFT (plain float stores — RT-safe; same benign-race convention
+            // as the analysis floats above).
+            uint32_t w = mTapWriteIndex;
+            for (UInt32 i = 0; i < frameCount; ++i) {
+                mTapRing[(w + i) & kTapRingMask] = in0[i];
+            }
+            mTapWriteIndex = w + frameCount;
         }
 
         // Pass the audio through unchanged (a tap, not a gate).
@@ -148,6 +157,18 @@ public:
     float outMid()   const { return mOutMid; }
     float outHigh()  const { return mOutHigh; }
     float outBPM()   const { return mOutBPM; }
+    double outSampleRate() const { return mSampleRate; }
+
+    /// Copy the most recent `count` tap samples (channel 0) into `dest`,
+    /// oldest first. Called from the OSC sender's utility thread; a torn
+    /// window under concurrent render writes only smears one FFT frame.
+    void copyTapWindow(float *dest, uint32_t count) const {
+        uint32_t w = mTapWriteIndex;
+        uint32_t start = w - count;   // unsigned wrap is fine with the mask
+        for (uint32_t i = 0; i < count; ++i) {
+            dest[i] = mTapRing[(start + i) & kTapRingMask];
+        }
+    }
     
     void handleOneEvent(AUEventSampleTime now, AURenderEvent const *event) {
         switch (event->head.eventType) {
@@ -219,6 +240,13 @@ public:
     double mNormLevel = 1e-4, mNormLow = 1e-4, mNormMid = 1e-4, mNormHigh = 1e-4;
     // Latest normalized features, polled by the Swift OSC sender (~60 Hz).
     float mOutLevel = 0, mOutLow = 0, mOutMid = 0, mOutHigh = 0, mOutBPM = 0;
+
+    // Channel-0 sample ring for the off-thread spectrum FFT (render thread
+    // writes, OSC-sender thread reads; benign races by design).
+    static constexpr uint32_t kTapRingSize = 4096;   // power of two, > FFT window
+    static constexpr uint32_t kTapRingMask = kTapRingSize - 1;
+    float mTapRing[kTapRingSize] = {};
+    uint32_t mTapWriteIndex = 0;
 
     bool mBypassed = false;
     AUAudioFrameCount mMaxFramesToRender = 1024;

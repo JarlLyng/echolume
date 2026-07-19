@@ -21,8 +21,21 @@ final class PluginOSCSender {
     /// touch the render thread (the kernel getters are plain float reads).
     private let readValues: () -> (level: Float, low: Float, mid: Float, high: Float, bpm: Float)
 
-    init(readValues: @escaping () -> (level: Float, low: Float, mid: Float, high: Float, bpm: Float)) {
+    /// Copies the kernel's most recent tap-ring samples into a buffer for the
+    /// spectrum FFT. Optional: nil disables the spectrum feed (bands only).
+    private let fillTapWindow: ((UnsafeMutablePointer<Float>, Int) -> Void)?
+
+    /// Spectrum FFT state — lives entirely on the timer queue.
+    private let spectrumAnalyzer = PluginSpectrumAnalyzer()
+    private var tapWindow = [Float](repeating: 0, count: kPluginFFTSize)
+    private var tickCount = 0
+
+    init(
+        readValues: @escaping () -> (level: Float, low: Float, mid: Float, high: Float, bpm: Float),
+        fillTapWindow: ((UnsafeMutablePointer<Float>, Int) -> Void)? = nil
+    ) {
         self.readValues = readValues
+        self.fillTapWindow = fillTapWindow
     }
 
     deinit {
@@ -74,17 +87,41 @@ final class PluginOSCSender {
         sendOSCFloat("/echolume/audio/mid", v.mid)
         sendOSCFloat("/echolume/audio/high", v.high)
         if v.bpm > 0 { sendOSCFloat("/echolume/audio/bpm", v.bpm) }
+
+        // Full 64-bin spectrum every other tick (~30 Hz, matching the app's
+        // own FFT cadence). One message, one FFT — all on this utility queue.
+        tickCount += 1
+        if tickCount % 2 == 0, let fill = fillTapWindow, let analyzer = spectrumAnalyzer {
+            tapWindow.withUnsafeMutableBufferPointer { buf in
+                guard let base = buf.baseAddress else { return }
+                fill(base, kPluginFFTSize)
+                analyzer.process(samples: base)
+            }
+            sendOSCFloats("/echolume/audio/spectrum", analyzer.bins)
+        }
     }
 
     /// One OSC float message: padded address, ",f" type tag, big-endian float32.
     private func sendOSCFloat(_ address: String, _ value: Float) {
+        sendOSCFloats(address, [value])
+    }
+
+    /// One OSC message with N float arguments: padded address, ",fff…" type
+    /// tags, big-endian float32s. 64 floats ≈ 350 bytes — well under any UDP
+    /// loopback limit.
+    private func sendOSCFloats(_ address: String, _ values: [Float]) {
         var packet = [UInt8]()
-        packet.reserveCapacity(64)
+        packet.reserveCapacity(64 + values.count * 4 + values.count)
         packet.append(contentsOf: Array(address.utf8))
         packet.append(0)
         while packet.count % 4 != 0 { packet.append(0) }
-        packet.append(contentsOf: [UInt8(ascii: ","), UInt8(ascii: "f"), 0, 0])
-        withUnsafeBytes(of: value.bitPattern.bigEndian) { packet.append(contentsOf: $0) }
+        packet.append(UInt8(ascii: ","))
+        for _ in values { packet.append(UInt8(ascii: "f")) }
+        packet.append(0)
+        while packet.count % 4 != 0 { packet.append(0) }
+        for value in values {
+            withUnsafeBytes(of: value.bitPattern.bigEndian) { packet.append(contentsOf: $0) }
+        }
 
         var dst = destination
         packet.withUnsafeBytes { raw in
