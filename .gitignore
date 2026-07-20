@@ -28,3 +28,7 @@ Thumbs.db
 # IDE
 .idea/
 *.swp
+
+# Editor/AI tool state
+.cursor/
+.vscode/
