@@ -362,8 +362,11 @@ final class AppModel: ObservableObject {
                     object: nil,
                     queue: .main
                 ) { [weak self] _ in
+                    // Rebind to an immutable capture before the Task: referencing
+                    // the weak (mutable) `self` inside concurrently-executing code
+                    // is an error in Swift 6 language mode.
+                    guard let self else { return }
                     Task { @MainActor in
-                        guard let self else { return }
                         self.menuBarController?.setVisible(self.menubarEnabled)
                         if let token = self.launchObserver {
                             NotificationCenter.default.removeObserver(token)
