@@ -5,6 +5,14 @@ All notable changes to Echolume are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project aims to follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.1.1] — Mac App Store hotfix (Jul 2026)
+
+### Fixed
+- Crash on launch for some users (SIGABRT in AppKit): the menu-bar status
+  item was created during the first SwiftUI render, before the app had a
+  window-server connection on some launch paths. It is now created after
+  `applicationDidFinishLaunching` (#145).
+
 ## [1.1.0] — Mac App Store update (Jul 2026)
 
 ### Added

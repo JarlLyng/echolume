@@ -169,6 +169,8 @@ final class AppModel: ObservableObject {
         }
     }
     private var menuBarController: MenuBarController?
+    /// One-shot didFinishLaunching observer for deferred status-item creation.
+    private var launchObserver: (any NSObjectProtocol)?
 
     private let audioManager = AudioManager()
     private var twitchManager: TwitchChatManager?
@@ -343,10 +345,33 @@ final class AppModel: ObservableObject {
         }
         // Create the status item unless launched by the UI test harness (a menu
         // bar extra blocks XCUITest's accessibility handshake).
+        //
+        // The NSStatusItem itself must NOT be created here: AppModel.init runs
+        // during the first SwiftUI render, before the app is connected to the
+        // window server on some launch paths (background/login-item launches,
+        // session not yet active). Creating it that early aborts inside AppKit
+        // with a CGSConnectionByID assert (field crash on macOS 14.8, M1).
+        // Defer to applicationDidFinishLaunching, when the connection exists.
         if ProcessInfo.processInfo.environment["ECHOLUME_UITEST"] != "1" {
-            let controller = MenuBarController(appModel: self)
-            controller.setVisible(menubarEnabled)
-            menuBarController = controller
+            menuBarController = MenuBarController(appModel: self)
+            if NSRunningApplication.current.isFinishedLaunching {
+                menuBarController?.setVisible(menubarEnabled)
+            } else {
+                launchObserver = NotificationCenter.default.addObserver(
+                    forName: NSApplication.didFinishLaunchingNotification,
+                    object: nil,
+                    queue: .main
+                ) { [weak self] _ in
+                    Task { @MainActor in
+                        guard let self else { return }
+                        self.menuBarController?.setVisible(self.menubarEnabled)
+                        if let token = self.launchObserver {
+                            NotificationCenter.default.removeObserver(token)
+                            self.launchObserver = nil
+                        }
+                    }
+                }
+            }
         }
     }
 
