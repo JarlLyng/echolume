@@ -17,6 +17,7 @@ enum SceneType: String, CaseIterable, Identifiable {
     case plasma
     case spectrumRing
     case ridgeline
+    case wireframeBurst
 
     var id: String { rawValue }
 
@@ -31,6 +32,7 @@ enum SceneType: String, CaseIterable, Identifiable {
         case .plasma: return "Plasma"
         case .spectrumRing: return "Spectrum Ring"
         case .ridgeline: return "Ridgeline"
+        case .wireframeBurst: return "Wireframe Burst"
         }
     }
 
@@ -46,6 +48,7 @@ enum SceneType: String, CaseIterable, Identifiable {
         case .plasma: return 6
         case .spectrumRing: return 7
         case .ridgeline: return 8
+        case .wireframeBurst: return 9
         }
     }
 

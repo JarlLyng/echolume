@@ -3,6 +3,7 @@
 //  echolume
 //
 
+import AppKit
 import Metal
 import MetalKit
 import simd
@@ -79,8 +80,15 @@ final class Renderer: NSObject, MTKViewDelegate {
     /// Active Live recording (nil when not recording). Owned by the render
     /// thread; started/stopped by polling the provider's recording flag.
     private var recorder: VideoRecorder?
+    /// Finalizes an active recording on app termination (deinit is NOT
+    /// guaranteed on quit, and an unfinalized .mp4 has no moov atom — the
+    /// whole capture would be lost if the performer hits Cmd-Q mid-recording).
+    private var terminationObserver: (any NSObjectProtocol)?
 
     deinit {
+        if let terminationObserver {
+            NotificationCenter.default.removeObserver(terminationObserver)
+        }
         // Finalize a recording if the view is torn down mid-capture, so the
         // file on disk is playable rather than truncated.
         if let recorder {
@@ -170,6 +178,32 @@ final class Renderer: NSObject, MTKViewDelegate {
         }
 
         super.init()
+
+        // Cmd-Q with a recording running must not lose the file: block the
+        // main thread briefly while the writer finalizes the moov atom.
+        terminationObserver = NotificationCenter.default.addObserver(
+            forName: NSApplication.willTerminateNotification,
+            object: nil,
+            queue: .main
+        ) { [weak self] _ in
+            self?.finishRecordingBlocking()
+        }
+    }
+
+    /// Finalize an active recording synchronously (bounded wait). Called on
+    /// the main thread during app termination.
+    private func finishRecordingBlocking() {
+        guard let active = recorder else { return }
+        recorder = nil
+        let done = DispatchSemaphore(value: 0)
+        active.finish { url, error in
+            var info: [String: Any] = [:]
+            if let url { info["url"] = url }
+            if let error { info["error"] = error }
+            NotificationCenter.default.post(name: .echolumeRecordingFinished, object: nil, userInfo: info)
+            done.signal()
+        }
+        _ = done.wait(timeout: .now() + 2.0)
     }
 
     func draw(in view: MTKView) {
