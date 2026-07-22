@@ -29,6 +29,7 @@ struct LiveView: View {
     @State private var pointerOverChrome = false
     @State private var chromeHideTask: Task<Void, Never>?
     @State private var lastChromePoke = Date.distantPast
+    @State private var recordingPulse = false
 
     var body: some View {
         ZStack {
@@ -74,6 +75,24 @@ struct LiveView: View {
                         .buttonStyle(.plain)
                         .keyboardShortcut("r", modifiers: [])
                         .accessibilityLabel("Panic reset visuals")
+                        Button(action: { appModel.toggleRecording() }) {
+                            HStack(spacing: DesignTokens.Spacing.xs) {
+                                Circle()
+                                    .fill(appModel.isRecording ? Color.red : overlayText.opacity(0.5))
+                                    .frame(width: 8, height: 8)
+                                Text(appModel.isRecording ? "Stop (V)" : "Record (V)")
+                                    .font(.system(size: DesignTokens.Typography.Size.base, weight: DesignTokens.Typography.Weight.semibold))
+                                    .foregroundStyle(overlayText)
+                            }
+                            .padding(.horizontal, DesignTokens.Spacing.xl)
+                            .padding(.vertical, DesignTokens.Spacing.md)
+                            .frame(minHeight: 44)
+                            .modifier(LiveChromeSurface(accent: overlayAccent, scrim: overlayScrim))
+                            .contentShape(Rectangle())
+                        }
+                        .buttonStyle(.plain)
+                        .keyboardShortcut("v", modifiers: [])
+                        .accessibilityLabel(appModel.isRecording ? "Stop recording" : "Record visuals to a video file")
                         Spacer()
                         if appModel.hasMicPermission {
                             LevelMeterView(rms: appModel.rms, peak: appModel.peak, compact: true)
@@ -141,6 +160,42 @@ struct LiveView: View {
             }
             .opacity(chromeVisible ? 1 : 0)
             .allowsHitTesting(chromeVisible)
+
+            // Recording indicator: deliberately OUTSIDE the auto-hiding chrome.
+            // A performer must always be able to see that capture is running.
+            if appModel.isRecording {
+                VStack {
+                    HStack {
+                        Spacer()
+                        Circle()
+                            .fill(Color.red)
+                            .frame(width: 10, height: 10)
+                            .opacity(recordingPulse ? 1 : 0.35)
+                            .animation(.easeInOut(duration: 0.8).repeatForever(autoreverses: true), value: recordingPulse)
+                            .onAppear { recordingPulse = true }
+                            .onDisappear { recordingPulse = false }
+                            .accessibilityLabel("Recording")
+                    }
+                    .padding(DesignTokens.Spacing.lg)
+                    Spacer()
+                }
+            }
+
+            // Post-recording note ("Saved to Movies"). Also outside the chrome
+            // so it is seen even when the controls are hidden; auto-clears.
+            if let note = appModel.recordingNote {
+                VStack {
+                    Spacer()
+                    Text(note)
+                        .font(.system(size: DesignTokens.Typography.Size.sm, weight: DesignTokens.Typography.Weight.semibold))
+                        .foregroundStyle(overlayText)
+                        .padding(.horizontal, DesignTokens.Spacing.md)
+                        .padding(.vertical, DesignTokens.Spacing.sm)
+                        .modifier(LiveChromeSurface(accent: overlayAccent, scrim: overlayScrim, cornerRadius: DesignTokens.Radius.sm))
+                        .padding(.bottom, 24)
+                }
+                .transition(.opacity)
+            }
         }
         .background(DesignTokens.Common.Background.app(colorScheme))
         .background(MouseActivityMonitor(onActivity: showChrome))

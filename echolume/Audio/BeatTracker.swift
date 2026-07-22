@@ -122,8 +122,7 @@ final class BeatTracker {
 
     /// Set a manual BPM (nil re-enables auto-detection).
     func setManualBPM(_ bpm: Float?) {
-        if let bpm { manualBPM = min(max(bpm, 60), 200) }
-        else { manualBPM = nil; tapTimes.removeAll() }
+        if let bpm { manualBPM = min(max(bpm, 60), 200) } else { manualBPM = nil; tapTimes.removeAll() }
     }
 
     // MARK: - Tempo estimation

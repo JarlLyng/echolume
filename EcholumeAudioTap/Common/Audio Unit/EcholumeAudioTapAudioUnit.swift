@@ -7,8 +7,7 @@
 
 import AVFoundation
 
-public class EcholumeAudioTapAudioUnit: AUAudioUnit, @unchecked Sendable
-{
+public class EcholumeAudioTapAudioUnit: AUAudioUnit, @unchecked Sendable {
 	// C++ Objects
 	var kernel = EcholumeAudioTapDSPKernel()
     var processHelper: AUProcessHelper?
@@ -27,16 +26,16 @@ public class EcholumeAudioTapAudioUnit: AUAudioUnit, @unchecked Sendable
         try super.init(componentDescription: componentDescription, options: options)
         outputBus = try AUAudioUnitBus(format: format)
         outputBus?.maximumChannelCount = 2
-        
+
         // Create the input and output busses.
-        inputBus.initialize(format, 8);
+        inputBus.initialize(format, 8)
 
         // Create the input and output bus arrays.
         _inputBusses = AUAudioUnitBusArray(audioUnit: self, busType: AUAudioUnitBusType.output, busses: [inputBus.bus!])
-        
+
         // Create the input and output bus arrays.
         _outputBusses = AUAudioUnitBusArray(audioUnit: self, busType: AUAudioUnitBusType.output, busses: [outputBus!])
-        
+
         processHelper = AUProcessHelper(&kernel, &inputBus)
 	}
 
@@ -47,13 +46,13 @@ public class EcholumeAudioTapAudioUnit: AUAudioUnit, @unchecked Sendable
     public override var outputBusses: AUAudioUnitBusArray {
         return _outputBusses
     }
-    
+
 	public override var channelCapabilities: [NSNumber] {
 		get {
 			return [NSNumber(value: 2), NSNumber(value: 2)]
 		}
 	}
-	
+
     public override var  maximumFramesToRender: AUAudioFrameCount {
         get {
             return kernel.maximumFramesToRender()
@@ -89,15 +88,15 @@ public class EcholumeAudioTapAudioUnit: AUAudioUnit, @unchecked Sendable
     public override func allocateRenderResources() throws {
         let inputChannelCount = self.inputBusses[0].format.channelCount
         let outputChannelCount = self.outputBusses[0].format.channelCount
-        
+
         if outputChannelCount != inputChannelCount {
             setRenderResourcesAllocated(false)
             throw NSError(domain: NSOSStatusErrorDomain, code: Int(kAudioUnitErr_FailedInitialization), userInfo: nil)
         }
 
-        inputBus.allocateRenderResources(self.maximumFramesToRender);
+        inputBus.allocateRenderResources(self.maximumFramesToRender)
 
-        kernel.setMIDIOutputEventBlock(self.midiOutputEventListBlock);
+        kernel.setMIDIOutputEventBlock(self.midiOutputEventListBlock)
         kernel.setMusicalContextBlock(self.musicalContextBlock)
         kernel.initialize(Int32(inputChannelCount), Int32(outputChannelCount), outputBus!.format.sampleRate)
         processHelper?.setChannelCount(UInt32(inputChannelCount), UInt32(outputChannelCount))
@@ -123,7 +122,6 @@ public class EcholumeAudioTapAudioUnit: AUAudioUnit, @unchecked Sendable
     // Deallocate resources allocated in allocateRenderResourcesAndReturnError:
     // Subclassers should call the superclass implementation.
     public override func deallocateRenderResources() {
-
         // Deallocate your resources.
         oscSender?.stop()
         oscSender = nil
@@ -145,7 +143,7 @@ public class EcholumeAudioTapAudioUnit: AUAudioUnit, @unchecked Sendable
 
 	private func setupParameterCallbacks() {
 		// implementorValueObserver is called when a parameter changes value.
-		parameterTree?.implementorValueObserver = { [weak self] param, value -> Void in
+		parameterTree?.implementorValueObserver = { [weak self] param, value in
             self?.kernel.setParameter(param.address, value)
 		}
 
@@ -155,7 +153,7 @@ public class EcholumeAudioTapAudioUnit: AUAudioUnit, @unchecked Sendable
 		}
 
 		// A function to provide string representations of parameter values.
-		parameterTree?.implementorStringFromValueCallback = { param, valuePtr in
+		parameterTree?.implementorStringFromValueCallback = { _, valuePtr in
 			guard let value = valuePtr?.pointee else {
 				return "-"
 			}

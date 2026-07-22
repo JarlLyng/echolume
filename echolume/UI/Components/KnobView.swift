@@ -24,13 +24,13 @@ struct KnobView: View {
     var size: KnobSize = .standard
     var isEnabled: Bool = true
     /// Bound MIDI CC number, shown as a small badge when non-nil.
-    var midiCC: Int? = nil
+    var midiCC: Int?
     /// When true, the knob is in MIDI Learn mode: a tap arms it instead of resetting.
     var isLearnMode: Bool = false
     /// When true, this knob is the one currently waiting for a MIDI CC.
     var isArmed: Bool = false
     /// Called when the knob is tapped in MIDI Learn mode.
-    var onArm: (() -> Void)? = nil
+    var onArm: (() -> Void)?
 
     private static let dragPixelsFullRange: CGFloat = 200
     private static let fineControlMultiplier: CGFloat = 0.3

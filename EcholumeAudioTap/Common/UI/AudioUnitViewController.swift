@@ -15,9 +15,9 @@ private let log = Logger(subsystem: "com.iamjarl.echolume.EcholumeAudioTap", cat
 @MainActor
 public class AudioUnitViewController: AUViewController, AUAudioUnitFactory {
     var audioUnit: AUAudioUnit?
-    
+
     var hostingController: HostingController<EcholumeAudioTapMainView>?
-    
+
     private var observation: NSKeyValueObservation?
 
 	/* iOS View lifcycle
@@ -53,24 +53,23 @@ public class AudioUnitViewController: AUViewController, AUAudioUnitFactory {
 
     public override func viewDidLoad() {
         super.viewDidLoad()
-        
+
         // Accessing the `audioUnit` parameter prompts the AU to be created via createAudioUnit(with:)
         guard let audioUnit = self.audioUnit else {
             return
         }
         configureSwiftUIView(audioUnit: audioUnit)
     }
-    
+
 	nonisolated public func createAudioUnit(with componentDescription: AudioComponentDescription) throws -> AUAudioUnit {
 		return try DispatchQueue.main.sync {
-			
 			audioUnit = try EcholumeAudioTapAudioUnit(componentDescription: componentDescription, options: [])
-			
+
 			guard let audioUnit = self.audioUnit as? EcholumeAudioTapAudioUnit else {
 				log.error("Unable to create EcholumeAudioTapAudioUnit")
 				return audioUnit!
 			}
-			
+
 			defer {
 				// Configure the SwiftUI view after creating the AU, instead of in viewDidLoad,
 				// so that the parameter tree is set up before we build our @AUParameterUI properties
@@ -78,31 +77,31 @@ public class AudioUnitViewController: AUViewController, AUAudioUnitFactory {
 					self.configureSwiftUIView(audioUnit: audioUnit)
 				}
 			}
-			
+
 			audioUnit.setupParameterTree(EcholumeAudioTapParameterSpecs.createAUParameterTree())
-			
-			self.observation = audioUnit.observe(\.allParameterValues, options: [.new]) { object, change in
+
+			self.observation = audioUnit.observe(\.allParameterValues, options: [.new]) { _, _ in
 				guard let tree = audioUnit.parameterTree else { return }
-				
+
 				// This insures the Audio Unit gets initial values from the host.
 				for param in tree.allParameters { param.value = param.value }
 			}
-			
+
 			guard audioUnit.parameterTree != nil else {
 				log.error("Unable to access AU ParameterTree")
 				return audioUnit
 			}
-			
+
 			return audioUnit
 		}
 	}
-    
+
     private func configureSwiftUIView(audioUnit: AUAudioUnit) {
         if let host = hostingController {
             host.removeFromParent()
             host.view.removeFromSuperview()
         }
-        
+
         guard let observableParameterTree = audioUnit.observableParameterTree else {
             return
         }
@@ -112,7 +111,7 @@ public class AudioUnitViewController: AUViewController, AUAudioUnitFactory {
         host.view.frame = self.view.bounds
         self.view.addSubview(host.view)
         hostingController = host
-        
+
         // Make sure the SwiftUI view fills the full area provided by the view controller
         host.view.translatesAutoresizingMaskIntoConstraints = false
         host.view.topAnchor.constraint(equalTo: self.view.topAnchor).isActive = true
@@ -121,5 +120,4 @@ public class AudioUnitViewController: AUViewController, AUAudioUnitFactory {
         host.view.bottomAnchor.constraint(equalTo: self.view.bottomAnchor).isActive = true
         self.view.bringSubviewToFront(host.view)
     }
-    
 }

@@ -102,7 +102,7 @@ final class AudioAnalyzer {
 
     /// Process float PCM from pointer (allocation-free for audio callbacks).
     func process(buffer: UnsafeBufferPointer<Float>) {
-        guard buffer.count > 0 else {
+        guard !buffer.isEmpty else {
             let z: Float = 0
             rmsPublisher.send(rmsSmoother.tick(with: z))
             peakPublisher.send(peakSmoother.tick(with: z))

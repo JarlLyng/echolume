@@ -97,7 +97,6 @@ public struct ParameterSpec: NodeSpec {
 // MARK: - Tree factory for parameter spec
 
 extension AUParameterTree {
-
     class func createNode(from spec: NodeSpec) -> AUParameterNode {
         switch spec {
         case let parameterSpec as ParameterSpec:

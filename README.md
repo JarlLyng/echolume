@@ -34,7 +34,7 @@ A quick reference of what's shipped vs planned. For the intended design, layerin
 - Metal renderer for 2D visuals (procedural shapes + a two‑pass decaying feedback/trail accumulation; trail length follows Abstraction, cleared by Panic Reset).
 - Audio engine: input‑device enumeration, in‑app device switching, channel‑pair selection, safe fallback, live RMS/peak meter, FFT bands (low/mid/high).
 - SetupView and LiveView (fullscreen output, minimal overlay, no‑signal banner, Panic Reset).
-- 6 themes, **9 scenes** (radial, flow, grid, spiral, tunnel, kaleidoscope, plasma, spectrum ring, ridgeline), 5 shape styles, performance knobs, and Randomize.
+- 6 themes, **10 scenes** (radial, flow, grid, spiral, tunnel, kaleidoscope, plasma, spectrum ring, ridgeline, wireframe burst), 5 shape styles, performance knobs, and Randomize.
 - External display output selection.
 - Twitch chat integration (anonymous read‑only IRC, viewer commands).
 - Preset system: save/recall/delete named visual configurations (UI, `⌘1–9`, `!preset` chat command).

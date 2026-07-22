@@ -559,6 +559,120 @@ float4 renderRidgeline(constant Uniforms& u, float2 uv, device const float* hist
     return applyGlitch(float4(clamp(sky + halo, 0.0, 0.95), 1.0), uv, t, u);
 }
 
+// Distance from p to the segment a-b (screen space).
+inline float sdSegment(float2 p, float2 a, float2 b) {
+    float2 pa = p - a, ba = b - a;
+    float h = clamp(dot(pa, ba) / max(1e-6, dot(ba, ba)), 0.0, 1.0);
+    return length(pa - ba * h);
+}
+
+inline float3 burstRotY(float3 v, float a) {
+    float c = cos(a), s = sin(a);
+    return float3(c * v.x + s * v.z, v.y, -s * v.x + c * v.z);
+}
+
+inline float3 burstRotX(float3 v, float a) {
+    float c = cos(a), s = sin(a);
+    return float3(v.x, c * v.y - s * v.z, s * v.y + c * v.z);
+}
+
+// Scene: Wireframe Burst — a rotating low-poly icosahedron wireframe in
+// perspective. The bass breathes its scale, spectrum bins light its edges,
+// and on each transient the impulse blows the edges apart along their radial
+// normals — shards that snap back together as the impulse decays. Hash-
+// directed particles streak outward on the burst; the feedback pass turns
+// them into comet tails. Genuinely different structure: projected 3D
+// geometry, not a fullscreen field.
+float4 renderWireframeBurst(constant Uniforms& u, float2 uv, device const float* spectrum) {
+    float t = u.time * max(0.25, u.speedMul);
+    float2 p = uv - 0.5;
+    p.x *= u.resolution.x / max(1.0, u.resolution.y);
+
+    // Icosahedron: 12 vertices (golden-ratio construction), 30 edges.
+    const float PHI = 1.6180339887;
+    const float3 V[12] = {
+        float3(-1,  PHI, 0), float3(1,  PHI, 0), float3(-1, -PHI, 0), float3(1, -PHI, 0),
+        float3(0, -1,  PHI), float3(0, 1,  PHI), float3(0, -1, -PHI), float3(0, 1, -PHI),
+        float3( PHI, 0, -1), float3( PHI, 0, 1), float3(-PHI, 0, -1), float3(-PHI, 0, 1)
+    };
+    const int E[60] = {
+        0,1, 0,5, 0,7, 0,10, 0,11,
+        1,5, 1,7, 1,8, 1,9,
+        2,3, 2,4, 2,6, 2,10, 2,11,
+        3,4, 3,6, 3,8, 3,9,
+        4,5, 4,9, 4,11,
+        5,9, 5,11,
+        6,7, 6,8, 6,10,
+        7,8, 7,10,
+        8,9,
+        10,11
+    };
+
+    float burst = clamp(u.impulse, 0.0, 1.0);            // 1 at the hit, decays
+    float breathe = 1.0 + 0.10 * clamp(u.low, 0.0, 1.0) + 0.04 * beatPulse(u);
+    float scale = 0.34 * breathe;
+    float a1 = t * 0.35 + u.lfo1 * 0.5;
+    float a2 = t * 0.21;
+    const float camZ = 3.2;
+    const float focal = 1.9;
+
+    float3 col = float3(0.0);
+
+    for (int i = 0; i < 30; i++) {
+        float3 va = V[E[2 * i]];
+        float3 vb = V[E[2 * i + 1]];
+        // Blow the edge outward along its (model-space) radial normal, with a
+        // per-edge kick so the shards separate instead of scaling uniformly.
+        float3 mid = normalize(va + vb);
+        float kick = 0.35 + 0.65 * hash1(float(i) * 7.31, u.seed);
+        float3 offset = mid * burst * kick * 1.1;
+        float3 wa = burstRotX(burstRotY(normalize(va) + offset, a1), a2) * scale;
+        float3 wb = burstRotX(burstRotY(normalize(vb) + offset, a1), a2) * scale;
+
+        float za = wa.z + camZ, zb = wb.z + camZ;
+        float2 sa = wa.xy * (focal / za);
+        float2 sb = wb.xy * (focal / zb);
+
+        float zMid = 0.5 * (za + zb);
+        float thick = clamp(0.006 * focal / zMid, 0.0015, 0.006);
+        float d = sdSegment(p, sa, sb);
+        float line = exp(-(d * d) / (thick * thick));
+
+        // Per-edge spectrum drive: two bins per edge, low bins first.
+        float amp = clamp(spectrum[(i * 2) % SPECTRUM_BINS], 0.0, 1.0);
+        float depthFade = clamp(1.6 - zMid * 0.35, 0.25, 1.0);
+        float3 edgeC = mix(u.palette1.rgb, u.palette0.rgb, amp);
+        edgeC = mix(edgeC, u.palette2.rgb, burst * 0.5);      // hue shift while shattered
+        col += edgeC * line * depthFade * (0.35 + 0.65 * amp + 0.5 * burst);
+    }
+
+    // Burst particles: hash-directed points that streak outward from the core
+    // while the impulse decays; the trail pass smears them into comets.
+    if (burst > 0.02) {
+        for (int k = 0; k < 24; k++) {
+            float h1 = hash1(float(k) * 13.7, u.seed);
+            float h2 = hash1(float(k) * 29.3 + 5.0, u.seed);
+            float theta = h1 * 6.2831853;
+            float z = h2 * 2.0 - 1.0;
+            float r = sqrt(max(0.0, 1.0 - z * z));
+            float3 dir = float3(r * cos(theta), r * sin(theta), z);
+            float travel = 0.35 + 1.5 * (1.0 - burst);
+            float3 wp = burstRotX(burstRotY(dir * travel, a1), a2) * scale;
+            float2 sp = wp.xy * (focal / (wp.z + camZ));
+            float pd = length(p - sp);
+            float pr = 0.004 + 0.004 * burst;
+            float glow = exp(-(pd * pd) / (pr * pr)) * pow(burst, 1.5);
+            col += mix(u.palette0.rgb, u.palette3.rgb, h2) * glow;
+        }
+    }
+
+    // Core glow breathing with the level.
+    float core = exp(-dot(p, p) / (0.02 + 0.01 * clamp(u.level, 0.0, 1.0)));
+    col += u.palette0.rgb * core * (0.06 + 0.18 * clamp(u.level, 0.0, 1.0));
+
+    return applyGlitch(float4(clamp(col, 0.0, 0.95), 1.0), uv, t, u);
+}
+
 // Scene color for the current frame (no feedback). Shared by the feedback pass
 // and the single-pass fallback.
 float4 sceneColor(constant Uniforms& u, float2 uv, device const float* spectrum, device const float* history) {
@@ -572,7 +686,8 @@ float4 sceneColor(constant Uniforms& u, float2 uv, device const float* spectrum,
     else if (sceneType == 5) col = renderKaleidoscope(u, uv);
     else if (sceneType == 6) col = renderPlasma(u, uv);
     else if (sceneType == 7) col = renderSpectrumRing(u, uv, spectrum);
-    else col = renderRidgeline(u, uv, history);
+    else if (sceneType == 8) col = renderRidgeline(u, uv, history);
+    else col = renderWireframeBurst(u, uv, spectrum);
 
     // Subtle tempo-synced pulse: a small brightness lift on each beat. Bounded
     // (<=8%) so it accents rather than dominates; no-op without a tempo lock.
