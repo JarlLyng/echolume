@@ -5,6 +5,18 @@ All notable changes to Echolume are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project aims to follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Added
+- **Record your show**: one button in the Live overlay (or V) captures the
+  visuals to an H.264 .mp4 in ~/Movies at full resolution and display refresh
+  rate. A pulsing red dot stays visible while capturing (it never auto-hides),
+  and quitting mid-recording finalizes the file instead of losing it (#6).
+- New **Wireframe Burst** scene — a rotating low-poly icosahedron wireframe
+  in perspective. The bass breathes its scale, the spectrum lights its edges,
+  and every hard transient blows it apart into shards and particle streaks
+  that snap back together as the impulse fades (#91, second archetype).
+
 ## [1.1.1] — Mac App Store hotfix (Jul 2026)
 
 ### Fixed
