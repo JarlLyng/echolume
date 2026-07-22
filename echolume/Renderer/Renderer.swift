@@ -76,6 +76,23 @@ final class Renderer: NSObject, MTKViewDelegate {
     private var displayBeatPhase: Float = 0
     private var prevBeatTime: Float = -1
 
+    /// Active Live recording (nil when not recording). Owned by the render
+    /// thread; started/stopped by polling the provider's recording flag.
+    private var recorder: VideoRecorder?
+
+    deinit {
+        // Finalize a recording if the view is torn down mid-capture, so the
+        // file on disk is playable rather than truncated.
+        if let recorder {
+            recorder.finish { url, error in
+                var info: [String: Any] = [:]
+                if let url { info["url"] = url }
+                if let error { info["error"] = error }
+                NotificationCenter.default.post(name: .echolumeRecordingFinished, object: nil, userInfo: info)
+            }
+        }
+    }
+
     /// Ping-pong accumulation textures for the feedback/trail pass.
     private var accum: [MTLTexture] = []
     private var accumIndex = 0
@@ -285,6 +302,11 @@ final class Renderer: NSObject, MTKViewDelegate {
             enc.endEncoding()
         }
 
+        // Pass 3 (recording only): the same present pass into a
+        // CVPixelBuffer-backed texture, appended to the writer once the GPU
+        // finishes the frame. See updateRecording() for start/stop.
+        updateRecording(source: curr, drawableSize: view.drawableSize, commandBuffer: commandBuffer)
+
         accumIndex = 1 - accumIndex
         commandBuffer.present(drawable)
         commandBuffer.commit()
@@ -292,6 +314,68 @@ final class Renderer: NSObject, MTKViewDelegate {
 
     func mtkView(_ view: MTKView, drawableSizeWillChange size: CGSize) {
         ensureAccumTextures(width: Int(size.width), height: Int(size.height))
+    }
+
+    /// Start/stop/feed the Live recording based on the provider flag. Runs on
+    /// the render thread once per frame, after the present pass is encoded.
+    private func updateRecording(source: MTLTexture, drawableSize: CGSize, commandBuffer: MTLCommandBuffer) {
+        let wantsRecording = paramsProvider?.isRecordingEnabled() ?? false
+
+        if let active = recorder {
+            // Stop on request, or if the surface was resized (the writer's
+            // dimensions are fixed at start).
+            let resized = abs(active.size.width - drawableSize.width) > 2 || abs(active.size.height - drawableSize.height) > 2
+            if !wantsRecording || resized {
+                finishRecorder(active, stoppedBySizeChange: resized && wantsRecording)
+                recorder = nil
+            }
+        }
+
+        if wantsRecording && recorder == nil {
+            let url = VideoRecorder.defaultDestination()
+            recorder = VideoRecorder(device: device, size: drawableSize, url: url)
+            if recorder == nil {
+                Log.error("[Recorder] Could not start recording (writer init failed)")
+                paramsProvider?.setRecordingEnabled(false)
+                NotificationCenter.default.post(
+                    name: .echolumeRecordingFinished, object: nil,
+                    userInfo: ["error": "Could not start recording"]
+                )
+            }
+        }
+
+        guard let recorder, let (pixelBuffer, target) = recorder.makeFrameTarget() else { return }
+
+        let pass = MTLRenderPassDescriptor()
+        pass.colorAttachments[0].texture = target
+        pass.colorAttachments[0].loadAction = .dontCare
+        pass.colorAttachments[0].storeAction = .store
+        if let enc = commandBuffer.makeRenderCommandEncoder(descriptor: pass) {
+            enc.setRenderPipelineState(presentPipeline)
+            enc.setVertexBuffer(vertexBuffer, offset: 0, index: 0)
+            enc.setFragmentTexture(source, index: 0)
+            enc.setFragmentSamplerState(sampler, index: 0)
+            enc.drawPrimitives(type: .triangle, vertexStart: 0, vertexCount: 6)
+            enc.endEncoding()
+        }
+        let hostTime = CACurrentMediaTime()
+        commandBuffer.addCompletedHandler { _ in
+            recorder.commit(pixelBuffer: pixelBuffer, at: hostTime)
+        }
+    }
+
+    /// Finalize a recording and tell the UI how it went.
+    private func finishRecorder(_ recorder: VideoRecorder, stoppedBySizeChange: Bool) {
+        recorder.finish { url, error in
+            var info: [String: Any] = [:]
+            if let url { info["url"] = url }
+            if let error { info["error"] = error }
+            if stoppedBySizeChange { info["sizeChanged"] = true }
+            NotificationCenter.default.post(name: .echolumeRecordingFinished, object: nil, userInfo: info)
+        }
+        if stoppedBySizeChange {
+            paramsProvider?.setRecordingEnabled(false)
+        }
     }
 
     /// Push the current spectrum into the history ring at a rate set by the

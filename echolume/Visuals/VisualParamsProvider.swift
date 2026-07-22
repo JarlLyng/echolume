@@ -24,6 +24,7 @@ final class VisualParamsProvider: @unchecked Sendable {
     private var hasSignal: Bool = true
     private var resetTransientsRequested: Bool = false
     private var trailResetRequested: Bool = false
+    private var recordingEnabled: Bool = false
     private var spectrum = [Float](repeating: 0, count: kSpectrumBins)
     private let mapping = ParamMapping()
 
@@ -57,6 +58,20 @@ final class VisualParamsProvider: @unchecked Sendable {
         lock.lock()
         for i in 0 ..< spectrum.count { dest[i] = spectrum[i] }
         lock.unlock()
+    }
+
+    /// Whether the renderer should be recording Live output. Set from the main
+    /// thread (AppModel); read once per frame on the render thread.
+    func setRecordingEnabled(_ enabled: Bool) {
+        lock.lock()
+        recordingEnabled = enabled
+        lock.unlock()
+    }
+
+    func isRecordingEnabled() -> Bool {
+        lock.lock()
+        defer { lock.unlock() }
+        return recordingEnabled
     }
 
     /// Request transient reset on next params() call (panic reset). Call from main thread.

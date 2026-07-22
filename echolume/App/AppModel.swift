@@ -171,6 +171,8 @@ final class AppModel: ObservableObject {
     private var menuBarController: MenuBarController?
     /// One-shot didFinishLaunching observer for deferred status-item creation.
     private var launchObserver: (any NSObjectProtocol)?
+    /// Observer for the renderer's recording-finished notification.
+    private var recordingObserver: (any NSObjectProtocol)?
 
     private let audioManager = AudioManager()
     private var twitchManager: TwitchChatManager?
@@ -339,6 +341,8 @@ final class AppModel: ObservableObject {
         oscEnabled = UserDefaults.standard.bool(forKey: DefaultsKey.oscEnabled.rawValue)
         oscServer.onMessage = { [weak self] msg in self?.handleOSC(msg) }
         if oscEnabled { oscServer.start(port: oscPort) }
+
+        recordingObserver = startRecordingObserver()
 
         if UserDefaults.standard.object(forKey: DefaultsKey.menubarEnabled.rawValue) != nil {
             menubarEnabled = UserDefaults.standard.bool(forKey: DefaultsKey.menubarEnabled.rawValue)
@@ -544,6 +548,7 @@ final class AppModel: ObservableObject {
     }
 
     func exitLive() {
+        if isRecording { setRecording(false) }
         if let w = liveWindow {
             w.close()
             liveWindow = nil
@@ -554,6 +559,64 @@ final class AppModel: ObservableObject {
         state = .setup
         maybePromptReviewAfterSession()
         liveEnteredAt = nil
+    }
+
+    // MARK: - Live recording
+
+    /// True while the renderer is capturing Live output to a file.
+    @Published private(set) var isRecording = false
+    /// Transient user-facing note after a recording ends ("Saved to Movies" /
+    /// an error). Auto-clears after a few seconds.
+    @Published private(set) var recordingNote: String?
+    private var recordingNoteClearTask: Task<Void, Never>?
+
+    /// Toggle recording of the Live output (bound to the Record button / V).
+    func toggleRecording() {
+        setRecording(!isRecording)
+    }
+
+    private func setRecording(_ on: Bool) {
+        guard isRecording != on else { return }
+        isRecording = on
+        visualParamsProvider.setRecordingEnabled(on)
+    }
+
+    /// Handle the renderer's end-of-recording notification (any cause: user
+    /// stop, size change, teardown, writer error).
+    private func handleRecordingFinished(url: URL?, error: String?, resized: Bool) {
+        isRecording = false
+        visualParamsProvider.setRecordingEnabled(false)
+        if url != nil {
+            recordingNote = resized
+                ? "Recording stopped (window resized). Saved to Movies"
+                : "Saved to Movies"
+        } else if let error {
+            recordingNote = "Recording failed: \(error)"
+        }
+        recordingNoteClearTask?.cancel()
+        recordingNoteClearTask = Task { @MainActor in
+            try? await Task.sleep(for: .seconds(4))
+            guard !Task.isCancelled else { return }
+            recordingNote = nil
+        }
+    }
+
+    /// One observer for the renderer's recording-finished notification.
+    /// Registered in init; the notification arrives on the recorder's queue.
+    func startRecordingObserver() -> any NSObjectProtocol {
+        NotificationCenter.default.addObserver(
+            forName: .echolumeRecordingFinished,
+            object: nil,
+            queue: .main
+        ) { [weak self] note in
+            guard let self else { return }
+            let url = note.userInfo?["url"] as? URL
+            let error = note.userInfo?["error"] as? String
+            let resized = note.userInfo?["sizeChanged"] != nil
+            Task { @MainActor in
+                self.handleRecordingFinished(url: url, error: error, resized: resized)
+            }
+        }
     }
 
     /// Called when the external Live window closes (e.g. system or user).
