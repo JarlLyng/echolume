@@ -488,6 +488,9 @@ float4 renderSpectrumRing(constant Uniforms& u, float2 uv, device const float* s
     int i0 = int(fb);
     int i1 = min(i0 + 1, SPECTRUM_BINS - 1);
     float amp = clamp(mix(spectrum[i0], spectrum[i1], fract(fb)), 0.0, 1.0);
+    // Noise knob: per-bar flicker jitter around the ring.
+    amp = clamp(amp + clamp(u.noise, 0.0, 1.0) * 0.25
+                * (hash1(floor(folded * float(SPECTRUM_BINS)) + floor(t * 8.0) * 31.7, u.seed) - 0.5), 0.0, 1.0);
 
     float r0 = 0.16 + 0.02 * clamp(u.low, 0.0, 1.0);    // inner radius pulses with bass
     float outer = r0 + 0.26 * amp;                      // bar tip
@@ -535,6 +538,9 @@ float4 renderRidgeline(constant Uniforms& u, float2 uv, device const float* hist
         float edge = smoothstep(0.0, 0.16, x) * smoothstep(1.0, 0.84, x);
         float height = (0.015 + amp * (0.14 + 0.10 * u.reactivity)) * edge;
         height *= 1.0 + 0.3 * pulse * (1.0 - depth);     // the beat lifts the front rows
+        // Noise knob: rugged vs. smooth terrain (per-bin, per-row jitter).
+        height += clamp(u.noise, 0.0, 1.0) * 0.05 * edge
+                * (hash1(fb + float(r) * 61.7, u.seed) - 0.5);
         float lineY = baseY + height;
 
         float d = uv.y - lineY;                          // uv.y = 0 at the bottom
@@ -550,7 +556,8 @@ float4 renderRidgeline(constant Uniforms& u, float2 uv, device const float* hist
             float3 col = fill + lineC * bright * line + halo;
             return applyGlitch(float4(clamp(col, 0.0, 0.95), 1.0), uv, t, u);
         }
-        halo += lineC * bright * line * 0.35;            // soft glow above the line
+        // Abstraction widens the glow above the lines (dreamier terrain).
+        halo += lineC * bright * line * (0.2 + 0.5 * clamp(u.abstraction, 0.0, 1.0));
     }
 
     // Sky above every ridge: faint palette wash + a level glow at the horizon.
@@ -611,6 +618,10 @@ float4 renderWireframeBurst(constant Uniforms& u, float2 uv, device const float*
     float burst = clamp(u.impulse, 0.0, 1.0);            // 1 at the hit, decays
     float breathe = 1.0 + 0.10 * clamp(u.low, 0.0, 1.0) + 0.04 * beatPulse(u);
     float scale = 0.34 * breathe;
+    // Knobs: Noise shivers the vertices organically; Energy Bias (via
+    // reactivity) scales how far transients throw the shards.
+    float wobble = clamp(u.noise, 0.0, 1.0);
+    float throwScale = 0.6 + 0.9 * clamp(u.reactivity, 0.0, 1.0);
     float a1 = t * 0.35 + u.lfo1 * 0.5;
     float a2 = t * 0.21;
     const float camZ = 3.2;
@@ -625,9 +636,18 @@ float4 renderWireframeBurst(constant Uniforms& u, float2 uv, device const float*
         // per-edge kick so the shards separate instead of scaling uniformly.
         float3 mid = normalize(va + vb);
         float kick = 0.35 + 0.65 * hash1(float(i) * 7.31, u.seed);
-        float3 offset = mid * burst * kick * 1.1;
-        float3 wa = burstRotX(burstRotY(normalize(va) + offset, a1), a2) * scale;
-        float3 wb = burstRotX(burstRotY(normalize(vb) + offset, a1), a2) * scale;
+        float3 offset = mid * burst * kick * 1.1 * throwScale;
+        float3 na = normalize(va);
+        float3 nb = normalize(vb);
+        if (wobble > 0.001) {
+            // Per-vertex shiver: three detuned sines per vertex index.
+            float wA = float(E[2 * i]) * 2.39996;
+            float wB = float(E[2 * i + 1]) * 2.39996;
+            na += wobble * 0.16 * float3(sin(t * 2.3 + wA), sin(t * 1.7 + wA * 1.3), sin(t * 2.9 + wA * 0.7));
+            nb += wobble * 0.16 * float3(sin(t * 2.3 + wB), sin(t * 1.7 + wB * 1.3), sin(t * 2.9 + wB * 0.7));
+        }
+        float3 wa = burstRotX(burstRotY(na + offset, a1), a2) * scale;
+        float3 wb = burstRotX(burstRotY(nb + offset, a1), a2) * scale;
 
         float za = wa.z + camZ, zb = wb.z + camZ;
         float2 sa = wa.xy * (focal / za);
@@ -663,6 +683,24 @@ float4 renderWireframeBurst(constant Uniforms& u, float2 uv, device const float*
             float pr = 0.004 + 0.004 * burst;
             float glow = exp(-(pd * pd) / (pr * pr)) * pow(burst, 1.5);
             col += mix(u.palette0.rgb, u.palette3.rgb, h2) * glow;
+        }
+    }
+
+    // Abstraction: above ~0.45 a second, larger ghost shell fades in,
+    // counter-rotated — the structure literally becomes more abstract.
+    float ghost = smoothstep(0.45, 1.0, clamp(u.abstraction, 0.0, 1.0));
+    if (ghost > 0.01) {
+        float gScale = scale * 1.55;
+        for (int i = 0; i < 30; i++) {
+            float3 va = normalize(V[E[2 * i]]);
+            float3 vb = normalize(V[E[2 * i + 1]]);
+            float3 wa = burstRotX(burstRotY(va, -a1 * 0.6), a2 * 0.8) * gScale;
+            float3 wb = burstRotX(burstRotY(vb, -a1 * 0.6), a2 * 0.8) * gScale;
+            float2 sa = wa.xy * (focal / (wa.z + camZ));
+            float2 sb = wb.xy * (focal / (wb.z + camZ));
+            float d = sdSegment(p, sa, sb);
+            float line = exp(-(d * d) / (0.002 * 0.002));
+            col += u.palette2.rgb * line * ghost * 0.25;
         }
     }
 
