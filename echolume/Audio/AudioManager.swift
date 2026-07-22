@@ -198,7 +198,11 @@ final class AudioManager {
             #endif
         }
 
-        let format = input.inputFormat(forBus: 0)
+        // Use the input node's OUTPUT format for the tap: that is what
+        // installTap validates against. After switching the current device
+        // above, the input/output formats can disagree for a transient, and
+        // passing a mismatched format makes installTapOnBus raise (→ abort).
+        let format = input.outputFormat(forBus: 0)
         guard format.sampleRate > 0, format.channelCount > 0 else {
             mutateSnapshot {
                 $0.lastError = $0.lastError ?? "Invalid input format: \(format.sampleRate) Hz, \(format.channelCount) ch"
@@ -222,6 +226,10 @@ final class AudioManager {
         let ch1 = chCount > 1 ? min(pairIdx * 2 + 1, chCount - 1) : ch0
         let cap = kRingCapacity
 
+        // installTapOnBus can RAISE an NSException (not a Swift error) when the
+        // device is in a bad transient state after a switch — that aborts the
+        // app. Run it inside the ObjC exception catcher and fail gracefully.
+        let tapException = ObjCExceptionCatcher.reasonRunning {
         input.installTap(onBus: 0, bufferSize: kTapBufferSize, format: format) { [weak self] buffer, _ in
             guard let self = self else { return }
 #if DEBUG
@@ -282,6 +290,21 @@ final class AudioManager {
             let durationNs = Float((t1 - t0) * UInt64(self._timebaseNumer) / UInt64(self._timebaseDenom))
             self.mutateSnapshot { $0.lastTapDurationNs = durationNs }
 #endif
+        }
+        }
+
+        if let tapException {
+            // AVFAudio raised (usually a format/device-transition mismatch).
+            // Don't crash — surface it and leave the engine stopped; the next
+            // device change or a manual Restart Audio will try again.
+            input.removeTap(onBus: 0)
+            mutateSnapshot {
+                $0.lastError = "Audio input is temporarily unavailable (device changed). Try Restart Audio or reselect the input."
+                $0.engineRunning = false
+            }
+            Log.error("AudioManager: installTap raised — \(tapException); skipping this start")
+            engine = nil
+            return
         }
 
         eng.prepare()
