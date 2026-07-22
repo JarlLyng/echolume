@@ -99,9 +99,19 @@ final class VideoRecorder {
         textureCache = cache
     }
 
-    /// A pool-backed pixel buffer wrapped as a Metal texture for the renderer
-    /// to draw this frame into. Returns nil under pool pressure (frame skipped).
-    func makeFrameTarget() -> (CVPixelBuffer, MTLTexture)? {
+    /// A frame the renderer can draw into: a pool-backed pixel buffer, its
+    /// Metal texture, and the CVMetalTexture wrapper that OWNS that texture's
+    /// backing. The caller MUST keep `cvTexture` alive until the command buffer
+    /// that renders into `texture` completes — releasing it earlier frees the
+    /// texture memory out from under the GPU (an intermittent crash / garbage
+    /// frames). Returns nil under pool pressure (frame skipped).
+    struct FrameTarget {
+        let pixelBuffer: CVPixelBuffer
+        let cvTexture: CVMetalTexture
+        let texture: MTLTexture
+    }
+
+    func makeFrameTarget() -> FrameTarget? {
         guard !finishing, let pool = adaptor.pixelBufferPool, let cache = textureCache else { return nil }
         var pb: CVPixelBuffer?
         guard CVPixelBufferPoolCreatePixelBuffer(kCFAllocatorDefault, pool, &pb) == kCVReturnSuccess,
@@ -114,7 +124,7 @@ final class VideoRecorder {
         guard status == kCVReturnSuccess, let cvTex = cvTexture, let texture = CVMetalTextureGetTexture(cvTex) else {
             return nil
         }
-        return (pixelBuffer, texture)
+        return FrameTarget(pixelBuffer: pixelBuffer, cvTexture: cvTex, texture: texture)
     }
 
     /// Append a rendered frame. Call after the command buffer that drew into
