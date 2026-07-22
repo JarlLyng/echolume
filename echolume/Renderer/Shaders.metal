@@ -573,14 +573,11 @@ inline float sdSegment(float2 p, float2 a, float2 b) {
     return length(pa - ba * h);
 }
 
-inline float3 burstRotY(float3 v, float a) {
-    float c = cos(a), s = sin(a);
-    return float3(c * v.x + s * v.z, v.y, -s * v.x + c * v.z);
-}
-
-inline float3 burstRotX(float3 v, float a) {
-    float c = cos(a), s = sin(a);
-    return float3(v.x, c * v.y - s * v.z, s * v.y + c * v.z);
+// Rotate around Y then X using PRECOMPUTED cos/sin (c1,s1 for Y; c2,s2 for X),
+// so the trig is evaluated once per frame instead of once per pixel per vertex.
+inline float3 burstRotYX(float3 v, float c1, float s1, float c2, float s2) {
+    float3 r = float3(c1 * v.x + s1 * v.z, v.y, -s1 * v.x + c1 * v.z);
+    return float3(r.x, c2 * r.y - s2 * r.z, s2 * r.y + c2 * r.z);
 }
 
 // Scene: Wireframe Burst — a rotating low-poly icosahedron wireframe in
@@ -627,33 +624,35 @@ float4 renderWireframeBurst(constant Uniforms& u, float2 uv, device const float*
     const float camZ = 3.2;
     const float focal = 1.9;
 
+    // Precompute the frame's rotation trig ONCE (was ~200 sin/cos per pixel).
+    float c1 = cos(a1), s1 = sin(a1), c2 = cos(a2), s2 = sin(a2);
+
+    // Project the 12 vertices ONCE per pixel (was recomputed per edge, ~60×).
+    // Burst pushes each vertex out along its own normal (per-vertex, so the
+    // projection is shareable across the edges that meet there); wobble is a
+    // per-vertex shiver. Edges then reduce to cheap 2D distance tests.
+    float2 sv[12];
+    float sz[12];
+    for (int v = 0; v < 12; v++) {
+        float3 n = normalize(V[v]);
+        float kick = 0.35 + 0.65 * hash1(float(v) * 7.31, u.seed);
+        float3 m = n * (1.0 + burst * kick * 1.1 * throwScale);
+        if (wobble > 0.001) {
+            float w = float(v) * 2.39996;
+            m += wobble * 0.16 * float3(sin(t * 2.3 + w), sin(t * 1.7 + w * 1.3), sin(t * 2.9 + w * 0.7));
+        }
+        float3 wv = burstRotYX(m, c1, s1, c2, s2) * scale;
+        float z = wv.z + camZ;
+        sv[v] = wv.xy * (focal / z);
+        sz[v] = z;
+    }
+
     float3 col = float3(0.0);
 
     for (int i = 0; i < 30; i++) {
-        float3 va = V[E[2 * i]];
-        float3 vb = V[E[2 * i + 1]];
-        // Blow the edge outward along its (model-space) radial normal, with a
-        // per-edge kick so the shards separate instead of scaling uniformly.
-        float3 mid = normalize(va + vb);
-        float kick = 0.35 + 0.65 * hash1(float(i) * 7.31, u.seed);
-        float3 offset = mid * burst * kick * 1.1 * throwScale;
-        float3 na = normalize(va);
-        float3 nb = normalize(vb);
-        if (wobble > 0.001) {
-            // Per-vertex shiver: three detuned sines per vertex index.
-            float wA = float(E[2 * i]) * 2.39996;
-            float wB = float(E[2 * i + 1]) * 2.39996;
-            na += wobble * 0.16 * float3(sin(t * 2.3 + wA), sin(t * 1.7 + wA * 1.3), sin(t * 2.9 + wA * 0.7));
-            nb += wobble * 0.16 * float3(sin(t * 2.3 + wB), sin(t * 1.7 + wB * 1.3), sin(t * 2.9 + wB * 0.7));
-        }
-        float3 wa = burstRotX(burstRotY(na + offset, a1), a2) * scale;
-        float3 wb = burstRotX(burstRotY(nb + offset, a1), a2) * scale;
-
-        float za = wa.z + camZ, zb = wb.z + camZ;
-        float2 sa = wa.xy * (focal / za);
-        float2 sb = wb.xy * (focal / zb);
-
-        float zMid = 0.5 * (za + zb);
+        int ia = E[2 * i], ib = E[2 * i + 1];
+        float2 sa = sv[ia], sb = sv[ib];
+        float zMid = 0.5 * (sz[ia] + sz[ib]);
         float thick = clamp(0.006 * focal / zMid, 0.0015, 0.006);
         float d = sdSegment(p, sa, sb);
         float line = exp(-(d * d) / (thick * thick));
@@ -669,6 +668,9 @@ float4 renderWireframeBurst(constant Uniforms& u, float2 uv, device const float*
     // Burst particles: hash-directed points that streak outward from the core
     // while the impulse decays; the trail pass smears them into comets.
     if (burst > 0.02) {
+        float travel = 0.35 + 1.5 * (1.0 - burst);
+        float pr = 0.004 + 0.004 * burst;
+        float pw = pow(burst, 1.5);
         for (int k = 0; k < 24; k++) {
             float h1 = hash1(float(k) * 13.7, u.seed);
             float h2 = hash1(float(k) * 29.3 + 5.0, u.seed);
@@ -676,12 +678,10 @@ float4 renderWireframeBurst(constant Uniforms& u, float2 uv, device const float*
             float z = h2 * 2.0 - 1.0;
             float r = sqrt(max(0.0, 1.0 - z * z));
             float3 dir = float3(r * cos(theta), r * sin(theta), z);
-            float travel = 0.35 + 1.5 * (1.0 - burst);
-            float3 wp = burstRotX(burstRotY(dir * travel, a1), a2) * scale;
+            float3 wp = burstRotYX(dir * travel, c1, s1, c2, s2) * scale;
             float2 sp = wp.xy * (focal / (wp.z + camZ));
             float pd = length(p - sp);
-            float pr = 0.004 + 0.004 * burst;
-            float glow = exp(-(pd * pd) / (pr * pr)) * pow(burst, 1.5);
+            float glow = exp(-(pd * pd) / (pr * pr)) * pw;
             col += mix(u.palette0.rgb, u.palette3.rgb, h2) * glow;
         }
     }
@@ -691,14 +691,14 @@ float4 renderWireframeBurst(constant Uniforms& u, float2 uv, device const float*
     float ghost = smoothstep(0.45, 1.0, clamp(u.abstraction, 0.0, 1.0));
     if (ghost > 0.01) {
         float gScale = scale * 1.55;
+        float gc1 = cos(-a1 * 0.6), gs1 = sin(-a1 * 0.6), gc2 = cos(a2 * 0.8), gs2 = sin(a2 * 0.8);
+        float2 gsv[12];
+        for (int v = 0; v < 12; v++) {
+            float3 wv = burstRotYX(normalize(V[v]), gc1, gs1, gc2, gs2) * gScale;
+            gsv[v] = wv.xy * (focal / (wv.z + camZ));
+        }
         for (int i = 0; i < 30; i++) {
-            float3 va = normalize(V[E[2 * i]]);
-            float3 vb = normalize(V[E[2 * i + 1]]);
-            float3 wa = burstRotX(burstRotY(va, -a1 * 0.6), a2 * 0.8) * gScale;
-            float3 wb = burstRotX(burstRotY(vb, -a1 * 0.6), a2 * 0.8) * gScale;
-            float2 sa = wa.xy * (focal / (wa.z + camZ));
-            float2 sb = wb.xy * (focal / (wb.z + camZ));
-            float d = sdSegment(p, sa, sb);
+            float d = sdSegment(p, gsv[E[2 * i]], gsv[E[2 * i + 1]]);
             float line = exp(-(d * d) / (0.002 * 0.002));
             col += u.palette2.rgb * line * ghost * 0.25;
         }
