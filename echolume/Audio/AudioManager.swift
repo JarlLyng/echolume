@@ -44,7 +44,7 @@ final class UnfairLock {
 /// layer always observes a coherent moment in time.
 struct AudioManagerSnapshot: Equatable {
     var engineRunning: Bool = false
-    var lastError: String? = nil
+    var lastError: String?
     var formatSampleRate: Double = 0
     var formatChannelCount: AVAudioChannelCount = 0
     var rms: Float = 0
@@ -91,7 +91,6 @@ final class AudioManager {
         get { channelPairLock.lock(); defer { channelPairLock.unlock() }; return _selectedChannelPairIndex }
         set { channelPairLock.lock(); _selectedChannelPairIndex = newValue; channelPairLock.unlock() }
     }
-
 
     private let fftQueue = DispatchQueue(label: "echolume.fft", qos: .userInitiated)
     private var fftSource: DispatchSourceUserDataOr?

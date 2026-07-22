@@ -19,7 +19,6 @@ import AudioToolbox
 @MainActor
 @dynamicMemberLookup
 class ObservableAUParameterNode {
-
     /// Create an ObservableAUParameterNode
     ///
     /// This creates the appropriate subclass, depending on the type of the passed in AUParameterNode
@@ -94,7 +93,6 @@ class ObservableAUParameterNode {
 /// The primary purpose here is to expose observable versions of the group's child parameters.
 ///
 final class ObservableAUParameterGroup: ObservableAUParameterNode {
-
     private(set) var children: [String: ObservableAUParameterNode]
 
     init(_ parameterGroup: AUParameterGroup) {
@@ -117,7 +115,6 @@ final class ObservableAUParameterGroup: ObservableAUParameterNode {
 /// `onEditingChanged()` whenever a UI element will change its editing state.
 @Observable
 final class ObservableAUParameter: ObservableAUParameterNode {
-
     private weak var parameter: AUParameter?
     private var observerToken: AUParameterObserverToken!
     private var editingState: EditingState = .inactive
@@ -140,10 +137,9 @@ final class ObservableAUParameter: ObservableAUParameterNode {
         /// Use the parameter.token(byAddingParameterObserver:) function to monitor for parameter
         /// changes from the host. The only role of this callback is to update the UI if the value is changed by the host.
         self.observerToken = parameter.token { @Sendable (_ address: AUParameterAddress, _ auValue: AUValue) in
-
             DispatchQueue.main.async {
                 guard address == self.parameter?.address else { return }
-                
+
                 // Don't update the UI if the user is currently interacting
                 guard self.editingState == .inactive else { return }
 

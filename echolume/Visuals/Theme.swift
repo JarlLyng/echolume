@@ -20,6 +20,7 @@ struct Theme: Identifiable {
     /// Shape styles this theme allows (empty = all).
     var allowedShapeStyles: [VisualShapeStyle]
 
+    // swiftlint:disable:next line_length
     init(id: UInt32, name: String, palette: [SIMD4<Float>], baseSpeed: Float = 0.3, rotationSpeed: Float = 0.2, defaultShapeStyle: VisualShapeStyle = .blobs, allowedShapeStyles: [VisualShapeStyle] = []) {
         self.id = id
         self.name = name

@@ -29,6 +29,8 @@ final class VisualParamsProvider: @unchecked Sendable {
     private let mapping = ParamMapping()
 
     /// Call from main thread when analyzer or user settings change.
+    // One lock-guarded snapshot write; restructuring tracked in #55.
+    // swiftlint:disable:next function_parameter_count line_length
     func update(snapshot: AnalyzerSnapshot, abstraction: Float, seed: UInt32, themeIndex: Int, shapeStyleIndex: Int, sceneTypeIndex: Int, energyBias: Float, motion: Float, noise: Float, glitch: Float, hasSignal: Bool = true) {
         lock.lock()
         self.snapshot = snapshot
@@ -111,7 +113,11 @@ final class VisualParamsProvider: @unchecked Sendable {
         lock.unlock()
         if resetReq { mapping.resetTransients() }
         let theme = ThemeLibrary.theme(byIndex: tIdx)
-        var p = mapping.map(snapshot: snap, abstraction: abs, energyBias: bias, theme: theme, seed: s, shapeStyleIndex: styleIdx, sceneTypeIndex: sceneIdx, time: time, resolution: resolution, motion: mot, noise: noi, glitch: gli)
+        var p = mapping.map(
+            snapshot: snap, abstraction: abs, energyBias: bias, theme: theme, seed: s,
+            shapeStyleIndex: styleIdx, sceneTypeIndex: sceneIdx, time: time,
+            resolution: resolution, motion: mot, noise: noi, glitch: gli
+        )
         if !sig {
             p.impact = 0
             p.impulse = 0

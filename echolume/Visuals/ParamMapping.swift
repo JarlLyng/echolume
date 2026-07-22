@@ -48,6 +48,7 @@ final class ParamMapping {
     private var cachedPaletteThemeID: UInt32 = .max
 
     /// Produce VisualParams from current snapshot and settings. Call from render thread.
+    // swiftlint:disable:next function_parameter_count
     func map(
         snapshot: AnalyzerSnapshot,
         abstraction: Float,
@@ -114,7 +115,7 @@ final class ParamMapping {
             cachedPaletteThemeID = theme.id
         }
         let pal = cachedPalette
-        let p0 = pal.count > 0 ? pal[0] : SIMD4<Float>(0.2, 0.2, 0.3, 1)
+        let p0 = !pal.isEmpty ? pal[0] : SIMD4<Float>(0.2, 0.2, 0.3, 1)
         let p1 = pal.count > 1 ? pal[1] : p0
         let p2 = pal.count > 2 ? pal[2] : p1
         let p3 = pal.count > 3 ? pal[3] : p2

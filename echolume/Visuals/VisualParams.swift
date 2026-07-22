@@ -17,6 +17,7 @@ struct VisualParams {
     var abstraction: Float
     var seed: UInt32
     var themeID: UInt32
+    // swiftlint:disable:next large_tuple (mirrors the Metal uniform layout)
     var palette: (SIMD4<Float>, SIMD4<Float>, SIMD4<Float>, SIMD4<Float>, SIMD4<Float>)
     var warpAmount: Float
     var trailPersistence: Float
