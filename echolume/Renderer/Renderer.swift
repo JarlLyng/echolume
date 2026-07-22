@@ -378,10 +378,10 @@ final class Renderer: NSObject, MTKViewDelegate {
             }
         }
 
-        guard let recorder, let (pixelBuffer, target) = recorder.makeFrameTarget() else { return }
+        guard let recorder, let frame = recorder.makeFrameTarget() else { return }
 
         let pass = MTLRenderPassDescriptor()
-        pass.colorAttachments[0].texture = target
+        pass.colorAttachments[0].texture = frame.texture
         pass.colorAttachments[0].loadAction = .dontCare
         pass.colorAttachments[0].storeAction = .store
         if let enc = commandBuffer.makeRenderCommandEncoder(descriptor: pass) {
@@ -393,8 +393,10 @@ final class Renderer: NSObject, MTKViewDelegate {
             enc.endEncoding()
         }
         let hostTime = CACurrentMediaTime()
+        // Capture `frame` whole: it keeps the CVMetalTexture (and thus the
+        // texture memory) alive until the GPU has finished writing this frame.
         commandBuffer.addCompletedHandler { _ in
-            recorder.commit(pixelBuffer: pixelBuffer, at: hostTime)
+            recorder.commit(pixelBuffer: frame.pixelBuffer, at: hostTime)
         }
     }
 
