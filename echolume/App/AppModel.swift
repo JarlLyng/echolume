@@ -188,6 +188,9 @@ final class AppModel: ObservableObject {
         mElement: kAudioObjectPropertyElementMain
     )
 
+    // Known god-object debt: splitting this init (and the class) into a
+    // ControlRouter is tracked in #55 — don't let the linter hide that story.
+    // swiftlint:disable:next cyclomatic_complexity function_body_length
     init() {
         debugTimer = Timer.scheduledTimer(withTimeInterval: 0.1, repeats: true) { [weak self] _ in
             guard let self = self else { return }

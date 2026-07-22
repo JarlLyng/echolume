@@ -115,8 +115,8 @@ final class Renderer: NSObject, MTKViewDelegate {
         commandQueue = queue
 
         let quadVertices: [Float] = [
-            -1, -1,  1, -1, -1,  1,
-            -1,  1,  1, -1,  1,  1
+            -1, -1, 1, -1, -1, 1,
+            -1, 1, 1, -1, 1, 1
         ]
         let size = quadVertices.count * MemoryLayout<Float>.stride
         guard let buf = device.makeBuffer(bytes: quadVertices, length: size, options: .storageModeShared) else {

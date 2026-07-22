@@ -42,9 +42,7 @@ enum OSCAction: Equatable {
         case "/echolume/tempo/tap":        self = .tapTempo
         case "/echolume/preset":
             // String arg → recall by name; numeric arg → 1-based slot.
-            if let s = message.string { self = .presetName(s) }
-            else if let i = message.int { self = .presetSlot(i) }
-            else { return nil }
+            if let s = message.string { self = .presetName(s) } else if let i = message.int { self = .presetSlot(i) } else { return nil }
         default:
             return nil
         }
