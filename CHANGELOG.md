@@ -5,7 +5,7 @@ All notable changes to Echolume are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project aims to follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [1.2.0] — Mac App Store update (Jul 2026)
 
 ### Added
 - **Record your show**: one button in the Live overlay (or V) captures the
@@ -16,6 +16,18 @@ and this project aims to follow [Semantic Versioning](https://semver.org/spec/v2
   in perspective. The bass breathes its scale, the spectrum lights its edges,
   and every hard transient blows it apart into shards and particle streaks
   that snap back together as the impulse fades (#91, second archetype).
+
+### Changed
+- The performance knobs (Noise, Energy Bias, Abstraction) now visibly shape
+  the newer scenes — organic shiver and shard-throw on Wireframe Burst,
+  rugged-vs-smooth terrain on Ridgeline, flicker on Spectrum Ring.
+
+### Fixed
+- A crash that could happen when the audio input device changed mid-session
+  (an AVAudioEngine tap error is now handled gracefully instead of quitting
+  the app).
+- Reduced the GPU cost of the Wireframe Burst scene so it stays smooth at
+  high resolutions.
 
 ## [1.1.1] — Mac App Store hotfix (Jul 2026)
 
