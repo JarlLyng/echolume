@@ -150,12 +150,12 @@ private struct RootView: View {
                 appModel.applyPreset(atSlot: slot)
                 return .handled
             }
-            if ch == "1" { appModel.setThemeIndex(0); return .handled }
-            if ch == "2" { appModel.setThemeIndex(1); return .handled }
-            if ch == "3" { appModel.setThemeIndex(2); return .handled }
-            if ch == "4" { appModel.setThemeIndex(3); return .handled }
-            if ch == "5" { appModel.setThemeIndex(4); return .handled }
-            if ch == "6" { appModel.setThemeIndex(5); return .handled }
+            // Number keys select a theme by position: 1–9 → themes 0–8, 0 → theme 9.
+            if let digit = ch.first, let n = digit.wholeNumberValue, ch.count == 1 {
+                let index = (n == 0) ? 9 : n - 1
+                appModel.setThemeIndex(index)
+                return .handled
+            }
             return .ignored
         }
     }
