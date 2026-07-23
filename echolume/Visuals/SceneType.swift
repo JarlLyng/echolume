@@ -55,4 +55,7 @@ enum SceneType: String, CaseIterable, Identifiable {
     static func from(shaderIndex: Int) -> SceneType {
         allCases.first { $0.shaderIndex == shaderIndex } ?? .radial
     }
+
+    /// Asset-catalog image name for the scene picker thumbnail.
+    var thumbnailAsset: String { "scene-\(rawValue)" }
 }

@@ -21,9 +21,10 @@ struct StyleSection: View {
 
             ThemeSwatchPicker(appModel: appModel)
 
+            SceneSwatchPicker(appModel: appModel)
+
             HStack(alignment: .top, spacing: DesignTokens.Spacing.md) {
                 shapePicker
-                scenePicker
                 Spacer(minLength: 0)
             }
         }
@@ -50,26 +51,6 @@ struct StyleSection: View {
             .pickerStyle(.menu)
             .tint(DesignTokens.Common.primary(colorScheme))
             .accessibilityLabel("Shape style")
-        }
-        .frame(width: 170, alignment: .leading)
-    }
-
-    private var scenePicker: some View {
-        VStack(alignment: .leading, spacing: DesignTokens.Spacing.xs) {
-            Text("Scene")
-                .font(.system(size: DesignTokens.Typography.Size.xs, weight: DesignTokens.Typography.Weight.semibold))
-                .foregroundStyle(DesignTokens.Common.Text.tertiary(colorScheme))
-            Picker("", selection: Binding(
-                get: { appModel.selectedScene },
-                set: { appModel.setScene($0) }
-            )) {
-                ForEach(SceneType.allCases) { scene in
-                    Text(scene.displayName).tag(scene)
-                }
-            }
-            .pickerStyle(.menu)
-            .tint(DesignTokens.Common.primary(colorScheme))
-            .accessibilityLabel("Scene")
         }
         .frame(width: 170, alignment: .leading)
     }
