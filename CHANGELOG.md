@@ -5,6 +5,16 @@ All notable changes to Echolume are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project aims to follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.3.0] — Mac App Store update (Jul 2026)
+
+### Added
+- **Four new themes** — Sunset (warm gold/orange/red), Nebula (deep
+  purple/magenta with cyan), Vapor (soft vaporwave pastels), and Acid (hard
+  lime-on-black), bringing the set to 10.
+- **Graphical scene picker** — the scene is now chosen from a row of live
+  thumbnails instead of a dropdown, matching the theme swatches. Number keys
+  1–9 and 0 select themes directly.
+
 ## [1.2.0] — Mac App Store update (Jul 2026)
 
 ### Added
