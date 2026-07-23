@@ -32,6 +32,22 @@ enum ThemeLibrary {
             SIMD4<Float>(0.1, 0.1, 0.12, 1), SIMD4<Float>(0.5, 0.5, 0.55, 1),
             SIMD4<Float>(0.9, 0.9, 0.95, 1),
         ], baseSpeed: 0.25, rotationSpeed: 0.15, defaultShapeStyle: .circles),
+        Theme(id: 6, name: "Sunset", palette: [
+            SIMD4<Float>(1.0, 0.85, 0.4, 1), SIMD4<Float>(1.0, 0.5, 0.15, 1),
+            SIMD4<Float>(0.85, 0.2, 0.15, 1), SIMD4<Float>(0.95, 0.35, 0.5, 1),
+        ], baseSpeed: 0.3, rotationSpeed: 0.15, defaultShapeStyle: .blobs),
+        Theme(id: 7, name: "Nebula", palette: [
+            SIMD4<Float>(0.85, 0.25, 0.95, 1), SIMD4<Float>(0.5, 0.2, 0.85, 1),
+            SIMD4<Float>(0.12, 0.08, 0.3, 1), SIMD4<Float>(0.25, 0.8, 0.95, 1),
+        ], baseSpeed: 0.3, rotationSpeed: 0.2, defaultShapeStyle: .blobs),
+        Theme(id: 8, name: "Vapor", palette: [
+            SIMD4<Float>(1.0, 0.7, 0.9, 1), SIMD4<Float>(0.7, 0.95, 0.98, 1),
+            SIMD4<Float>(0.82, 0.78, 1.0, 1), SIMD4<Float>(1.0, 0.97, 0.82, 1),
+        ], baseSpeed: 0.3, rotationSpeed: 0.2, defaultShapeStyle: .blobs),
+        Theme(id: 9, name: "Acid", palette: [
+            SIMD4<Float>(0.8, 1.0, 0.0, 1), SIMD4<Float>(0.5, 1.0, 0.1, 1),
+            SIMD4<Float>(0.05, 0.08, 0.0, 1), SIMD4<Float>(0.9, 1.0, 0.6, 1),
+        ], baseSpeed: 0.5, rotationSpeed: 0.35, defaultShapeStyle: .lines),
     ]
 
     static func theme(byIndex index: Int) -> Theme {

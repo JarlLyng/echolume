@@ -34,7 +34,7 @@ A quick reference of what's shipped vs planned. For the intended design, layerin
 - Metal renderer for 2D visuals (procedural shapes + a two‑pass decaying feedback/trail accumulation; trail length follows Abstraction, cleared by Panic Reset).
 - Audio engine: input‑device enumeration, in‑app device switching, channel‑pair selection, safe fallback, live RMS/peak meter, FFT bands (low/mid/high).
 - SetupView and LiveView (fullscreen output, minimal overlay, no‑signal banner, Panic Reset).
-- 6 themes, **10 scenes** (radial, flow, grid, spiral, tunnel, kaleidoscope, plasma, spectrum ring, ridgeline, wireframe burst), 5 shape styles, performance knobs, and Randomize.
+- 10 themes, **10 scenes** (radial, flow, grid, spiral, tunnel, kaleidoscope, plasma, spectrum ring, ridgeline, wireframe burst), 5 shape styles, performance knobs, and Randomize.
 - External display output selection.
 - Twitch chat integration (anonymous read‑only IRC, viewer commands).
 - Preset system: save/recall/delete named visual configurations (UI, `⌘1–9`, `!preset` chat command).
@@ -63,7 +63,7 @@ Echolume turns sound into light. **Constraints (App Store friendly):**
 
 ## Themes
 
-Themes are curated presets that define palette + motion style. V1 ships with 6 themes:
+Themes are curated presets that define palette + motion style. Echolume ships with 10 themes:
 
 1. **Summer** – warm palette, soft gradients, slow drift.
 2. **Winter** – cool palette, crystalline shapes, sharper transients.
@@ -71,6 +71,10 @@ Themes are curated presets that define palette + motion style. V1 ships with 6 t
 4. **Techno Club** – high contrast, strobes on peaks, geometric repetition.
 5. **Neon Lines** – line/scan aesthetic, mid/high reactive.
 6. **Monochrome** – single hue + intensity modulation.
+7. **Sunset** – warm gold/orange/red with a pink accent.
+8. **Nebula** – deep purple/magenta with a cyan highlight.
+9. **Vapor** – soft vaporwave pastels (pink, cyan, lavender).
+10. **Acid** – hard lime-on-black, fast motion.
 
 A theme defines:
 - `palette` (3–5 colors)
