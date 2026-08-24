@@ -632,26 +632,8 @@ a:hover {
   max-width: 34rem;
 }
 
-.daw-points {
-  list-style: none;
-  padding: 0;
-  margin: 1.75rem 0 0;
-}
-
-.daw-points li {
-  position: relative;
-  padding-left: 1.75rem;
-  margin-bottom: 0.85rem;
-  color: var(--text);
-}
-
-.daw-points li::before {
-  content: "✓";
-  position: absolute;
-  left: 0;
-  top: -1px;
-  color: var(--accent);
-  font-weight: 700;
+.daw-copy p + p {
+  margin-top: 1.25rem;
 }
 
 .daw-shot {
