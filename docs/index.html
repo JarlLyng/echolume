@@ -105,8 +105,31 @@
       <span class="eyebrow">The visuals</span>
       <h2 class="section-title">Visuals that move with your music</h2>
       <p class="section-subtitle">Real-time, audio-reactive scenes rendered in Metal. Beat-synced, low-latency, and built to fill a screen behind your set.</p>
-      <div class="scene-gallery" id="scene-gallery" aria-label="Live previews of Echolume scenes"></div>
+      <div class="scene-stage">
+        <div class="stage-viewport">
+          <canvas id="stage-canvas" aria-hidden="true" role="presentation"></canvas>
+          <p class="stage-caption" id="stage-caption">Spectrum Ring · Neon Lines</p>
+          <button class="c-arrow c-prev" type="button" aria-label="Previous scene">&lsaquo;</button>
+          <button class="c-arrow c-next" type="button" aria-label="Next scene">&rsaquo;</button>
+        </div>
+        <div class="scene-selector" id="scene-selector" role="tablist" aria-label="Choose a scene"></div>
+      </div>
       <p class="scene-note">Live previews, running right here in your browser. In the app they render in Metal and react to your own audio.</p>
+    </section>
+
+    <section id="interface" class="interface reveal">
+      <span class="eyebrow">The app</span>
+      <h2 class="section-title">Everything on one screen</h2>
+      <p class="section-subtitle">No menus to dig through. Pick an input, choose a look, dial the knobs, and hit Ready. This is the whole interface.</p>
+      <figure class="ui-shot">
+        <img src="screenshots/setup.jpg" width="1600" height="1000" loading="lazy" decoding="async"
+             alt="Echolume's setup screen: audio input, the theme swatch picker, scene and shape menus, Twitch, MIDI and OSC control, five performance knobs, and the Ready button.">
+        <span class="ui-callout" style="left:13%; top:15%;">Your audio input</span>
+        <span class="ui-callout" style="left:64%; top:15%;">Themes, scenes, shapes</span>
+        <span class="ui-callout" style="left:31%; top:41%;">Twitch, MIDI &amp; OSC</span>
+        <span class="ui-callout" style="left:50%; top:64%;">Five live knobs</span>
+        <span class="ui-callout" style="left:54%; top:92%;">One button: Ready</span>
+      </figure>
     </section>
 
     <section id="daw" class="daw reveal">
@@ -244,12 +267,12 @@
       document.querySelectorAll('.reveal').forEach(function (el) { io.observe(el); });
     })();
 
-    // Live scene gallery — each tile is a small canvas homage to one of the
+    // Live scene stage — one large canvas that switches between homages to the
     // app's Metal scenes, driven by a shared fake spectrum + 124 BPM beat.
-    // A single rAF loop drives every in-view tile (cheaper than one per tile).
+    // Only the active scene animates; a selector and arrows switch between them.
     (function () {
-      var gallery = document.getElementById('scene-gallery');
-      if (!gallery) return;
+      var stage = document.getElementById('stage-canvas');
+      if (!stage) return;
 
       var reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
       var DPR = Math.min(window.devicePixelRatio || 1, 1.4);
@@ -410,81 +433,94 @@
         { scene: 'radial',       theme: 'acid',   label: 'Radial · Acid' }
       ];
 
-      var tiles = CONFIG.map(function (cfg, idx) {
-        var fig = document.createElement('figure');
-        fig.className = 'scene-tile';
-        var canvas = document.createElement('canvas');
-        canvas.setAttribute('aria-hidden', 'true');
-        canvas.setAttribute('role', 'presentation');
-        var cap = document.createElement('figcaption');
-        cap.textContent = cfg.label;
-        fig.appendChild(canvas);
-        fig.appendChild(cap);
-        gallery.appendChild(fig);
-        return {
-          cfg: cfg, fig: fig, canvas: canvas, ctx: canvas.getContext('2d'),
-          w: 0, h: 0, rot: idx * 0.7, phase: idx * 1.7,
-          pal: THEMES[cfg.theme], inView: !('IntersectionObserver' in window)
-        };
+      var ctx = stage.getContext('2d');
+      var caption = document.getElementById('stage-caption');
+      var selector = document.getElementById('scene-selector');
+      var viewport = document.querySelector('.stage-viewport');
+      var s = { ctx: ctx, w: 0, h: 0, rot: 0, t: 0, kick: 0, hat: 0, pal: THEMES[CONFIG[0].theme] };
+      var active = 0, clock = 0, running = false, raf = 0, autoTimer = 0;
+      var inView = !('IntersectionObserver' in window);
+      var autoplay = !reduceMotion, hovering = false;
+
+      var chips = CONFIG.map(function (cfg, i) {
+        var b = document.createElement('button');
+        b.type = 'button';
+        b.setAttribute('role', 'tab');
+        b.textContent = cfg.label;
+        b.addEventListener('click', function () { autoplay = false; select(i); });
+        selector.appendChild(b);
+        return b;
       });
 
-      function resizeTile(s) {
-        var w = s.canvas.offsetWidth, h = s.canvas.offsetHeight;
+      function resize() {
+        var w = stage.offsetWidth, h = stage.offsetHeight;
         if (!w || !h) return;
         s.w = w; s.h = h;
-        s.canvas.width = Math.round(w * DPR);
-        s.canvas.height = Math.round(h * DPR);
-        s.ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
-        s.ctx.fillStyle = '#0a0a0a';
-        s.ctx.fillRect(0, 0, w, h);
-      }
-      function resizeAll() { tiles.forEach(resizeTile); }
-
-      function drawTile(s, t, kick, hat) {
-        if (!s.w) { resizeTile(s); if (!s.w) return; }
-        s.t = t + s.phase; s.kick = kick; s.hat = hat;
-        SCENES[s.cfg.scene](s);
+        stage.width = Math.round(w * DPR);
+        stage.height = Math.round(h * DPR);
+        ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+        ctx.fillStyle = '#0a0a0a';
+        ctx.fillRect(0, 0, w, h);
       }
 
-      var running = false, raf = 0, clock = 0;
+      function select(i) {
+        active = (i + CONFIG.length) % CONFIG.length;
+        s.pal = THEMES[CONFIG[active].theme];
+        s.rot = 0;
+        caption.textContent = CONFIG[active].label;
+        chips.forEach(function (c, j) {
+          c.classList.toggle('active', j === active);
+          c.setAttribute('aria-selected', j === active ? 'true' : 'false');
+        });
+        if (s.w) { ctx.fillStyle = '#0a0a0a'; ctx.fillRect(0, 0, s.w, s.h); } // wipe for a clean fade-in
+        if (reduceMotion) drawStatic();
+      }
+
+      function drawStatic() {
+        if (!s.w) { resize(); if (!s.w) return; }
+        s.kick = 0.5; s.hat = 0.3;
+        for (var f = 0; f < 40; f++) { s.t = f / 60; SCENES[CONFIG[active].scene](s); }
+      }
+
       function loop() {
         if (!running) return;
         clock += 1 / 60;
         var beatPhase = (clock * BPM / 60) % 1;
-        var kick = Math.exp(-5 * beatPhase);
-        var hat = Math.exp(-8 * (((beatPhase + 0.5) % 1)));
-        for (var i = 0; i < tiles.length; i++) {
-          if (tiles[i].inView) drawTile(tiles[i], clock, kick, hat);
+        s.kick = Math.exp(-5 * beatPhase);
+        s.hat = Math.exp(-8 * (((beatPhase + 0.5) % 1)));
+        s.t = clock;
+        if (!s.w) resize();
+        if (s.w) SCENES[CONFIG[active].scene](s);
+        if (autoplay && !hovering) {
+          autoTimer += 1 / 60;
+          if (autoTimer > 9) { autoTimer = 0; select(active + 1); }
         }
         raf = requestAnimationFrame(loop);
       }
 
-      function anyInView() { return tiles.some(function (s) { return s.inView; }); }
       function setRunning() {
-        var next = !document.hidden && !reduceMotion && anyInView();
+        var next = !document.hidden && !reduceMotion && inView;
         if (next && !running) { running = true; raf = requestAnimationFrame(loop); }
         else if (!next) { running = false; if (raf) cancelAnimationFrame(raf); }
       }
 
-      resizeAll();
-      window.addEventListener('resize', resizeAll);
-      document.addEventListener('visibilitychange', setRunning);
+      document.querySelector('.c-prev').addEventListener('click', function () { autoplay = false; select(active - 1); });
+      document.querySelector('.c-next').addEventListener('click', function () { autoplay = false; select(active + 1); });
+      viewport.addEventListener('mouseenter', function () { hovering = true; });
+      viewport.addEventListener('mouseleave', function () { hovering = false; });
 
-      if (reduceMotion) {
-        // One calm static frame per tile, no loop.
-        tiles.forEach(function (s) { drawTile(s, 0.4, 0.5, 0.3); });
-        return;
-      }
+      resize();
+      window.addEventListener('resize', resize);
+      document.addEventListener('visibilitychange', setRunning);
+      select(0);
+
+      if (reduceMotion) { drawStatic(); return; }
 
       if ('IntersectionObserver' in window) {
-        var io = new IntersectionObserver(function (entries) {
-          entries.forEach(function (e) {
-            var s = tiles.filter(function (tt) { return tt.fig === e.target; })[0];
-            if (s) s.inView = e.isIntersecting;
-          });
+        new IntersectionObserver(function (entries) {
+          inView = entries[0].isIntersecting;
           setRunning();
-        }, { threshold: 0.08 });
-        tiles.forEach(function (s) { io.observe(s.fig); });
+        }, { threshold: 0.08 }).observe(viewport);
       } else {
         setRunning();
       }
