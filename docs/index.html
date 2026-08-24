@@ -104,42 +104,9 @@
     <section id="showcase" class="showcase reveal">
       <span class="eyebrow">The visuals</span>
       <h2 class="section-title">Visuals that move with your music</h2>
-      <p class="section-subtitle">Real-time, audio-reactive scenes rendered in Metal — beat-synced, low-latency, and built to fill a screen behind your set.</p>
-      <div class="carousel">
-        <div class="carousel-viewport">
-          <div class="carousel-track" id="shots-track" tabindex="0" role="group" aria-label="Echolume screenshots">
-            <div class="cslide">
-              <img src="screenshots/visual-neon-ring.jpg" width="1600" height="1000" loading="lazy" decoding="async"
-                   data-caption="Spectrum Ring scene · Neon Lines theme"
-                   alt="Echolume's Spectrum Ring scene in the Neon Lines theme — a glowing green ring reacting to live audio.">
-            </div>
-            <div class="cslide">
-              <img src="screenshots/visual-spiral.jpg" width="1600" height="1004" loading="lazy" decoding="async"
-                   data-caption="Spiral scene · Summer theme"
-                   alt="Echolume's Spiral scene in the Summer theme — warm orange arms swirling to the beat.">
-            </div>
-            <div class="cslide">
-              <img src="screenshots/visual-grid.jpg" width="1600" height="1004" loading="lazy" decoding="async"
-                   data-caption="Grid scene · Techno Club theme"
-                   alt="Echolume's Grid scene in the Techno Club theme — a magenta mesh flexing with the music.">
-            </div>
-            <div class="cslide">
-              <img src="screenshots/visual-plasma.jpg" width="1600" height="1004" loading="lazy" decoding="async"
-                   data-caption="Plasma scene · Winter theme"
-                   alt="Echolume's Plasma scene in the Winter theme — soft pastel blues and purples drifting.">
-            </div>
-            <div class="cslide">
-              <img src="screenshots/setup.jpg" width="1600" height="1000" loading="lazy" decoding="async"
-                   data-caption="And this is the whole interface — dial in a look, hit Ready"
-                   alt="Echolume's Setup screen: audio input, the visual theme swatch picker, scene and shape menus, and five performance knobs — all on one screen.">
-            </div>
-          </div>
-          <button class="c-arrow c-prev" type="button" aria-label="Previous screenshot">&lsaquo;</button>
-          <button class="c-arrow c-next" type="button" aria-label="Next screenshot">&rsaquo;</button>
-        </div>
-        <p class="c-caption" id="shots-caption">Spectrum Ring scene · Neon Lines theme</p>
-        <div class="c-dots" id="shots-dots" role="tablist" aria-label="Choose screenshot"></div>
-      </div>
+      <p class="section-subtitle">Real-time, audio-reactive scenes rendered in Metal. Beat-synced, low-latency, and built to fill a screen behind your set.</p>
+      <div class="scene-gallery" id="scene-gallery" aria-label="Live previews of Echolume scenes"></div>
+      <p class="scene-note">Live previews, running right here in your browser. In the app they render in Metal and react to your own audio.</p>
     </section>
 
     <section id="daw" class="daw reveal">
@@ -277,68 +244,250 @@
       document.querySelectorAll('.reveal').forEach(function (el) { io.observe(el); });
     })();
 
-    // Screenshot carousel
+    // Live scene gallery — each tile is a small canvas homage to one of the
+    // app's Metal scenes, driven by a shared fake spectrum + 124 BPM beat.
+    // A single rAF loop drives every in-view tile (cheaper than one per tile).
     (function () {
-      var track = document.getElementById('shots-track');
-      if (!track) return;
-      var slides = Array.prototype.slice.call(track.querySelectorAll('.cslide'));
-      var prev = document.querySelector('.c-prev');
-      var next = document.querySelector('.c-next');
-      var dotsWrap = document.getElementById('shots-dots');
-      var caption = document.getElementById('shots-caption');
-      var current = -1;
+      var gallery = document.getElementById('scene-gallery');
+      if (!gallery) return;
 
-      slides.forEach(function (s, i) {
-        var b = document.createElement('button');
-        b.type = 'button';
-        b.setAttribute('role', 'tab');
-        b.setAttribute('aria-label', 'Screenshot ' + (i + 1));
-        b.addEventListener('click', function () { goTo(i); });
-        dotsWrap.appendChild(b);
+      var reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+      var DPR = Math.min(window.devicePixelRatio || 1, 1.4);
+      var BPM = 124;
+
+      function lerp(a, b, t) { return a + (b - a) * t; }
+      function mix(c1, c2, t) {
+        return [Math.round(lerp(c1[0], c2[0], t)), Math.round(lerp(c1[1], c2[1], t)), Math.round(lerp(c1[2], c2[2], t))];
+      }
+      function rgba(c, a) { return 'rgba(' + c[0] + ',' + c[1] + ',' + c[2] + ',' + a + ')'; }
+
+      // Palettes (0-255) lifted from the app's ThemeLibrary: [c0, c1, c2, c3].
+      var THEMES = {
+        neon:   [[0, 255, 128], [0, 204, 255], [51, 51, 77], [128, 255, 204]],
+        techno: [[255, 0, 128], [0, 255, 255], [128, 0, 255], [255, 255, 255]],
+        sunset: [[255, 217, 102], [255, 128, 38], [217, 51, 38], [242, 89, 128]],
+        nebula: [[217, 64, 242], [128, 51, 217], [64, 204, 242], [64, 40, 128]],
+        vapor:  [[255, 179, 230], [179, 242, 250], [209, 199, 255], [255, 247, 209]],
+        acid:   [[204, 255, 0], [128, 255, 26], [230, 255, 153], [102, 153, 0]]
+      };
+
+      // Fake spectrum: three overlapping bands travelling around 0..1, kicked
+      // by the beat on the low end (same shape as the hero simulation).
+      function energyAt(u, t, kick, hat) {
+        var low = Math.pow(Math.abs(Math.sin(u * Math.PI * 2 + t * 0.7)), 3) * kick;
+        var mid = Math.pow(Math.abs(Math.sin(u * Math.PI * 6 - t * 1.3)), 2) * (0.35 + hat * 0.4);
+        var high = Math.abs(Math.sin(u * Math.PI * 14 + t * 2.1)) * (0.15 + hat * 0.25);
+        return Math.min(low * 0.9 + mid * 0.5 + high * 0.3, 1.4);
+      }
+
+      // Decaying feedback: fade instead of clearing, so motion leaves trails.
+      function fade(s, a) {
+        s.ctx.globalCompositeOperation = 'source-over';
+        s.ctx.fillStyle = 'rgba(10,10,10,' + a + ')';
+        s.ctx.fillRect(0, 0, s.w, s.h);
+      }
+
+      var SCENES = {
+        spectrumRing: function (s) {
+          fade(s, 0.18);
+          var cx = s.w / 2, cy = s.h / 2, R = Math.min(s.w, s.h) * 0.26 * (1 + s.kick * 0.06);
+          var N = 96;
+          s.ctx.globalCompositeOperation = 'lighter';
+          s.ctx.lineCap = 'round';
+          for (var i = 0; i < N; i++) {
+            var ang = (i / N) * Math.PI * 2 + s.rot;
+            var e = energyAt(i / N, s.t, s.kick, s.hat);
+            var len = R * 0.12 + R * 0.7 * e;
+            var x0 = cx + Math.cos(ang) * R, y0 = cy + Math.sin(ang) * R;
+            var x1 = cx + Math.cos(ang) * (R + len), y1 = cy + Math.sin(ang) * (R + len);
+            var c = mix(s.pal[0], s.pal[1], i / N);
+            s.ctx.strokeStyle = rgba(c, 0.06 + e * 0.06); s.ctx.lineWidth = 4;
+            s.ctx.beginPath(); s.ctx.moveTo(x0, y0); s.ctx.lineTo(x1, y1); s.ctx.stroke();
+            s.ctx.strokeStyle = rgba(c, 0.3 + e * 0.5); s.ctx.lineWidth = 1.4;
+            s.ctx.beginPath(); s.ctx.moveTo(x0, y0); s.ctx.lineTo(x1, y1); s.ctx.stroke();
+          }
+          s.rot += 0.0016 + s.kick * 0.003;
+        },
+
+        radial: function (s) {
+          fade(s, 0.2);
+          var cx = s.w / 2, cy = s.h / 2, R = Math.min(s.w, s.h) * 0.42, r0 = R * 0.12;
+          var N = 60;
+          s.ctx.globalCompositeOperation = 'lighter';
+          s.ctx.lineCap = 'round';
+          for (var i = 0; i < N; i++) {
+            var ang = (i / N) * Math.PI * 2 + s.rot;
+            var e = energyAt(i / N, s.t, s.kick, s.hat);
+            var len = r0 + R * 0.85 * e;
+            var x0 = cx + Math.cos(ang) * r0, y0 = cy + Math.sin(ang) * r0;
+            var x1 = cx + Math.cos(ang) * len, y1 = cy + Math.sin(ang) * len;
+            var c = mix(s.pal[0], s.pal[1], Math.min(1, e / 1.2));
+            s.ctx.strokeStyle = rgba(c, 0.35 + e * 0.5);
+            s.ctx.lineWidth = 2.4;
+            s.ctx.beginPath(); s.ctx.moveTo(x0, y0); s.ctx.lineTo(x1, y1); s.ctx.stroke();
+          }
+          s.rot -= 0.0012 + s.kick * 0.002;
+        },
+
+        spiral: function (s) {
+          fade(s, 0.16);
+          var cx = s.w / 2, cy = s.h / 2, maxR = Math.min(s.w, s.h) * 0.46;
+          var K = 130;
+          s.ctx.globalCompositeOperation = 'lighter';
+          for (var k = 0; k < K; k++) {
+            var f = k / K;
+            var ang = k * 0.38 + s.rot;
+            var e = energyAt(f, s.t, s.kick, s.hat);
+            var r = maxR * f * (1 + s.kick * 0.05);
+            var x = cx + Math.cos(ang) * r, y = cy + Math.sin(ang) * r;
+            var c = mix(s.pal[0], s.pal[1], f);
+            s.ctx.fillStyle = rgba(c, 0.25 + e * 0.55);
+            s.ctx.beginPath(); s.ctx.arc(x, y, 1 + e * 3.2, 0, Math.PI * 2); s.ctx.fill();
+          }
+          s.rot += 0.006 + s.kick * 0.004;
+        },
+
+        grid: function (s) {
+          fade(s, 0.28);
+          var cols = 11, rows = 7, cw = s.w / cols, ch = s.h / rows;
+          s.ctx.globalCompositeOperation = 'lighter';
+          for (var gy = 0; gy < rows; gy++) {
+            for (var gx = 0; gx < cols; gx++) {
+              var u = (gx + 0.5) / cols, v = (gy + 0.5) / rows;
+              var wave = Math.sin(u * 6 + s.t * 1.6) * Math.cos(v * 5 - s.t * 1.2);
+              var e = Math.max(0, wave) * (0.4 + s.kick * 0.9) + energyAt(u, s.t, s.kick, s.hat) * 0.3;
+              if (e < 0.04) continue;
+              var c = mix(s.pal[0], s.pal[1], (u + v) / 2);
+              var px = cw * (0.5 - Math.min(0.42, e * 0.42));
+              var py = ch * (0.5 - Math.min(0.42, e * 0.42));
+              s.ctx.fillStyle = rgba(c, Math.min(0.85, 0.12 + e * 0.7));
+              s.ctx.fillRect(gx * cw + px, gy * ch + py, cw - px * 2, ch - py * 2);
+            }
+          }
+        },
+
+        tunnel: function (s) {
+          fade(s, 0.16);
+          var cx = s.w / 2, cy = s.h / 2, maxR = Math.min(s.w, s.h) * 0.62, rings = 16;
+          s.ctx.globalCompositeOperation = 'lighter';
+          for (var i = 0; i < rings; i++) {
+            var phase = (s.t * 0.12 + i / rings) % 1;
+            var r = phase * maxR * (1 + s.kick * 0.08);
+            var e = energyAt(i / rings, s.t, s.kick, s.hat);
+            var c = mix(s.pal[0], s.pal[1], phase);
+            s.ctx.strokeStyle = rgba(c, (1 - phase) * (0.25 + e * 0.4));
+            s.ctx.lineWidth = 1.5 + e * 3 + s.kick * 2;
+            s.ctx.beginPath(); s.ctx.arc(cx, cy, r, 0, Math.PI * 2); s.ctx.stroke();
+          }
+        },
+
+        plasma: function (s) {
+          // Full-field redraw (no trails). Low-res cells map a layered-sine
+          // field onto the palette, reading as a smooth plasma at tile size.
+          s.ctx.globalCompositeOperation = 'source-over';
+          var cols = 40, rows = 26, cw = Math.ceil(s.w / cols), ch = Math.ceil(s.h / rows), t = s.t;
+          for (var gy = 0; gy < rows; gy++) {
+            for (var gx = 0; gx < cols; gx++) {
+              var x = gx / cols, y = gy / rows;
+              var v = Math.sin(x * 6 + t) + Math.sin(y * 7 - t * 1.1) +
+                      Math.sin((x + y) * 5 + t * 0.7) +
+                      Math.sin(Math.sqrt((x - 0.5) * (x - 0.5) + (y - 0.5) * (y - 0.5)) * 14 - t * 1.6);
+              var f = Math.min(1, Math.max(0, (v + 4) / 8) * (0.75 + s.kick * 0.35));
+              var c = f < 0.5 ? mix(s.pal[2], s.pal[0], f * 2) : mix(s.pal[0], s.pal[1], (f - 0.5) * 2);
+              s.ctx.fillStyle = 'rgb(' + c[0] + ',' + c[1] + ',' + c[2] + ')';
+              s.ctx.fillRect(gx * cw, gy * ch, cw, ch);
+            }
+          }
+        }
+      };
+
+      var CONFIG = [
+        { scene: 'spectrumRing', theme: 'neon',   label: 'Spectrum Ring · Neon Lines' },
+        { scene: 'spiral',       theme: 'sunset', label: 'Spiral · Sunset' },
+        { scene: 'plasma',       theme: 'nebula', label: 'Plasma · Nebula' },
+        { scene: 'grid',         theme: 'techno', label: 'Grid · Techno Club' },
+        { scene: 'tunnel',       theme: 'vapor',  label: 'Tunnel · Vapor' },
+        { scene: 'radial',       theme: 'acid',   label: 'Radial · Acid' }
+      ];
+
+      var tiles = CONFIG.map(function (cfg, idx) {
+        var fig = document.createElement('figure');
+        fig.className = 'scene-tile';
+        var canvas = document.createElement('canvas');
+        canvas.setAttribute('aria-hidden', 'true');
+        canvas.setAttribute('role', 'presentation');
+        var cap = document.createElement('figcaption');
+        cap.textContent = cfg.label;
+        fig.appendChild(canvas);
+        fig.appendChild(cap);
+        gallery.appendChild(fig);
+        return {
+          cfg: cfg, fig: fig, canvas: canvas, ctx: canvas.getContext('2d'),
+          w: 0, h: 0, rot: idx * 0.7, phase: idx * 1.7,
+          pal: THEMES[cfg.theme], inView: !('IntersectionObserver' in window)
+        };
       });
-      var dots = Array.prototype.slice.call(dotsWrap.children);
 
-      function update(i) {
-        if (i === current) return;
-        current = i;
-        dots.forEach(function (d, j) { d.classList.toggle('active', j === i); });
-        var img = slides[i].querySelector('img');
-        if (caption && img) caption.textContent = img.getAttribute('data-caption') || '';
-        if (prev) prev.disabled = (i === 0);
-        if (next) next.disabled = (i === slides.length - 1);
+      function resizeTile(s) {
+        var w = s.canvas.offsetWidth, h = s.canvas.offsetHeight;
+        if (!w || !h) return;
+        s.w = w; s.h = h;
+        s.canvas.width = Math.round(w * DPR);
+        s.canvas.height = Math.round(h * DPR);
+        s.ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+        s.ctx.fillStyle = '#0a0a0a';
+        s.ctx.fillRect(0, 0, w, h);
+      }
+      function resizeAll() { tiles.forEach(resizeTile); }
+
+      function drawTile(s, t, kick, hat) {
+        if (!s.w) { resizeTile(s); if (!s.w) return; }
+        s.t = t + s.phase; s.kick = kick; s.hat = hat;
+        SCENES[s.cfg.scene](s);
       }
 
-      function goTo(i) {
-        i = Math.max(0, Math.min(slides.length - 1, i));
-        slides[i].scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
-        update(i);
+      var running = false, raf = 0, clock = 0;
+      function loop() {
+        if (!running) return;
+        clock += 1 / 60;
+        var beatPhase = (clock * BPM / 60) % 1;
+        var kick = Math.exp(-5 * beatPhase);
+        var hat = Math.exp(-8 * (((beatPhase + 0.5) % 1)));
+        for (var i = 0; i < tiles.length; i++) {
+          if (tiles[i].inView) drawTile(tiles[i], clock, kick, hat);
+        }
+        raf = requestAnimationFrame(loop);
       }
 
-      if (prev) prev.addEventListener('click', function () { goTo(current - 1); });
-      if (next) next.addEventListener('click', function () { goTo(current + 1); });
+      function anyInView() { return tiles.some(function (s) { return s.inView; }); }
+      function setRunning() {
+        var next = !document.hidden && !reduceMotion && anyInView();
+        if (next && !running) { running = true; raf = requestAnimationFrame(loop); }
+        else if (!next) { running = false; if (raf) cancelAnimationFrame(raf); }
+      }
 
-      var raf;
-      track.addEventListener('scroll', function () {
-        if (raf) cancelAnimationFrame(raf);
-        raf = requestAnimationFrame(function () {
-          var tr = track.getBoundingClientRect();
-          var center = tr.left + tr.width / 2;
-          var best = 0, bestDist = Infinity;
-          slides.forEach(function (s, i) {
-            var r = s.getBoundingClientRect();
-            var d = Math.abs(r.left + r.width / 2 - center);
-            if (d < bestDist) { bestDist = d; best = i; }
+      resizeAll();
+      window.addEventListener('resize', resizeAll);
+      document.addEventListener('visibilitychange', setRunning);
+
+      if (reduceMotion) {
+        // One calm static frame per tile, no loop.
+        tiles.forEach(function (s) { drawTile(s, 0.4, 0.5, 0.3); });
+        return;
+      }
+
+      if ('IntersectionObserver' in window) {
+        var io = new IntersectionObserver(function (entries) {
+          entries.forEach(function (e) {
+            var s = tiles.filter(function (tt) { return tt.fig === e.target; })[0];
+            if (s) s.inView = e.isIntersecting;
           });
-          update(best);
-        });
-      }, { passive: true });
-
-      track.addEventListener('keydown', function (e) {
-        if (e.key === 'ArrowRight') { e.preventDefault(); goTo(current + 1); }
-        else if (e.key === 'ArrowLeft') { e.preventDefault(); goTo(current - 1); }
-      });
-
-      update(0);
+          setRunning();
+        }, { threshold: 0.08 });
+        tiles.forEach(function (s) { io.observe(s.fig); });
+      } else {
+        setRunning();
+      }
     })();
 
     // Card Hover Glow Effect

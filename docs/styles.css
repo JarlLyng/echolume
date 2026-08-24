@@ -358,129 +358,64 @@ a:hover {
   line-height: 1.5;
 }
 
-/* Screenshot showcase */
+/* Visuals showcase */
 .showcase {
   max-width: 68rem;
   margin: 0 auto;
   padding: 2rem 2rem 3rem;
 }
 
-/* Screenshot carousel */
-.carousel-viewport {
-  position: relative;
-}
-
-.carousel-track {
-  display: flex;
+/* Live scene gallery — each tile is a canvas homage to one of the app's
+   Metal scenes, drawn by the shared engine in index.html. */
+.scene-gallery {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
   gap: 1.25rem;
-  overflow-x: auto;
-  scroll-snap-type: x mandatory;
-  scroll-behavior: smooth;
-  -webkit-overflow-scrolling: touch;
-  scrollbar-width: none;
-  border-radius: var(--radius);
-  outline: none;
 }
 
-.carousel-track::-webkit-scrollbar {
-  display: none;
-}
-
-.cslide {
-  flex: 0 0 100%;
-  scroll-snap-align: center;
+.scene-tile {
+  position: relative;
   margin: 0;
-}
-
-@media (min-width: 760px) {
-  .cslide {
-    flex-basis: 86%;
-  }
-}
-
-.cslide img {
-  width: 100%;
-  height: auto;
-  aspect-ratio: 16 / 10;
-  object-fit: cover;
-  display: block;
   border-radius: var(--radius);
   border: 1px solid var(--border);
-  box-shadow: var(--shadow-md);
+  overflow: hidden;
   background: #000;
+  box-shadow: var(--shadow-md);
+  aspect-ratio: 16 / 10;
+  transition: transform 0.25s ease, border-color 0.25s ease;
 }
 
-.c-arrow {
+.scene-tile:hover {
+  transform: translateY(-3px);
+  border-color: var(--border-hover);
+}
+
+.scene-tile canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.scene-tile figcaption {
   position: absolute;
-  top: 50%;
-  transform: translateY(-50%);
-  width: 46px;
-  height: 46px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: rgba(10, 10, 10, 0.7);
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
-  border: 1px solid var(--border-hover);
-  border-radius: 50%;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  padding: 1.5rem 0.9rem 0.7rem;
+  font-size: 0.82rem;
+  font-weight: 500;
   color: #ffffff;
-  font-size: 1.7rem;
-  line-height: 1;
-  cursor: pointer;
-  transition: background 0.2s ease, color 0.2s ease, border-color 0.2s ease, opacity 0.2s ease;
-  z-index: 2;
-}
-
-.c-arrow:hover {
-  background: var(--accent);
-  color: #000000;
-  border-color: var(--accent);
-}
-
-.c-arrow:disabled {
-  opacity: 0;
+  letter-spacing: -0.01em;
+  background: linear-gradient(0deg, rgba(10, 10, 10, 0.85) 0%, rgba(10, 10, 10, 0) 100%);
   pointer-events: none;
 }
 
-.c-prev {
-  left: 0.85rem;
-}
-
-.c-next {
-  right: 0.85rem;
-}
-
-.c-caption {
-  margin: 1rem 0 0;
+.scene-note {
+  margin: 1.4rem 0 0;
   font-size: 0.9rem;
   color: var(--text-tertiary);
   padding-left: 0.9rem;
   border-left: 2px solid var(--border-hover);
-}
-
-.c-dots {
-  display: flex;
-  gap: 0.5rem;
-  margin-top: 1.1rem;
-  padding-left: 0.9rem;
-}
-
-.c-dots button {
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  border: none;
-  padding: 0;
-  cursor: pointer;
-  background: var(--border-hover);
-  transition: background 0.2s ease, width 0.2s ease;
-}
-
-.c-dots button.active {
-  background: var(--accent);
-  width: 22px;
-  border-radius: 4px;
 }
 
 .feature-grid {
