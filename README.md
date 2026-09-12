@@ -43,11 +43,11 @@ A quick reference of what's shipped vs planned. For the intended design, layerin
 - OSC input: opt-in UDP listener (default port 9000) mapping a `/echolume/…` namespace to knobs, theme/scene/shape, and triggers — for TouchDesigner/Resolume rigs.
 - Menu bar extra: quick actions (Randomize, Panic Reset, Restart Audio), live status, and Open Echolume — reachable while running fullscreen on another display.
 - Audio plugin (beta): bundled `EcholumeAudioTap` AUv3 — drop it on a DAW track and it forwards analysed bands + host BPM to Echolume over OSC (no BlackHole). See [Audio plugin (beta)](#audio-plugin-beta).
+- Video recording: `Record`/`V` in Live writes the output to an H.264 `.mp4` in `~/Movies`. Video‑only, no audio track ([#6](https://github.com/JarlLyng/echolume/issues/6), shipped in 1.2).
 - Settings persistence in `UserDefaults`.
 - Crash reporting via Apple's built‑in tooling (Xcode Organizer / App Store Connect) — no third‑party SDK. See [Crash reporting](#crash-reporting).
 
 ### Planned
-- Video recording/export ([#6](https://github.com/JarlLyng/echolume/issues/6)).
 - Twitch OAuth for authenticated features ([#4](https://github.com/JarlLyng/echolume/issues/4)).
 - Danish localization ([#9](https://github.com/JarlLyng/echolume/issues/9)).
 
@@ -114,7 +114,7 @@ Echolume estimates tempo from the low‑band onset envelope (autocorrelation ove
 
 `EcholumeAudioTap` is an AUv3 audio‑effect bundled inside Echolume.app — installing the app auto‑registers it (no separate installer). Drop it on a track in Ableton (Live 11.3+) or any AU host; it passes audio through and forwards the analysed bands, a full 64‑bin spectrum, and the host BPM to Echolume over OSC (loopback), so every scene — including the per‑bin ones (Spectrum Ring, Ridgeline) — reacts to that track. Enable OSC in Echolume (port 9000) — no BlackHole/loopback routing.
 
-> Note (beta): the plugin currently sends OSC from the render thread (best‑effort, non‑blocking). A v2 will move transport off the realtime thread.
+> Note: since 1.0.1 the plugin sends OSC from its own sender thread, not the realtime audio render thread ([#51](https://github.com/JarlLyng/echolume/issues/51)).
 
 ---
 

@@ -48,7 +48,7 @@
         "name": "Can I capture system audio (e.g. Spotify) directly?",
         "acceptedAnswer": {
           "@type": "Answer",
-          "text": "macOS does not allow applications to directly hook and record 'system output' audio due to system sandboxing rules. To capture general system audio, you must route it through a virtual loopback device (like BlackHole 2ch) and select that device as the input in Echolume."
+          "text": "Not directly. Echolume reads audio inputs only, so it cannot listen to your Mac's output on its own. That is Echolume's own limitation rather than a blanket macOS restriction, since other tools such as OBS can capture desktop audio natively on macOS 13 and later. To feed system audio into Echolume, route your output through a virtual loopback device such as BlackHole 2ch and select that device as the input in Echolume. If the sound comes from a supported DAW, the bundled AUv3 plugin sends the analysis straight to Echolume once you enable OSC input, with no loopback driver needed."
         }
       },
       {
@@ -122,7 +122,7 @@
           <dd>On macOS, access to all audio inputs (including external audio interfaces, USB soundcards, and microphones) is categorized under "Microphone" permissions in Privacy &amp; Security. Echolume reads inputs locally for real-time mathematical analysis (FFT and peak levels). It never stores, records, or transmits audio data anywhere. Visuals run 100% locally.</dd>
 
           <dt>Can I capture system audio (e.g., Spotify, Chrome) directly?</dt>
-          <dd>macOS sandboxing does not allow direct hooks into general speaker output. To capture system audio, download a virtual loopback device like <strong>BlackHole 2ch</strong>. Route your system output to BlackHole, and set Echolume's input device to BlackHole. See the <a href="how-it-works.html">How it works guide</a> for setup details.</dd>
+          <dd>Not directly. Echolume reads audio <strong>inputs</strong> only, so it cannot listen to your Mac's output on its own. That is Echolume's own limitation rather than a blanket macOS restriction, since other tools such as OBS can capture desktop audio natively on macOS 13 and later. To feed system audio into Echolume, download a virtual loopback device like <strong>BlackHole 2ch</strong>, route your system output to it, and set Echolume's input device to BlackHole. If the sound comes from a supported DAW, the bundled AUv3 plugin does the same job once you enable OSC input, with no loopback driver needed. See the <a href="how-it-works.html">How it works guide</a> for setup details.</dd>
 
           <dt>How do I register the bundled AUv3 DAW plugin?</dt>
           <dd>The <strong>EcholumeAudioTap</strong> AUv3 plugin is embedded inside the main Echolume.app. Launching the main Echolume application once registers the plugin globally on macOS. If your DAW (Ableton, Logic) does not display it, try restarting the host DAW to trigger a fresh Audio Unit plug-in cache scan.</dd>
