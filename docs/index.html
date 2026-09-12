@@ -28,9 +28,9 @@
     "name": "Echolume",
     "operatingSystem": "macOS 14.0+",
     "applicationCategory": "MultimediaApplication",
-    "description": "A macOS application for live, audio-reactive 2D visuals rendered with Metal. Built for streaming, VJ performance, and DAW integration.",
-    "softwareVersion": "1.0.0",
-    "releaseNotes": "Introduced EcholumeAudioTap AUv3 DAW plugin, OSC control, MIDI Learn, beat detection, Twitch commands, and presets.",
+    "description": "A macOS application for live, audio-reactive 2D visuals rendered with Metal. 10 scenes and 10 themes, video-only MP4 recording, and control over MIDI, OSC and Twitch. Built for streaming, VJ performance, and DAW integration.",
+    "softwareVersion": "1.3.0",
+    "releaseNotes": "1.3 added four themes (10 total) and a graphical scene picker. 1.2 added video-only MP4 recording of the live output plus the Ridgeline and Wireframe Burst scenes (10 total).",
     "offers": {
       "@type": "Offer",
       "price": "19.99",
@@ -45,7 +45,9 @@
     },
     "featureList": [
       "Metal-powered low-latency 2D visuals and feedback trails",
-      "EcholumeAudioTap AUv3 DAW plugin for DAW audio routing",
+      "10 scenes and 10 themes with graphical scene and theme pickers",
+      "EcholumeAudioTap AUv3 DAW plugin for DAW audio routing (requires OSC input enabled in Echolume)",
+      "Video-only MP4 recording of the live output to the Movies folder (no audio track)",
       "Live BPM autocorrelation beat-sync and tap-tempo tracker",
       "Twitch Chat commands for live viewer interaction",
       "MIDI Learn and OSC UDP show-control (port 9000)",
@@ -138,7 +140,7 @@
           <span class="eyebrow">In your DAW</span>
           <h2 class="section-title">Made for producers</h2>
           <p>Drop the bundled <strong>EcholumeAudioTap</strong> plugin onto a track in <strong>Ableton Live</strong> or <strong>Logic Pro</strong>. It listens to that track and streams the analysed frequency bands and your project's tempo straight to Echolume.</p>
-          <p>There is no BlackHole or loopback driver to set up, so it works the moment you add it. It stays locked to your host tempo, always in sync, and your audio passes through the track untouched.</p>
+          <p>There is no BlackHole or loopback driver to set up. Add the plugin, turn on OSC input in Echolume's Setup, and hit Ready. It stays locked to your host tempo and your audio passes through the track untouched.</p>
         </div>
         <figure class="daw-shot">
           <img src="screenshots/plugin-daw2.png" width="852" height="900" loading="lazy" decoding="async"
@@ -181,6 +183,11 @@
           <span class="feature-accent">Metal Renderer</span>
           <h3 class="feature-title">Low-latency Metal engine</h3>
           <p>Renders high-FPS procedural shapes and two-pass decaying feedback/trail accumulation. Run visuals fullscreen on an external display while controlling Setup on your main screen.</p>
+        </li>
+        <li class="feature">
+          <span class="feature-accent">Video Recording</span>
+          <h3 class="feature-title">Record your visuals</h3>
+          <p>Press <code>V</code> in Live to record the output to an H.264 MP4 in your Movies folder. It captures the picture only, with no audio track, so pair it with your own recording of the music in an editor, or capture both together in OBS.</p>
         </li>
         <li class="feature">
           <span class="feature-accent">Menu Bar Control</span>

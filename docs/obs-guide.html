@@ -80,7 +80,7 @@
         "name": "Is there a delay between stream audio and Echolume visuals?",
         "acceptedAnswer": {
           "@type": "Answer",
-          "text": "No. Virtual loopback drivers like BlackHole run inside the macOS kernel and have zero latency. If you notice a delay, it is likely GPU throttling. Close unused background software to free up rendering cycles."
+          "text": "Usually it is small enough not to notice, but it is never truly zero. BlackHole itself adds no latency of its own, and the rest of the path does: the audio buffer, Echolume's analysis, the Metal render, and OBS capturing the window. Check the whole path rather than one part. Play something percussive, watch the visuals against the sound, and if the gap bothers you, lower your audio buffer size, close heavy background software, and use OBS's per-source audio sync offset to line them up."
         }
       },
       {
@@ -143,7 +143,7 @@
       <section>
         <h2>Step-by-step setup guide</h2>
         <div class="callout callout-info">
-          <strong>Why use BlackHole?</strong> macOS does not natively support system output audio capture. BlackHole creates a virtual bridge that routes audio between applications with zero latency.
+          <strong>Why use BlackHole?</strong> There are two separate paths here. OBS can capture desktop or application audio natively on macOS 13 and later, and that is what carries the music to your stream. Echolume is a different matter: it reads audio <em>inputs</em> only, so it cannot listen to your system output on its own. BlackHole is the virtual bridge that turns that output into an input Echolume can analyse. If your sound comes from a supported DAW, the bundled AUv3 plugin does the same job without a loopback driver.
         </div>
 
         <h3>1. Set up audio monitoring in OBS</h3>
@@ -201,7 +201,7 @@
           <dd>Because OBS is routing monitoring audio to BlackHole, your headphones are bypassed. To hear the stream output, open <strong>Audio MIDI Setup</strong> on macOS, click the <strong>+</strong> button in the bottom left, and create a <strong>Multi-Output Device</strong>. Check both your headphones (or audio interface) and <strong>BlackHole 2ch</strong>. Then, in OBS Settings &rarr; Audio, select this Multi-Output Device as your Monitoring Device.</dd>
 
           <dt>Is there a delay between stream audio and Echolume visuals?</dt>
-          <dd>No. Virtual loopback drivers like BlackHole run inside the macOS kernel and have zero latency. If you notice a delay, it is likely GPU throttling. Close unused background software to free up rendering cycles.</dd>
+          <dd>Usually it is small enough not to notice, but it is never truly zero. BlackHole itself adds no latency of its own, and the rest of the path does: the audio buffer, Echolume's analysis, the Metal render, and OBS capturing the window. Check the whole path rather than one part. Play something percussive, watch the visuals against the sound, and if the gap bothers you, lower your audio buffer size, close heavy background software, and use OBS's per-source audio sync offset to line them up.</dd>
 
           <dt>My viewer commands are not affecting the visuals</dt>
           <dd>To enable viewer interaction, make sure you configure your channel username under the Twitch chat tab in Setup and toggle the connection to active. Refer to the <a href="twitch-guide.html">Twitch integration guide</a>.</dd>
