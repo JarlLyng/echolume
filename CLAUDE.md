@@ -35,3 +35,11 @@ bullet lists in public copy, minimal emojis, avoid AI-sounding phrasing, pay-onc
 ($19.99 once, no subscription). Echolume's own overlay is deliberately undefined until launch
 signals arrive: write the base voice (honest maker, calm, concrete), and log audience
 reactions in the hub so the overlay can grow from real replies.
+
+## Before submitting a release
+
+Run [`RELEASE_CHECKLIST.md`](RELEASE_CHECKLIST.md). It gates the voice rules above and the
+public facts that drift between versions (scene/theme counts, JSON-LD version, README
+shipped-vs-planned, sitemap dates), plus the version-numbering rules that have broken
+deliveries before. The App Store description is version-locked, so store copy can only be
+fixed alongside a submission.
