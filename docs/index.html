@@ -581,9 +581,11 @@
         cx = narrow ? w * 0.5 : w * 0.7;
         cy = narrow ? h * 0.4 : h * 0.52;
         baseR = Math.min(w, h) * (narrow ? 0.2 : 0.23);
-        // Start from black so the first trails fade in cleanly.
-        ctx.fillStyle = '#0a0a0a';
-        ctx.fillRect(0, 0, w, h);
+        // Deliberately left transparent: the poster frame behind the canvas is
+        // what a visitor sees until the loop runs. The per-frame trail fade
+        // (rgba(10,10,10,0.16)) darkens over it in about a third of a second,
+        // so the real captured frame dissolves into the live simulation.
+        ctx.clearRect(0, 0, w, h);
       }
 
       const heroSection = document.querySelector('.hero');
@@ -694,9 +696,9 @@
       window.addEventListener('resize', resize);
 
       if (reduceMotion) {
-        // A single, calm frame: mid-energy ring, no loop.
-        time = 0.35;
-        for (let i = 0; i < 24; i++) { time += 1 / 60; drawFrame(); }
+        // Nothing to draw: the poster frame behind the canvas is the reduced
+        // motion experience, and it is a real capture of the app rather than
+        // an approximation of one.
       } else {
         if ('IntersectionObserver' in window) {
           new IntersectionObserver(function (entries) {

@@ -199,11 +199,19 @@ a:hover {
   z-index: 2;
 }
 
+/* Poster frame behind the canvas: a real capture of the app's Spectrum Ring
+   scene, not an approximation of one. It is what a visitor sees before the loop
+   starts, when motion is reduced, when JavaScript never runs, and in any
+   renderer that pauses requestAnimationFrame (screenshot services, link
+   previews, background tabs). The canvas starts transparent and its per-frame
+   trail fade darkens over this within about a third of a second, so the still
+   dissolves into the live simulation. */
 .hero-canvas-container {
   position: absolute;
   inset: 0;
   z-index: 0;
   pointer-events: none;
+  background: #0a0a0a url("images/hero-poster.jpg") center / cover no-repeat;
 }
 
 #hero-canvas {
