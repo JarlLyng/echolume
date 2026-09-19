@@ -214,6 +214,17 @@ a:hover {
   background: #0a0a0a url("images/hero-poster.jpg") center / cover no-repeat;
 }
 
+/* On a tall, narrow viewport `cover` zooms the poster until a couple of spokes
+   fill the screen and the copy sits on top of them. Scale it down so the ring
+   reads as a whole shape, at roughly the size the canvas draws it there, with
+   the copy in the dark space around it. */
+@media (max-width: 720px) {
+  .hero-canvas-container {
+    background-size: 200% auto;
+    background-position: center 40%;
+  }
+}
+
 #hero-canvas {
   display: block;
   width: 100%;
