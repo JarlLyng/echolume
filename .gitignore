@@ -30,5 +30,16 @@ Thumbs.db
 *.swp
 
 # Editor/AI tool state
+# The repo is indifferent to which AI is used and keeps exactly one agent-context
+# file, the vendor-neutral AGENTS.md. No tool-specific AI config is tracked.
 .cursor/
 .vscode/
+.claude/
+CLAUDE.md
+CLAUDE.local.md
+.cursorrules
+.windsurfrules
+.clinerules
+.aider*
+.mcp.json
+.github/copilot-instructions.md
