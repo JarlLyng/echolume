@@ -1,9 +1,11 @@
 /* Echolume marketing site — site-local design values (dark mode).
-   These mirror the IAMJARL palette but are NOT live design-system tokens:
-   the site is static (GitHub Pages, no build step), so the values are held
-   here directly. Names stay OUTSIDE the `--ij-*` namespace on purpose, so
-   nothing here falsely implies a live coupling to the design system. If a
-   shared `--ij-*` token is ever consumed, link the real dist/css/tokens.css. */
+   These mirror the IAMJARL palette and are held here directly, since the site
+   is static (GitHub Pages, no build step). Names stay OUTSIDE the `--ij-*`
+   namespace on purpose, so nothing here falsely implies a live coupling to the
+   design system. The one exception is real: the accent reads
+   `--ij-color-accent-family`, which comes from the design system's music family
+   identity sheet (dist/identity/echolume.css, linked on every page). If that
+   sheet fails to load, the fallbacks below keep the original lime. */
 :root {
   /* Color */
   --bg: #0a0a0a;
@@ -12,7 +14,10 @@
   --text: #ffffff;
   --text-muted: rgba(255, 255, 255, 0.75);
   --text-tertiary: rgba(255, 255, 255, 0.45);
-  --accent: #d0ff00; /* Lime / Neon Yellow */
+  /* Accent: the music family teal from the design system, lime if it is missing.
+     Decoration only; the canvas keeps its own theme palettes. */
+  --accent: var(--ij-color-accent-family, #d0ff00);
+  --accent-rgb: var(--ij-color-accent-family-rgb, 208, 255, 0);
   --border: rgba(255, 255, 255, 0.08);
   --border-hover: rgba(255, 255, 255, 0.15);
 
@@ -165,7 +170,7 @@ a:hover {
 }
 
 /* Header CTA needs explicit dark text — `.nav a` (translucent white) would
-   otherwise out-specify `.cta` and render an unreadable label on lime. */
+   otherwise out-specify `.cta` and render an unreadable label on the accent. */
 .nav a.cta-nav,
 .nav a.cta-nav:hover {
   color: #000000;
@@ -258,10 +263,10 @@ a:hover {
   margin: 0 0 1.25rem;
   display: inline-block;
   padding: 0.35rem 1.2rem;
-  background: rgba(208, 255, 0, 0.06);
-  border: 1px solid rgba(208, 255, 0, 0.15);
+  background: rgba(var(--accent-rgb), 0.06);
+  border: 1px solid rgba(var(--accent-rgb), 0.15);
   border-radius: 100px;
-  box-shadow: 0 0 20px rgba(208, 255, 0, 0.03);
+  box-shadow: 0 0 20px rgba(var(--accent-rgb), 0.03);
 }
 
 .hero-title {
@@ -313,7 +318,7 @@ a:hover {
   font-size: 1rem;
   border-radius: var(--radius);
   transition: all 0.25s cubic-bezier(0.2, 0.8, 0.2, 1);
-  box-shadow: 0 4px 15px rgba(208, 255, 0, 0.2), 0 0 0 1px rgba(208, 255, 0, 0.1) inset;
+  box-shadow: 0 4px 15px rgba(var(--accent-rgb), 0.2), 0 0 0 1px rgba(var(--accent-rgb), 0.1) inset;
 }
 
 .cta:hover {
@@ -544,7 +549,7 @@ a:hover {
   left: 0;
   width: 100%;
   height: 100%;
-  background: radial-gradient(800px circle at var(--x, 0px) var(--y, 0px), rgba(208, 255, 0, 0.05), transparent 40%);
+  background: radial-gradient(800px circle at var(--x, 0px) var(--y, 0px), rgba(var(--accent-rgb), 0.05), transparent 40%);
   opacity: 0;
   transition: opacity 0.5s ease;
   pointer-events: none;
@@ -559,7 +564,7 @@ a:hover {
   background: var(--bg-card-hover);
   border-color: var(--border-hover);
   transform: translateY(-4px);
-  box-shadow: var(--shadow-md), 0 0 30px rgba(208, 255, 0, 0.02);
+  box-shadow: var(--shadow-md), 0 0 30px rgba(var(--accent-rgb), 0.02);
 }
 
 .feature-accent {
@@ -753,7 +758,7 @@ a:hover {
   color: #ffffff;
   border-color: var(--accent);
   transform: translateY(-2px);
-  box-shadow: 0 8px 28px rgba(0, 0, 0, 0.5), 0 0 26px rgba(208, 255, 0, 0.12);
+  box-shadow: 0 8px 28px rgba(0, 0, 0, 0.5), 0 0 26px rgba(var(--accent-rgb), 0.12);
 }
 
 .download-note {
@@ -1019,7 +1024,7 @@ a:hover {
 
 .callout-success {
   border-left-color: var(--accent);
-  background: rgba(208, 255, 0, 0.03);
+  background: rgba(var(--accent-rgb), 0.03);
 }
 
 .callout-success strong {
