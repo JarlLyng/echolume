@@ -24,6 +24,8 @@ Check every place the same fact appears, not just the one you remember.
       describes a fixed problem as open.
 - [ ] `docs/sitemap.xml`: `lastmod` per page reflects a real edit to that page, and the
       `image:` entries list images actually on it.
+- [ ] `docs/social-card.jpg` (the `og:image` on every page) still states the right price and
+      platform. It is rendered from `design/social-card/`, see the README there.
 - [ ] Features described on the site still behave as described. Two that are easy to get
       wrong: recording writes **video only, no audio track**, and the AUv3 plugin route
       needs **OSC input enabled** in Setup, because `oscEnabled` defaults to `false`.
