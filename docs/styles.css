@@ -684,6 +684,18 @@ section[id] {
   }
 }
 
+/* Buyer questions on the homepage (#175). Reuses the .faq list from the support page. */
+.home-faq {
+  max-width: var(--container);
+  margin: 0 auto;
+  padding: var(--section-y) var(--gutter);
+  border-top: 1px solid var(--border);
+}
+
+.home-faq .faq {
+  max-width: 48rem;
+}
+
 /* Download */
 .download {
   max-width: var(--container);
