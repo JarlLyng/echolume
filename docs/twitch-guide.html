@@ -91,34 +91,40 @@
   }
   </script>
 
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&amp;family=Outfit:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet">
   <!-- Umami analytics (privacy-friendly, cookieless) -->
   <script defer src="https://umami-iamjarl.vercel.app/script.js" data-website-id="09a6bdeb-cb4b-4156-8674-aaff69e3fee9"></script>
   <link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png">
   <link rel="icon" type="image/png" sizes="16x16" href="favicon-16.png">
   <link rel="apple-touch-icon" href="apple-touch-icon.png">
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/JarlLyng/iamjarl-design@v1.13.0/dist/identity/echolume.css"
-        integrity="sha384-bSQ6iTdi7o3S0LRBCiV3AR1Ivk/O8QfwJJVJ4FMEQ409lodsGbl2QX6TIWu/qEnP" crossorigin="anonymous">
+  <!-- IAMJARL design system, every file from one tag (v1.18.1). Bump tag and hashes together. -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/jarllyng/iamjarl-design@v1.18.1/dist/css/tokens.css"
+        integrity="sha384-22MrFE+80z5lCKUZNzjvELfuIcp6Tpky6CAIRarb1O3kBRhKRcurJb60WPF/+img" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/jarllyng/iamjarl-design@v1.18.1/dist/fonts/outfit.css"
+        integrity="sha384-TKdqN9RLNdm1+7Br3sWgqzannw+0WUp4rgSTmDoYVGpFMsAw5zn5StHHQfy7Oarg" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/jarllyng/iamjarl-design@v1.18.1/dist/identity/echolume.css"
+        integrity="sha384-kREcQQ+7cG6Y9W9lnx9cKS06Egl2q5UHKjktP8/rnFzhCcLekeidgTY4cXHY5sJW" crossorigin="anonymous">
+  <script type="module" src="https://cdn.jsdelivr.net/gh/jarllyng/iamjarl-design@v1.18.1/dist/components/ij-nav.js"
+          integrity="sha384-i/0VwGVuk94AEHDbAix4x5BfuKvSjBhS8cdqsCXBHlwOidcAGJTBMi6QM2eU1RAV" crossorigin="anonymous"></script>
+  <script type="module" src="https://cdn.jsdelivr.net/gh/jarllyng/iamjarl-design@v1.18.1/dist/components/ij-footer.js"
+          integrity="sha384-vbo2o61hGBKT7RZB4taOfO8TxwNA3akt7UBF0X31Xjfk5rZlCXkz6oJ9HqiBglTJ" crossorigin="anonymous"></script>
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-  <header class="header">
-    <a href="/" class="logo">Echolume</a>
-    <nav class="nav" aria-label="Main Navigation">
-      <a href="how-it-works.html">How it works</a>
-      <a href="obs-guide.html">OBS Guide</a>
-      <a href="twitch-guide.html" class="active">Twitch</a>
-      <a href="/#download" class="cta cta-nav" data-umami-event="cta-download" data-umami-event-placement="nav">Download</a>
-      <a href="https://github.com/JarlLyng/echolume" target="_blank" rel="noopener" class="github-btn">
-        <svg height="16" width="16" viewBox="0 0 16 16" fill="currentColor" class="github-icon"><path fill-rule="evenodd" d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"></path></svg>
-        GitHub
-      </a>
-    </nav>
-  </header>
+  <ij-nav>
+    <a slot="brand" href="/">Echolume</a>
+    <a slot="links" href="how-it-works.html">How it works</a>
+    <a slot="links" href="obs-guide.html">OBS Guide</a>
+    <a slot="links" href="twitch-guide.html">Twitch</a>
+    <a slot="secondary" href="https://github.com/JarlLyng/echolume" target="_blank" rel="noopener">
+      <svg height="16" width="16" viewBox="0 0 16 16" fill="currentColor" class="github-icon"><path fill-rule="evenodd" d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"></path></svg>
+      GitHub
+    </a>
+    <a slot="cta" href="https://apps.apple.com/app/id6759684323"
+       data-umami-event="store-click" data-umami-event-store="mac-app-store"
+       data-umami-event-placement="nav" data-umami-event-locale="en">Download</a>
+  </ij-nav>
 
-  <main class="page-main">
+  <main id="main" class="page-main">
     <nav class="breadcrumbs" aria-label="Breadcrumbs">
       <a href="/">Echolume</a>
       <span class="separator"></span>
@@ -230,26 +236,24 @@
     </article>
   </main>
 
-  <footer class="footer">
+  <ij-footer app="echolume" tagline="Minimal UI, beautiful results.">
+    <a slot="links" href="/">Home</a>
+    <a slot="links" href="how-it-works.html">How it works</a>
+    <a slot="links" href="obs-guide.html">OBS Guide</a>
+    <a slot="links" href="twitch-guide.html">Twitch</a>
+    <a slot="links" href="support.html">Support</a>
+    <a slot="links" href="privacy.html">Privacy</a>
+    <a slot="links" href="https://github.com/JarlLyng/echolume" target="_blank" rel="noopener">GitHub</a>
+    <!-- Cross-links: dist/footers/echolume.html at v1.18.1, in the served HTML so crawlers see them.
+         Paste the new fragment when the tag moves. -->
+    <a slot="cross-links" href="https://its404yo.iamjarl.com">It's 404, yo!</a>
+    <a slot="cross-links" href="https://itsmonoyo.iamjarl.com">It's mono, yo!</a>
+    <a slot="cross-links" href="https://patternaut.iamjarl.com">Patternaut</a>
+    <a slot="cross-links" href="https://tonvault.iamjarl.com">TonVault</a>
+    <a slot="cross-links" href="https://madebyhuman.iamjarl.com">Made by Human</a>
+    <a slot="cross-links" href="https://iamjarl.com">All projects</a>
+    <!-- No slot: shown only if the component never loads. -->
     <p>Echolume. Minimal UI, beautiful results.</p>
-    <div class="footer-nav">
-      <a href="/">Home</a>
-      <a href="how-it-works.html">How it works</a>
-      <a href="obs-guide.html">OBS Guide</a>
-      <a href="twitch-guide.html">Twitch</a>
-      <a href="support.html">Support</a>
-      <a href="privacy.html">Privacy</a>
-      <a href="https://github.com/JarlLyng/echolume" target="_blank" rel="noopener">GitHub</a>
-    </div>
-    <p class="footer-more">More from IAMJARL</p>
-    <p class="footer-sublinks">
-      <a href="https://its404yo.iamjarl.com" target="_blank" rel="noopener noreferrer">It's 404, yo!</a> ·
-      <a href="https://itsmonoyo.iamjarl.com" target="_blank" rel="noopener noreferrer">It's mono, yo!</a> ·
-      <a href="https://patternaut.iamjarl.com" target="_blank" rel="noopener noreferrer">Patternaut</a> ·
-      <a href="https://tonvault.iamjarl.com" target="_blank" rel="noopener noreferrer">TonVault</a> ·
-      <a href="https://madebyhuman.iamjarl.com" target="_blank" rel="noopener noreferrer">Made by Human</a> ·
-      <a href="https://iamjarl.com" target="_blank" rel="noopener noreferrer">All projects</a>
-    </p>
-  </footer>
+  </ij-footer>
 </body>
 </html>
