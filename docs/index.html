@@ -4,10 +4,10 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Echolume — Live Audio-Reactive Visuals for macOS</title>
-  <meta name="description" content="Echolume is a low-latency, Metal-powered live visualizer for macOS. Route DAW audio via AUv3, sync beats, and let Twitch viewers control your visual sets.">
+  <meta name="description" content="Live audio-reactive visuals for macOS. Use your Mac's microphone, an audio interface or a track in Ableton Live or Logic Pro, pick a look and hit Ready. $19.99 once, no subscription.">
   <link rel="canonical" href="https://echolume.iamjarl.com/">
   <meta property="og:title" content="Echolume — Live Audio-Reactive Visuals for macOS">
-  <meta property="og:description" content="Metal-powered live 2D visuals. Connect DAW audio via AUv3, map MIDI parameters, sync BPM, and stream with OBS and Twitch.">
+  <meta property="og:description" content="Live audio-reactive visuals for macOS. Use your Mac's microphone, an audio interface or a track in Ableton Live or Logic Pro, pick a look and hit Ready. $19.99 once, no subscription.">
   <meta property="og:url" content="https://echolume.iamjarl.com/">
   <meta property="og:type" content="website">
   <meta property="og:image" content="https://echolume.iamjarl.com/social-card.jpg">
@@ -104,11 +104,16 @@
       <div class="hero-inner">
         <p class="hero-tagline">Sound into light</p>
         <h1 class="hero-title">Live audio‑reactive visuals for macOS</h1>
-        <p class="hero-desc">Metal-powered 2D visuals that react to your sound in real time. Pick your input, choose a theme, hit Ready, and perform. Complete with DAW plugin, OSC and MIDI control.</p>
+        <p class="hero-desc">Visuals that move with your music, for a live set, a stream or the track you are working on. Feed it your Mac's microphone, an audio interface or a track in Ableton Live or Logic Pro, pick a look and hit Ready. No controller needed.</p>
+        <div class="hero-buy">
+          <a id="hero-cta" href="https://apps.apple.com/app/id6759684323?pt=128512007&ct=site&mt=12" class="cta"
+             data-umami-event="store-click" data-umami-event-store="mac-app-store"
+             data-umami-event-placement="hero" data-umami-event-locale="en">Get Echolume</a>
+          <p class="hero-price">$19.99 once on the Mac App Store, no subscription.<br>Needs macOS 14 or later.</p>
+        </div>
         <div class="hero-more">
           <a href="how-it-works.html">How to route DAW audio, interfaces, or microphones &rarr;</a>
         </div>
-        <a id="hero-cta" href="#download" class="cta" data-umami-event="cta-download" data-umami-event-placement="hero">Get Echolume</a>
       </div>
     </section>
 
@@ -148,7 +153,7 @@
         <div class="daw-copy">
           <span class="eyebrow">In your DAW</span>
           <h2 class="section-title">Made for producers</h2>
-          <p>Drop the bundled <strong>EcholumeAudioTap</strong> plugin onto a track in <strong>Ableton Live</strong> or <strong>Logic Pro</strong>. It listens to that track and streams the analysed frequency bands and your project's tempo straight to Echolume.</p>
+          <p>Drop the bundled <strong>EcholumeAudioTap</strong> plugin onto a track in <strong>Ableton Live</strong> or <strong>Logic Pro</strong>. It listens to that track and sends what it hears, along with your project's tempo, straight to Echolume.</p>
           <p>There is no BlackHole or loopback driver to set up. Add the plugin, turn on OSC input in Echolume's Setup, and hit Ready. It stays locked to your host tempo and your audio passes through the track untouched.</p>
         </div>
         <figure class="daw-shot">
@@ -161,52 +166,52 @@
     <section id="features" class="features reveal">
       <span class="eyebrow">Everything you need</span>
       <h2 class="section-title">Built for performance</h2>
-      <p class="section-subtitle">Low-latency Metal rendering and deep control over MIDI, OSC and Twitch, for producers, live acts and DJs.</p>
+      <p class="section-subtitle">A microphone or an audio interface is all you need to start. The DAW plugin, a MIDI controller and Twitch are there when you want them.</p>
       <ul class="feature-grid">
         <li class="feature">
-          <span class="feature-accent">AUv3 DAW Tap</span>
-          <h3 class="feature-title">DAW audio routing</h3>
-          <p>Drop the bundled <strong>EcholumeAudioTap</strong> AUv3 plugin onto Ableton Live or Logic Pro tracks to stream analysis parameters and host BPM to Echolume over local OSC. No virtual loopback drivers required.</p>
+          <span class="feature-accent">DAW</span>
+          <h3 class="feature-title">Visuals from your DAW track</h3>
+          <p>Add the bundled <strong>EcholumeAudioTap</strong> plugin to a track in Ableton Live or Logic Pro and turn on OSC input in Echolume. The visuals follow that track and your project's tempo, with no loopback driver to install.</p>
         </li>
         <li class="feature">
-          <span class="feature-accent">BPM &amp; Beat Sync</span>
-          <h3 class="feature-title">Tempo-synced shaders</h3>
-          <p>Auto-detect track BPM using autocorrelation analysis. Sync visuals to a phase-locked loop beat pulse. Supports manual Tap Tempo buttons or MIDI-triggered BPM locking.</p>
+          <span class="feature-accent">Tempo</span>
+          <h3 class="feature-title">Moves on the beat</h3>
+          <p>Echolume finds the tempo of whatever you play and pulses with it. If it locks onto the wrong beat, tap the tempo in by hand or from a MIDI pad. With the DAW plugin it takes your project's tempo instead.</p>
         </li>
         <li class="feature">
-          <span class="feature-accent">Twitch Integration</span>
-          <h3 class="feature-title">Interactive stream sets</h3>
-          <p>Connect Echolume directly to Twitch chat as an anonymous reader. Let viewers randomize themes, switch scenes, adjust abstraction, or recall presets using rate-limited chat commands.</p>
+          <span class="feature-accent">Twitch</span>
+          <h3 class="feature-title">Let your chat play along</h3>
+          <p>Viewers type commands in chat to switch themes and scenes, randomize the look or recall a preset. Echolume reads chat without signing in to your account, and takes one command per second.</p>
         </li>
         <li class="feature">
-          <span class="feature-accent">MIDI Learn &amp; OSC</span>
-          <h3 class="feature-title">Hardware &amp; show control</h3>
-          <p>Bind any hardware MIDI slider, knob, or button to visual parameters. Listen to custom OSC UDP packets from Resolume or TouchDesigner on port 9000 to automate your rig.</p>
+          <span class="feature-accent">Controllers</span>
+          <h3 class="feature-title">Use the gear you have</h3>
+          <p>Map the five knobs and a few triggers, like Randomize and Panic Reset, to any MIDI controller with MIDI Learn. If you run TouchDesigner or Resolume, they can drive Echolume over OSC.</p>
         </li>
         <li class="feature">
-          <span class="feature-accent">Presets Store</span>
-          <h3 class="feature-title">Instant visual presets</h3>
-          <p>Save complex visual configurations (theme, scene, shape, knob positions) and recall them instantly with keyboard hotkeys <code>⌘1</code>–<code>⌘9</code>, OSC messages, or Twitch command parameters.</p>
+          <span class="feature-accent">Presets</span>
+          <h3 class="feature-title">Save a look, bring it back</h3>
+          <p>Save a look you like, with its theme, scene, shape and knob positions, and recall it with <code>⌘1</code> to <code>⌘9</code> during a set or from Twitch chat.</p>
         </li>
         <li class="feature">
-          <span class="feature-accent">Metal Renderer</span>
-          <h3 class="feature-title">Low-latency Metal engine</h3>
-          <p>Renders high-FPS procedural shapes and two-pass decaying feedback/trail accumulation. Run visuals fullscreen on an external display while controlling Setup on your main screen.</p>
+          <span class="feature-accent">Output</span>
+          <h3 class="feature-title">Fullscreen on a second screen</h3>
+          <p>Echolume draws on your Mac's graphics chip, so the visuals stay smooth fullscreen on a projector or an external display while the controls stay on your laptop.</p>
         </li>
         <li class="feature">
-          <span class="feature-accent">Video Recording</span>
+          <span class="feature-accent">Recording</span>
           <h3 class="feature-title">Record your visuals</h3>
           <p>Press <code>V</code> in Live to record the output to an H.264 MP4 in your Movies folder. It captures the picture only, with no audio track, so pair it with your own recording of the music in an editor, or capture both together in OBS.</p>
         </li>
         <li class="feature">
-          <span class="feature-accent">Menu Bar Control</span>
-          <h3 class="feature-title">Menu bar extra utility</h3>
-          <p>A native status bar menu provides access to Panic Reset (visual trails), Randomize visual seeds, or Audio Engine Restarts while running other apps fullscreen.</p>
+          <span class="feature-accent">Menu bar</span>
+          <h3 class="feature-title">Quick actions from the menu bar</h3>
+          <p>Randomize the look, clear the trails with Panic Reset, restart audio or bring Echolume forward from the menu bar, even while it runs fullscreen on another display.</p>
         </li>
         <li class="feature">
-          <span class="feature-accent">Device Switching</span>
-          <h3 class="feature-title">In-app audio switching</h3>
-          <p>Enumerate and switch audio input sources and stereo channel pairs in-app. Safe fallback keeps visuals alive if an external audio interface disconnects mid-set.</p>
+          <span class="feature-accent">Audio inputs</span>
+          <h3 class="feature-title">Switch inputs mid-set</h3>
+          <p>Pick any input and channel pair from inside the app. If an interface disconnects mid-set, Echolume falls back to your Mac's default input instead of stopping.</p>
         </li>
       </ul>
     </section>
@@ -234,14 +239,14 @@
     <section id="download" class="download reveal">
       <span class="eyebrow">Get it</span>
       <h2 class="section-title">Download Echolume</h2>
-      <p class="download-desc">Echolume is a standalone application requiring macOS 14 (Sonoma) or later. The AUv3 plugin requires an AUv3-compatible host like Ableton Live 11.3+ or Logic Pro.</p>
+      <p class="download-desc">Echolume runs on macOS 14 (Sonoma) or later. The bundled plugin needs a host that loads AUv3 plugins, such as Ableton Live 11.3 or later, or Logic Pro.</p>
       <a href="https://apps.apple.com/app/id6759684323?pt=128512007&ct=site&mt=12" class="btn-store"
          data-umami-event="store-click" data-umami-event-store="mac-app-store"
          data-umami-event-placement="purchase-section" data-umami-event-locale="en">
         <svg viewBox="0 0 384 512" aria-hidden="true"><path d="M318.7 268.7c-.2-36.7 16.4-64.4 50-84.8-18.8-26.9-47.2-41.7-84.7-44.6-35.5-2.8-74.3 20.7-88.5 20.7-15 0-49.4-19.7-76.4-19.7C63.3 141.2 4 184.8 4 273.5q0 39.3 14.4 81.2c12.8 36.7 59 126.7 107.2 125.2 25.2-.6 43-17.9 75.8-17.9 31.8 0 48.3 17.9 76.4 17.9 48.6-.7 90.4-82.5 102.6-119.3-65.2-30.7-61.7-90-61.7-91.9zm-56.6-164.2c27.3-32.4 24.8-61.9 24-72.5-24.1 1.4-52 16.4-67.9 34.9-17.5 19.8-27.8 44.3-25.6 71.9 26.1 2 49.9-11.4 69.5-34.3z"/></svg>
         <span>Download on the Mac App Store</span>
       </a>
-      <p class="download-note">On the Mac App Store. A one-time purchase ($19.99), yours forever. The bundled AUv3 plugin registers automatically on first launch.</p>
+      <p class="download-note">$19.99 once on the Mac App Store, no subscription, and it is yours to keep. The plugin comes inside the app and registers the first time you open Echolume.</p>
     </section>
   </main>
 
