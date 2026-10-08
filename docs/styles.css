@@ -26,8 +26,11 @@
   --radius-sm: 8px;
 
   /* Type */
-  --font: "Inter", -apple-system, BlinkMacSystemFont, sans-serif;
-  --font-heading: "Outfit", -apple-system, BlinkMacSystemFont, sans-serif;
+  /* Body is the system UI stack, the same value as the design system's --ij-font-ui
+     (design.md: "Body copy stays --ij-font-ui everywhere"). Headings take the display
+     face from the identity sheet, Outfit, loaded from dist/fonts/outfit.css. No Google Fonts. */
+  --font: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  --font-heading: var(--ij-font-display, system-ui, -apple-system, 'Segoe UI', sans-serif);
 
   /* Elevation */
   --shadow-md: 0 8px 24px rgba(0, 0, 0, 0.6);
@@ -41,6 +44,10 @@
 
 * {
   box-sizing: border-box;
+}
+
+h1, h2, h3 {
+  font-family: var(--font-heading);
 }
 
 html {
@@ -74,106 +81,48 @@ body {
   background: rgba(255, 255, 255, 0.2);
 }
 
-a {
+a:where(:not([slot])) {
   color: var(--accent);
   text-decoration: none;
   transition: color 0.2s ease, opacity 0.2s ease;
 }
 
-a:hover {
+a:where(:not([slot])):hover {
   color: #ffffff;
   text-decoration: none;
 }
 
-/* Header */
-.header {
-  position: sticky;
-  top: 0;
-  z-index: 100;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 1.25rem 2rem;
-  background: rgba(10, 10, 10, 0.75);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-  border-bottom: 1px solid var(--border);
-  transition: background 0.3s, border-color 0.3s;
-}
-
-.logo {
-  font-family: var(--font-heading);
-  font-weight: 800;
+/* Navigation: <ij-nav> from the design system (#207). It brings the sticky translucent
+   bar, the one-row phone layout, the skip link and aria-current. These rules only keep
+   today's look where the site chose to: the wordmark's size and weight, and pill-shaped
+   buttons, which are a deliberate exception to the design system's radius.md. */
+ij-nav a[slot="brand"] {
   font-size: 1.4rem;
-  color: var(--text);
+  font-weight: 800;
   letter-spacing: -0.03em;
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
 }
 
-.logo::before {
-  content: "";
-  display: inline-block;
-  width: 10px;
-  height: 10px;
-  background: var(--accent);
-  border-radius: 50%;
-  box-shadow: 0 0 10px var(--accent);
-}
-
-.logo:hover {
-  color: var(--accent);
-  text-decoration: none;
-}
-
-.nav {
-  display: flex;
-  gap: 2rem;
-  align-items: center;
-}
-
-.nav a {
-  color: var(--text-muted);
-  font-size: 0.95rem;
-  font-weight: 500;
-}
-
-.nav a:hover, .nav a.active {
-  color: var(--accent);
-  text-decoration: none;
-}
-
-.nav .github-btn {
-  display: flex;
-  align-items: center;
-  gap: 0.4rem;
-  padding: 0.45rem 1rem;
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px solid var(--border);
+ij-nav a[slot="cta"],
+ij-nav a[slot="secondary"] {
   border-radius: 30px;
-  font-size: 0.9rem;
-  color: var(--text);
-  transition: all 0.2s ease;
 }
 
-.nav .github-btn:hover {
-  background: rgba(255, 255, 255, 0.1);
-  border-color: rgba(255, 255, 255, 0.2);
+/* Before the script upgrades it, <ij-nav> is a row of plain links (also what a crawler
+   sees). This makes that moment look like a bar instead of a jump. */
+ij-nav:not(:defined) {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--ij-spacing-lg, 16px) var(--ij-spacing-xxxl, 32px);
+  padding: var(--ij-spacing-md, 12px) var(--ij-spacing-xxxl, 32px);
+  border-bottom: 1px solid var(--border);
 }
 
-.cta-nav {
-  padding: 0.45rem 1.25rem;
-  font-size: 0.9rem;
-  border-radius: 30px;
-  box-shadow: none;
-}
+ij-nav:not(:defined) a { color: var(--text-muted); }
 
-/* Header CTA needs explicit dark text — `.nav a` (translucent white) would
-   otherwise out-specify `.cta` and render an unreadable label on the accent. */
-.nav a.cta-nav,
-.nav a.cta-nav:hover {
-  color: #000000;
+/* Anchors such as #download land below the sticky bar instead of under it. */
+section[id] {
+  scroll-margin-top: 5rem;
 }
 
 .github-icon {
@@ -227,6 +176,9 @@ a:hover {
   .hero-canvas-container {
     background-size: 200% auto;
     background-position: center 40%;
+    /* At this size the poster no longer covers the hero, and its pure black
+       ground showed as a band against #0a0a0a. Match the poster's black. */
+    background-color: #000;
   }
 }
 
@@ -293,8 +245,25 @@ a:hover {
   max-width: 20ch;
 }
 
+/* The store link with its price beside it, so the first screen says what it
+   costs and where to get it (#176). */
+.hero-buy {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 1rem 1.25rem;
+  margin: 0 0 1.75rem;
+}
+
+.hero-price {
+  margin: 0;
+  font-size: 0.95rem;
+  line-height: 1.45;
+  color: var(--text-muted);
+}
+
 .hero-more {
-  margin: 0 0 1.5rem;
+  margin: 0;
   font-size: 0.95rem;
 }
 
@@ -836,52 +805,26 @@ a:hover {
   border: 1px solid rgba(241, 196, 15, 0.2);
 }
 
-/* Footer */
-.footer {
-  padding: 4rem 2rem;
-  border-top: 1px solid var(--border);
-  text-align: left;
-  color: var(--text-muted);
-  font-size: 0.9rem;
-  background: rgba(0, 0, 0, 0.2);
+/* Footer: <ij-footer> from the design system (#188). It draws its own hairline, tagline,
+   link groups and "More from IAMJARL". The page only places it in the content width. */
+ij-footer {
+  display: block;
+  max-width: var(--container);
+  margin: 0 auto;
+  padding: 3rem var(--gutter) 4rem;
 }
 
-.footer > * {
-  max-width: 68rem;
-  margin-left: auto;
-  margin-right: auto;
-}
-
-.footer p {
-  margin: 0.5rem 0;
-}
-
-.footer a {
-  color: var(--text-muted);
-}
-
-.footer a:hover {
-  color: var(--accent);
-}
-
-.footer-nav {
+/* No-JavaScript state: every link is in the served HTML, so lay them out as a row. */
+ij-footer:not(:defined) {
   display: flex;
   flex-wrap: wrap;
-  justify-content: flex-start;
-  gap: 1.5rem;
-  margin: 1.5rem 0;
+  gap: 0.5rem 1.5rem;
+  border-top: 1px solid var(--border);
+  font-size: 0.9rem;
 }
 
-.footer-more {
-  margin-top: 2rem;
-  font-size: 0.85rem;
-  opacity: 0.55;
-}
-
-.footer-sublinks {
-  font-size: 0.85rem;
-  opacity: 0.75;
-}
+ij-footer:not(:defined) p { flex-basis: 100%; margin: 0 0 0.5rem; color: var(--text-muted); }
+ij-footer:not(:defined) a { color: var(--text-muted); }
 
 /* Subpages: Privacy, Support, Guides */
 .page-main {
@@ -1036,16 +979,6 @@ a:hover {
   :root {
     --gutter: 1.25rem;
     --section-y: clamp(3.5rem, 9vw, 5rem);
-  }
-  .header {
-    flex-direction: column;
-    gap: 1rem;
-    padding: 1.25rem 1rem;
-  }
-  .nav {
-    flex-wrap: wrap;
-    justify-content: center;
-    gap: 1rem;
   }
   .hero-inner {
     padding: 6rem 1.25rem 4rem;

@@ -49,7 +49,6 @@ A quick reference of what's shipped vs planned. For the intended design, layerin
 
 ### Planned
 - Twitch OAuth for authenticated features ([#4](https://github.com/JarlLyng/echolume/issues/4)).
-- Danish localization ([#9](https://github.com/JarlLyng/echolume/issues/9)).
 
 ---
 
@@ -177,8 +176,8 @@ Echolume can connect to a Twitch channel's chat (read-only, anonymous) and react
 
 | Command | Effect |
 |---------|--------|
-| `!theme <name>` | Switch theme (e.g. `!theme summer`, `!theme techno club`) |
-| `!scene <name>` | Switch scene type (`radial`, `flow`, `grid`) |
+| `!theme <name>` | Switch theme by its name from the list above (e.g. `!theme summer`, `!theme techno club`) |
+| `!scene <name>` | Switch scene type (`radial`, `flow`, `grid`, `spiral`, `tunnel`, `kaleidoscope`, `plasma`, `spectrumring`, `ridgeline`, `wireframeburst`) |
 | `!shape <name>` | Switch shape style (`blobs`, `circles`, `lines`, `grid`, `particles`) |
 | `!randomize` | Random theme + seed |
 | `!glitch` | Toggle glitch intensity |
@@ -272,7 +271,7 @@ The site will be available at `https://<username>.github.io/echolume/` (or your 
 - **`docs/obs-guide.html`** — OBS Studio integration guide (BlackHole routing, monitor output, streaming tips).
 - **`docs/twitch-guide.html`** — Twitch chat integration guide (setup, commands, stream workflow).
 - **`docs/privacy.html`** — privacy policy.
-- **`docs/support.html`** — FAQ and contact (GitHub Issues).
+- **`docs/support.html`** — FAQ and contact (support@iamjarl.com, GitHub Issues second).
 - **`docs/styles.css`** — styles (Echolume accent colors, dark theme).
 - **`docs/.nojekyll`** — disables Jekyll so static files are served as-is.
 
@@ -304,6 +303,12 @@ MIT — see [LICENSE](LICENSE) for full text.
 ## Contributing
 
 See [CONTRIBUTING.md](CONTRIBUTING.md) for development setup, code style, and how to submit pull requests.
+
+## Support
+
+Questions, bugs and feedback: **support@iamjarl.com**, or **Help → Send Feedback…** in the app
+(from the release after 1.3.0), which fills in your Echolume and macOS versions. GitHub issues are
+welcome too, for anything you would rather discuss in public.
 
 ## Security
 

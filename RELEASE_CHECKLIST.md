@@ -48,6 +48,10 @@ Applies to the App Store description and What's New, the site, and any launch po
 > version submission. Store copy fixes have to happen here, or they wait for the release
 > after this one.
 
+- [ ] Paste the description from `design/app-store/description.md` into App Store Connect, after
+      checking it against section 1. Update that file in the same commit whenever the listing
+      changes, so it always holds what is live or about to be.
+
 ## 3. Version numbers
 
 - [ ] Bump `MARKETING_VERSION` and `CURRENT_PROJECT_VERSION` **together and across every
