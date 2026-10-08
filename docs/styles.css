@@ -176,6 +176,9 @@ section[id] {
   .hero-canvas-container {
     background-size: 200% auto;
     background-position: center 40%;
+    /* At this size the poster no longer covers the hero, and its pure black
+       ground showed as a band against #0a0a0a. Match the poster's black. */
+    background-color: #000;
   }
 }
 
@@ -242,8 +245,25 @@ section[id] {
   max-width: 20ch;
 }
 
+/* The store link with its price beside it, so the first screen says what it
+   costs and where to get it (#176). */
+.hero-buy {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 1rem 1.25rem;
+  margin: 0 0 1.75rem;
+}
+
+.hero-price {
+  margin: 0;
+  font-size: 0.95rem;
+  line-height: 1.45;
+  color: var(--text-muted);
+}
+
 .hero-more {
-  margin: 0 0 1.5rem;
+  margin: 0;
   font-size: 0.95rem;
 }
 
