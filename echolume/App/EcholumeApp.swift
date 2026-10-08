@@ -79,6 +79,13 @@ struct EcholumeApp: App {
                 DebugInspectorMenuButton()
                 #endif
             }
+            // The default Help item only says "Help isn't available for Echolume".
+            // Replace that dead end with the support page and a private
+            // feedback route (#206).
+            CommandGroup(replacing: .help) {
+                Button("Echolume Support") { FeedbackMail.openSupportPage() }
+                Button("Send Feedback…") { FeedbackMail.compose() }
+            }
         }
 
         Settings {
