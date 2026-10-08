@@ -177,8 +177,8 @@ Echolume can connect to a Twitch channel's chat (read-only, anonymous) and react
 
 | Command | Effect |
 |---------|--------|
-| `!theme <name>` | Switch theme (e.g. `!theme summer`, `!theme techno club`) |
-| `!scene <name>` | Switch scene type (`radial`, `flow`, `grid`) |
+| `!theme <name>` | Switch theme by its name from the list above (e.g. `!theme summer`, `!theme techno club`) |
+| `!scene <name>` | Switch scene type (`radial`, `flow`, `grid`, `spiral`, `tunnel`, `kaleidoscope`, `plasma`, `spectrumring`, `ridgeline`, `wireframeburst`) |
 | `!shape <name>` | Switch shape style (`blobs`, `circles`, `lines`, `grid`, `particles`) |
 | `!randomize` | Random theme + seed |
 | `!glitch` | Toggle glitch intensity |
