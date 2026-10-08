@@ -39,12 +39,17 @@
       {
         "@type": "HowToStep",
         "name": "Enable Audio Monitoring",
-        "text": "Open Advanced Audio Properties in OBS. For the audio sources you want to visual, set Audio Monitoring to Monitor and Output."
+        "text": "Open Advanced Audio Properties in OBS. For the audio sources that carry your music, set Audio Monitoring to Monitoring Enabled."
       },
       {
         "@type": "HowToStep",
         "name": "Configure Echolume Input",
         "text": "Launch Echolume and select BlackHole 2ch as the Audio Input Device. Verify level meter movement and press Ready."
+      },
+      {
+        "@type": "HowToStep",
+        "name": "Capture Echolume in OBS",
+        "text": "Add a macOS Screen Capture source in OBS. Set Method to Window Capture and choose Echolume, or to Display Capture and choose the display Echolume runs on. In Display Capture mode the source also picks up the Mac's audio, so mute it in the Audio Mixer to avoid hearing the music twice."
       }
     ]
   }
@@ -137,10 +142,11 @@
       <section>
         <h2>Requirements</h2>
         <ul>
-          <li><a href="https://obsproject.com" target="_blank" rel="noopener">OBS Studio</a> installed on macOS 14+</li>
+          <li><a href="https://obsproject.com" target="_blank" rel="noopener">OBS Studio</a> 30 or later, on macOS 14 or later</li>
           <li><a href="https://existential.audio/blackhole/" target="_blank" rel="noopener">BlackHole 2ch</a> (free virtual loopback driver)</li>
           <li>Echolume application</li>
         </ul>
+        <p class="legal-updated">Source and setting names match OBS Studio 32.2.2, checked October 2026. OBS renames things between versions, so yours may differ slightly.</p>
       </section>
 
       <section>
@@ -160,10 +166,10 @@
         <ol class="legal-list">
           <li>In the OBS main interface, right-click anywhere in the <strong>Audio Mixer</strong> card.</li>
           <li>Select <strong>Advanced Audio Properties</strong>.</li>
-          <li>Locate the audio sources you want to drive the visuals (e.g., microphone feed, desktop music, game capture).</li>
-          <li>Change their <strong>Audio Monitoring</strong> state from *Monitor Off* to <strong>Monitor and Output</strong>.</li>
+          <li>Locate the audio sources that carry your music. If OBS does not have it yet, add a <strong>macOS Audio Capture</strong> source first, set to <strong>Desktop Audio Capture</strong> for everything the Mac plays or <strong>Application Audio Capture</strong> for one app.</li>
+          <li>Change their <strong>Audio Monitoring</strong> from <em>Monitor Off</em> to <strong>Monitoring Enabled</strong>.</li>
         </ol>
-        <p>This setting instructs OBS to broadcast the audio to your stream output *and* replicate it to BlackHole so Echolume can capture it.</p>
+        <p>OBS then sends that audio to your stream <em>and</em> copies it to BlackHole, which is where Echolume listens.</p>
 
         <h3>3. Select BlackHole inside Echolume</h3>
         <ol class="legal-list">
@@ -176,25 +182,27 @@
 
       <section>
         <h2>Capturing Echolume inside OBS</h2>
-        <p>Once Echolume is rendering visuals, you need to import its screen output back into OBS to show it on stream:</p>
+        <p>Once Echolume is rendering visuals, bring its picture back into OBS with a <strong>macOS Screen Capture</strong> source. OBS still lists the older <em>Window Capture</em> and <em>Display Capture</em> sources, but marks them as deprecated. The first time, macOS asks you to give OBS screen recording permission in Privacy &amp; Security.</p>
 
-        <h3>Method A: Window Capture (Single display setups)</h3>
-        <p>Use this method if you are running Echolume in a standard desktop window.</p>
+        <h3>Echolume in a window (one display)</h3>
         <ol class="legal-list">
-          <li>In OBS, click the <strong>+</strong> icon in the Sources dock and select <strong>Window Capture</strong>.</li>
-          <li>Name the source (e.g., "Echolume Visualizer").</li>
-          <li>In the properties, select <strong>[echolume] Echolume</strong> from the Window dropdown.</li>
-          <li>Press OK. Crop or adjust the size to overlay your screen layout.</li>
+          <li>In OBS, click the <strong>+</strong> icon in the Sources dock and choose <strong>macOS Screen Capture</strong>.</li>
+          <li>Name the source, for example "Echolume Visualizer".</li>
+          <li>Set <strong>Method</strong> to <strong>Window Capture</strong> and pick the Echolume window.</li>
+          <li>Press OK, then crop or resize it to fit your layout.</li>
         </ol>
 
-        <h3>Method B: Display Capture (External monitor or projector sets)</h3>
-        <p>Highly recommended for VJ performance and high-performance streams.</p>
+        <h3>Echolume fullscreen (external display or projector)</h3>
         <ol class="legal-list">
-          <li>Connect an external display to your Mac.</li>
-          <li>In Echolume's Setup panel, select the external display from the <strong>Output Display</strong> list.</li>
-          <li>Click <strong>Ready</strong> to project Echolume fullscreen onto the external monitor.</li>
-          <li>In OBS, add a <strong>Display Capture</strong> source, and select the external monitor as the target.</li>
+          <li>Connect the external display to your Mac.</li>
+          <li>In Echolume's Setup panel, select it in the <strong>Output Display</strong> list.</li>
+          <li>Click <strong>Ready</strong> so Echolume runs fullscreen there.</li>
+          <li>In OBS, add a <strong>macOS Screen Capture</strong> source, set <strong>Method</strong> to <strong>Display Capture</strong>, and choose that display.</li>
         </ol>
+
+        <div class="callout callout-warning">
+          <strong>Avoid hearing the music twice.</strong> A macOS Screen Capture source records audio as well as the picture. In Window Capture mode that is only Echolume's own audio, and Echolume makes no sound. In Display Capture mode it picks up everything the Mac is playing, including your music, so mute that source in the Audio Mixer.
+        </div>
       </section>
 
       <section>

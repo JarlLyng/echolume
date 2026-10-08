@@ -76,7 +76,7 @@
         "name": "Commands do not update the visuals",
         "acceptedAnswer": {
           "@type": "Answer",
-          "text": "Confirm that the global Twitch Chat toggle is enabled in Setup. Check the level meter to verify Echolume is active. Note that Echolume ignores commands if you are not currently in Ready (Live visual rendering) mode."
+          "text": "Confirm that Twitch Chat is enabled in Setup and that its status indicator shows a connection. Commands work in Setup as well as in Live. A theme, scene or shape name that does not match exactly is ignored, so check the spelling against the command list in this guide. Theme names can contain spaces, for example dark ambient."
         }
       },
       {
@@ -162,12 +162,12 @@
             <tbody>
               <tr>
                 <td><code>!theme [name]</code></td>
-                <td>Switch visual color palette and trails (<code>summer</code>, <code>winter</code>, <code>dark ambient</code>, <code>techno club</code>, <code>neon lines</code>, <code>monochrome</code>)</td>
+                <td>Switch visual color palette and trails (<code>summer</code>, <code>winter</code>, <code>dark ambient</code>, <code>techno club</code>, <code>neon lines</code>, <code>monochrome</code>, <code>sunset</code>, <code>nebula</code>, <code>vapor</code>, <code>acid</code>)</td>
                 <td><code>!theme dark ambient</code></td>
               </tr>
               <tr>
                 <td><code>!scene [name]</code></td>
-                <td>Switch rendering geometry (<code>radial</code>, <code>flow</code>, <code>grid</code>, <code>spiral</code>, <code>tunnel</code>, <code>kaleidoscope</code>, <code>plasma</code>, <code>spectrumring</code>)</td>
+                <td>Switch rendering geometry (<code>radial</code>, <code>flow</code>, <code>grid</code>, <code>spiral</code>, <code>tunnel</code>, <code>kaleidoscope</code>, <code>plasma</code>, <code>spectrumring</code>, <code>ridgeline</code>, <code>wireframeburst</code>)</td>
                 <td><code>!scene kaleidoscope</code></td>
               </tr>
               <tr>
@@ -203,12 +203,12 @@
       <section>
         <h2>Streaming workflow with OBS Studio</h2>
         <div class="callout callout-info">
-          <strong>Best performance:</strong> Visual rendering uses your Mac's graphics card. Running Echolume fullscreen on a secondary display and using OBS <strong>Display Capture</strong> yields better framerates than window captures.
+          <strong>Two displays help.</strong> Echolume renders on your Mac's graphics card while OBS encodes the stream. Running Echolume fullscreen on a second display keeps your OBS controls free and gives the visuals the whole screen.
         </div>
         <p>To broadcast interactive visuals to your stream:</p>
         <ol class="legal-list">
-          <li>Follow the instructions in our <a href="obs-guide.html">OBS Studio Setup Guide</a> to route OBS master monitor audio into Echolume via BlackHole.</li>
-          <li>Set up window capture or display capture in OBS to display Echolume.</li>
+          <li>Follow the <a href="obs-guide.html">OBS Studio Setup Guide</a> to send the music from OBS into Echolume through BlackHole.</li>
+          <li>Add a <strong>macOS Screen Capture</strong> source in OBS to show Echolume, set to <strong>Window Capture</strong> or <strong>Display Capture</strong> as the OBS guide describes.</li>
           <li>Set the Echolume source depth below your camera overlay or stream widgets.</li>
           <li>Go live! Viewers can immediately type commands in chat, which will manipulate the background visuals in real time.</li>
         </ol>
@@ -221,7 +221,7 @@
           <dd>Verify that your Mac has active internet access. Check that your Twitch channel name is spelled correctly (it should match your Twitch username exactly, e.g., <code>twitch_streamer</code>). Ensure local firewall policies do not block outgoing secure WebSocket connections on port 443.</dd>
 
           <dt>Commands do not update the visuals</dt>
-          <dd>Confirm that the global Twitch Chat toggle is enabled in Setup. Check the level meter to verify Echolume is active. Note that Echolume ignores commands if you are not currently in <strong>Ready</strong> (Live visual rendering) mode.</dd>
+          <dd>Confirm that Twitch Chat is enabled in Setup and that its status indicator shows a connection. Commands work in Setup as well as in Live. A theme, scene or shape name that does not match exactly is ignored, so check the spelling against the command list in this guide. Theme names can contain spaces, for example <code>dark ambient</code>.</dd>
 
           <dt>Commands lag or viewer changes are ignored</dt>
           <dd>To protect graphics performance, Echolume applies a strict global cooldown of 1 second between commands. If multiple viewers type commands simultaneously, excess commands are discarded. Viewer changes apply on top of active music analysis.</dd>
