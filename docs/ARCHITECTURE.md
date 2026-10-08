@@ -237,7 +237,7 @@ Rendering strategy (implemented):
 - Fullscreen stability
 - External display support (select output display; Live on external, Setup on main)
 - Performance tuning (FPS stable, no stutters)
-- Keyboard shortcuts for live use (Space/Enter/R/⌘R + 1–6 themes)
+- Keyboard shortcuts for live use (Space/Enter/R/⌘R, plus number keys for themes, now 1–9 and 0 for the ten themes)
 - No-signal detection + minimal banner in LiveView
 - Panic Reset (resets visuals without restarting audio)
 - Restart audio action + basic error banner
@@ -283,5 +283,5 @@ Before external review / TestFlight:
 
 - Capturing system audio output without routing
 - Complex beat grid detection
-- Video recording/export
+- Video recording/export (shipped later, in 1.2, as video-only MP4 to `~/Movies`)
 - Twitch OAuth / authenticated connections (anonymous read-only is sufficient for V1)

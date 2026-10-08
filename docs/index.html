@@ -60,6 +60,72 @@
 
   <!-- Umami analytics (privacy-friendly, cookieless) -->
   <script defer src="https://umami-iamjarl.vercel.app/script.js" data-website-id="09a6bdeb-cb4b-4156-8674-aaff69e3fee9"></script>
+  <!-- FAQPage structured data (mirrors the "Before you buy" section word for word) -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    "mainEntity": [
+      {
+        "@type": "Question",
+        "name": "What sound can Echolume react to?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Anything that reaches your Mac as an audio input. That means the built-in microphone, an audio interface, or a track in a DAW that loads AUv3 plugins (Ableton Live 11.3 or later, or Logic Pro) through the bundled plugin with OSC input turned on. It does not listen to your Mac's output directly, so music playing in Spotify or a browser needs a loopback driver such as BlackHole. The setup guide covers each route."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "Do I need a MIDI controller?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "No. The knobs, themes and scenes all work with a mouse or trackpad, and in Live mode there are keyboard shortcuts for the things you reach for during a set. A MIDI controller is there if you want your hands on real knobs."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "Is it a subscription?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "No. Echolume is $19.99 once on the Mac App Store, with no subscription and no in-app purchases."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "Does it need an internet connection?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "No. Listening, analysis and rendering all happen on your Mac, and no audio leaves it. Only the optional Twitch chat feature connects to the internet."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "Which Macs does it run on?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Echolume needs macOS 14 Sonoma or later."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "Can I record what it shows?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Yes. Press V in Live mode to record the output to an MP4 in your Movies folder. The file has the picture only and no sound, so put it together with your music in a video editor, or capture both at once in OBS."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "Does it work with OBS?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Yes. Capture Echolume with a macOS Screen Capture source and send your music into Echolume through BlackHole or the DAW plugin. The OBS guide walks through it."
+        }
+      }
+    ]
+  }
+  </script>
+
   <!-- IAMJARL design system, every file from one tag (v1.18.1). Bump tag and hashes together. -->
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/jarllyng/iamjarl-design@v1.18.1/dist/css/tokens.css"
         integrity="sha384-22MrFE+80z5lCKUZNzjvELfuIcp6Tpky6CAIRarb1O3kBRhKRcurJb60WPF/+img" crossorigin="anonymous">
@@ -201,7 +267,7 @@
         <li class="feature">
           <span class="feature-accent">Recording</span>
           <h3 class="feature-title">Record your visuals</h3>
-          <p>Press <code>V</code> in Live to record the output to an H.264 MP4 in your Movies folder. It captures the picture only, with no audio track, so pair it with your own recording of the music in an editor, or capture both together in OBS.</p>
+          <p>Press <code>V</code> in Live mode to record the output to an H.264 MP4 in your Movies folder. It captures the picture only, with no audio track, so pair it with your own recording of the music in an editor, or capture both together in OBS.</p>
         </li>
         <li class="feature">
           <span class="feature-accent">Menu bar</span>
@@ -234,6 +300,27 @@
           <figcaption>Streams &amp; studio</figcaption>
         </figure>
       </div>
+    </section>
+
+    <section id="faq" class="home-faq reveal">
+      <span class="eyebrow">Questions</span>
+      <h2 class="section-title">Before you buy</h2>
+      <dl class="faq">
+        <dt>What sound can Echolume react to?</dt>
+        <dd>Anything that reaches your Mac as an audio input. That means the built-in microphone, an audio interface, or a track in a DAW that loads AUv3 plugins (Ableton Live 11.3 or later, or Logic Pro) through the bundled plugin with OSC input turned on. It does not listen to your Mac's output directly, so music playing in Spotify or a browser needs a loopback driver such as BlackHole. The <a href="how-it-works.html">setup guide</a> covers each route.</dd>
+        <dt>Do I need a MIDI controller?</dt>
+        <dd>No. The knobs, themes and scenes all work with a mouse or trackpad, and in Live mode there are keyboard shortcuts for the things you reach for during a set. A MIDI controller is there if you want your hands on real knobs.</dd>
+        <dt>Is it a subscription?</dt>
+        <dd>No. Echolume is $19.99 once on the Mac App Store, with no subscription and no in-app purchases.</dd>
+        <dt>Does it need an internet connection?</dt>
+        <dd>No. Listening, analysis and rendering all happen on your Mac, and no audio leaves it. Only the optional Twitch chat feature connects to the internet.</dd>
+        <dt>Which Macs does it run on?</dt>
+        <dd>Echolume needs macOS 14 Sonoma or later.</dd>
+        <dt>Can I record what it shows?</dt>
+        <dd>Yes. Press <code>V</code> in Live mode to record the output to an MP4 in your Movies folder. The file has the picture only and no sound, so put it together with your music in a video editor, or capture both at once in OBS.</dd>
+        <dt>Does it work with OBS?</dt>
+        <dd>Yes. Capture Echolume with a macOS Screen Capture source and send your music into Echolume through BlackHole or the DAW plugin. The <a href="obs-guide.html">OBS guide</a> walks through it.</dd>
+      </dl>
     </section>
 
     <section id="download" class="download reveal">
