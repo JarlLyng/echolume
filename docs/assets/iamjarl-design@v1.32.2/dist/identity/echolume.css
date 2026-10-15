@@ -1,0 +1,42 @@
+/* IAMJARL identity for Echolume: generated, do not edit */
+/* design system v1.32.2. Follows the visitor's light or dark setting. */
+/* Display face: Outfit (OFL-1.1). Self-host it; see design.md. */
+
+:root {
+  --ij-color-accent: #177082;
+  --ij-color-accent-rgb: 23, 112, 130;
+  --ij-color-on-accent: #FFFFFF;
+  --ij-color-accent-text: #177082;
+  --ij-color-accent-family: #177082;
+  --ij-color-accent-family-rgb: 23, 112, 130;
+  --ij-font-display: 'Outfit', system-ui, -apple-system, 'Segoe UI', sans-serif;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not(.light) {
+    --ij-color-accent: #23ACC7;
+    --ij-color-accent-rgb: 35, 172, 199;
+    --ij-color-on-accent: #000000;
+    --ij-color-accent-text: #23ACC7;
+    --ij-color-accent-family: #23ACC7;
+    --ij-color-accent-family-rgb: 35, 172, 199;
+  }
+}
+
+.light {
+  --ij-color-accent: #177082;
+  --ij-color-accent-rgb: 23, 112, 130;
+  --ij-color-on-accent: #FFFFFF;
+  --ij-color-accent-text: #177082;
+  --ij-color-accent-family: #177082;
+  --ij-color-accent-family-rgb: 23, 112, 130;
+}
+
+.dark {
+  --ij-color-accent: #23ACC7;
+  --ij-color-accent-rgb: 35, 172, 199;
+  --ij-color-on-accent: #000000;
+  --ij-color-accent-text: #23ACC7;
+  --ij-color-accent-family: #23ACC7;
+  --ij-color-accent-family-rgb: 35, 172, 199;
+}
