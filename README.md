@@ -54,20 +54,20 @@ MIDI Learn works with any class-compliant MIDI controller. In the MIDI tile, tur
 
 ### OSC
 
-Echolume can listen for OSC over UDP, so it fits into a TouchDesigner or Resolume rig. It is off until you turn it on in the OSC tile, where you also set the port (9000 by default).
+Echolume can listen for OSC over UDP, so it fits into a TouchDesigner or Resolume rig. It is off until you turn it on in the OSC tile, where you also set the port (9000 by default). Every address starts with `/echolume/`:
 
 | Address | Effect |
 |---------|--------|
-| `/echolume/knob/<knob>` | Sets a knob to a float from 0 to 1. The knobs are `abstraction`, `energybias`, `motion`, `noise` and `glitch`. |
-| `/echolume/theme` | Selects a theme by index (int, from 0) |
-| `/echolume/scene` | Selects a scene by index (int, from 0) |
-| `/echolume/shape` | Selects a shape style by index (int, from 0) |
-| `/echolume/nexttheme` | Next theme |
-| `/echolume/prevtheme` | Previous theme |
-| `/echolume/randomize` | Randomize |
-| `/echolume/panic` | Panic Reset |
-| `/echolume/tempo/tap` | Taps the tempo |
-| `/echolume/preset` | Recalls a preset by slot (int, from 1) or by name (string) |
+| `knob/<knob>` | Sets a knob to a float from 0 to 1. The knobs are `abstraction`, `energybias`, `motion`, `noise` and `glitch`. |
+| `theme` | Selects a theme by index (int, from 0) |
+| `scene` | Selects a scene by index (int, from 0) |
+| `shape` | Selects a shape style by index (int, from 0) |
+| `nexttheme` | Next theme |
+| `prevtheme` | Previous theme |
+| `randomize` | Randomize |
+| `panic` | Panic Reset |
+| `tempo/tap` | Taps the tempo |
+| `preset` | Recalls a preset by slot (int, from 1) or by name (string) |
 
 For example, `/echolume/knob/abstraction 0.8` sets Abstraction to 80%.
 
