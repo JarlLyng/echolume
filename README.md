@@ -56,13 +56,18 @@ MIDI Learn works with any class-compliant MIDI controller. In the MIDI tile, tur
 
 Echolume can listen for OSC over UDP, so it fits into a TouchDesigner or Resolume rig. It is off until you turn it on in the OSC tile, where you also set the port (9000 by default).
 
-| Address | Argument | Effect |
-|---------|----------|--------|
-| `/echolume/knob/abstraction` (also `energybias`, `motion`, `noise`, `glitch`) | float 0–1 | Sets that knob |
-| `/echolume/theme`, `/echolume/scene`, `/echolume/shape` | int | Selects by index |
-| `/echolume/nexttheme`, `/echolume/prevtheme` | none | Cycles the theme |
-| `/echolume/randomize`, `/echolume/panic`, `/echolume/tempo/tap` | none | Triggers it |
-| `/echolume/preset` | int (slot) or string (name) | Recalls a preset |
+| Address | Effect |
+|---------|--------|
+| `/echolume/knob/<knob>` | Sets a knob to a float from 0 to 1. The knobs are `abstraction`, `energybias`, `motion`, `noise` and `glitch`. |
+| `/echolume/theme` | Selects a theme by index (int, from 0) |
+| `/echolume/scene` | Selects a scene by index (int, from 0) |
+| `/echolume/shape` | Selects a shape style by index (int, from 0) |
+| `/echolume/nexttheme` | Next theme |
+| `/echolume/prevtheme` | Previous theme |
+| `/echolume/randomize` | Randomize |
+| `/echolume/panic` | Panic Reset |
+| `/echolume/tempo/tap` | Taps the tempo |
+| `/echolume/preset` | Recalls a preset by slot (int, from 1) or by name (string) |
 
 For example, `/echolume/knob/abstraction 0.8` sets Abstraction to 80%.
 
