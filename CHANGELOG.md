@@ -5,6 +5,12 @@ All notable changes to Echolume are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project aims to follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Added
+- **Send Feedback** in the app (Help menu): opens a prefilled email to
+  support@iamjarl.com with your Echolume and macOS versions filled in (#213).
+
 ## [1.3.0] — Mac App Store update (Jul 2026)
 
 ### Added
@@ -153,4 +159,4 @@ Initial feature-complete beta (TestFlight). Highlights:
 - `EcholumeAudioTap` AUv3 plugin (beta): forwards analysed bands + host BPM to
   Echolume over OSC.
 
-[Unreleased]: https://github.com/JarlLyng/echolume/compare/main...HEAD
+[Unreleased]: https://github.com/JarlLyng/echolume/compare/v1.3.0...HEAD

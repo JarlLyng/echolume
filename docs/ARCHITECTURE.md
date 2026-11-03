@@ -161,6 +161,8 @@ enum SceneType {
     case kaleidoscope
     case plasma
     case spectrumRing
+    case ridgeline
+    case wireframeBurst
 }
 ```
 
