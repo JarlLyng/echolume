@@ -1,126 +1,38 @@
-# Audio Unit Extension
-This template serves as a starting point to create a custom plug-in using the latest Audio Unit standard (AUv3). The AUv3 standard builds on the App Extensions model, which means you deliver your plug-in as an extension that’s contained in an app distributed through the App Store or your own store.
+# EcholumeAudioTap (AUv3)
 
-There are 5 types of Audio Unit Extensions, each type is represented by a four character code.
+An Audio Unit v3 audio effect bundled inside Echolume.app. Drop it on a track in
+any AU host (Ableton Live, Logic Pro, etc.); it passes audio through unchanged
+and forwards the analysed signal to Echolume over OSC (loopback), so the visuals
+react to that track without a loopback driver such as BlackHole.
 
-|Name|Four Character Code|
-|---|---|
-|Effect|aufx|
-|Music Effect|aumf|
-|MIDI Processor|aumi|
-|Instrument|aumu|
-|Generator|augn|
+Installing Echolume.app auto-registers the plugin (no separate installer).
 
+## What it sends
 
-## Languages
-This template uses Swift/SwiftUI for business logic and user interface and C++ (via Swift/C++ Interoperability) for real-time constrained areas.
+On a dedicated sender thread (never the realtime render thread), it forwards:
 
-## Project Layout
-This template is designed to make Audio Unit development as easy as possible. In most cases you should only need to edit files in the top level groups; `Parameters`, `DSP` and `UI` groups.
+- the three bands (low/mid/high) and a full 64-bin spectrum, over
+  `/echolume/audio/...`;
+- the host tempo (BPM).
 
-* /Common - Contains common code split by functionality which should rarely need to be modified. 
-	* `Audio Unit/EcholumeAudioTapAudioUnit.swift` - A subclass of AUAudioUnit, this is the actual Audio Unit implementation. You may in advanced cases need to change this file to add additional functionality from AUAudioUnit.  
-* /Parameters
-	* `EcholumeAudioTapParameterAddresses.h` - A pure `C` enum containing parameter addresses used by Swift and C++ to reference parameters.
-	
-	* `Parameters.swift` - Contains a ParameterTreeSpec object made up of ParameterGroupSpec's and ParameterSpec's which allow you describe your plug-in's parameters and the layout of those parameters.
+Enable **OSC Input** in Echolume's Setup (default port 9000) for the app to
+receive it. The app suppresses its own microphone analysis while the plugin is
+driving.
 
-* /DSP
-	* `EcholumeAudioTapDSPKernel.hpp` - A pure C++ class to handle the real-time aspects of the Audio Unit Extension. DSP and processing should be done here. Note: Be aware of the constraints of real-time audio processing. 
-* /UI
-	* `EcholumeAudioTapMainView.swift` - SwiftUI based main view, add your SwiftUI views and controls here.
+## Parameters
 
-## Adding a parameter
-1. Add a new parameter address to the `EcholumeAudioTapParameterAddress` enum in `EcholumeAudioTapParameterAddresses.h` 
+- **Output Gain** (0 to 1): a simple pass-through gain on the audio.
 
+## Code layout
 
-Example:
+- `Parameters/` — the parameter tree (`Parameters.swift`) and C addresses.
+- `DSP/EcholumeAudioTapDSPKernel.hpp` — the realtime C++ kernel (analysis +
+  pass-through).
+- `UI/` — the SwiftUI plugin view (`EcholumeAudioTapMainView.swift`,
+  `ParameterSlider.swift`, `PluginStyle.swift`). The extension does not link the
+  design-system package, so it uses local brand constants.
+- `Common/` — AUv3 scaffolding (audio unit, parameter plumbing); rarely edited.
 
-```c
-typedef NS_ENUM(AUParameterAddress, EcholumeAudioTapParameterAddress) {
-	sendNote = 0,
-	....
-	attack
-```
-
-2. Create a new `ParameterSpec` in `Parameters.swift` using the enum value (created in step 1) as the address.
-
-Example:
-
-```swift
-ParameterGroupSpec(identifier: "global", name: "Global") {
-	....
-	ParameterSpec(
-		address: .attack,
-		identifier: "attack",
-		name: "Attack",
-		units: .milliseconds,
-		valueRange: 0.0...1000.0,
-		defaultValue: 100.0
-	)
-	...
-```
-Note: the identifier will be used to interact with this parameter from SwiftUI.
-
-3. In order to manipulate the DSP side of the Audio Unit we must handle changes to our new parameter in `EcholumeAudioTapDSPKernel.hpp`. In the `setParameter` and `getParameter` methods add a case for the new parameter address.
-
-Example:
-
-```cpp
-	void setParameter(AUParameterAddress address, AUValue value) {
-		switch (address) {
-			....
-			case EcholumeAudioTapExtensionParameterAddress:: attack:
-				mAttack = value;
-				break;			
-			...
-	}
-	
-	AUValue getParameter(AUParameterAddress address) {
-		switch (address) {
-			....
-			case EcholumeAudioTapExtensionParameterAddress::attack:
-				return (AUValue) mAttack;
-			...
-	}
-	
-	// You can now apply attack your DSP algorithm using `mAttack` in the `process` call. 
-```
-
-4. For Audio Units that present a user interface, you should expose or access the new parameter in your SwiftUI view. The parameter can be accessed using its identifier (defined in step 2). It is accessed using dot notation as follows parameterTree.<ParameterGroupSpec Identifier>.<ParameterGroupSpec Identifier>.<ParameterSpec Identifier>
-
-Example
-
-```Swift
-// Access the attack parameters value from SwiftUI
-parameterTree.global.attack.value
-
-// Set the attack parameters value from SwiftUI
-parameterTree.global.attack.value = 0.5
-
-// Bind the parameter to a slider
-struct EqualizerExtensionMainView: View {
-	...	
-	var body: some View {
-		ParameterSlider(param: parameterTree.global.attack)
-	}
-	...
-}
-
-/*
-Note: the parameterTree.<parameter_name> must match the structure and identifier of the parameter defined in `Parameters.swift`.
-*/
-```
-
-## Catalyst / iPhone and iPad apps on Mac with Apple silicon
-To build this template in a Catalyst or iPhone/iPad App on Mac with Apple silicon, perform the following steps:  
-
-1. Select your Xcode project in the left hand side file browser
-2. Select your app target under the 'TARGETS' menu
-3. Under 'Deployment Info' select 'Mac Catalyst' (Note: Skip this step for iPhone and iPad apps on Mac with Apple silicon)
-4. Select the 'General' tab in the top menu bar
-5. Under 'Frameworks, Libraries, and Embedded Content' click the button next to the  iOS filter
-6. In the pop-up menu select 'Allow any platforms'
-
-## More Information
-[Apple Audio Developer Documentation](https://developer.apple.com/audio/)
+See the app's [`docs/ARCHITECTURE.md`](../docs/ARCHITECTURE.md) for how the OSC
+route fits the wider renderer, and the root [`README.md`](../README.md) for the
+feature list.

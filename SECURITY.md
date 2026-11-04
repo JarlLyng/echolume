@@ -6,7 +6,7 @@ Only the latest released version of Echolume receives security fixes.
 
 | Version | Supported          |
 | ------- | ------------------ |
-| 1.0.x   | :white_check_mark: |
+| 1.3.x   | :white_check_mark: |
 
 ## Reporting a Vulnerability
 
