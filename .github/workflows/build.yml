@@ -76,6 +76,25 @@ jobs:
             CODE_SIGNING_ALLOWED=NO \
             | xcpretty
 
+      - name: Build AUv3 plugin (EcholumeAudioTap)
+        # The appex is already built above as an embedded extension of the app,
+        # but build it via its own scheme too so a standalone-scheme break is
+        # caught (e.g. the plugin target drifting to the wrong deployment target
+        # or SDK, which the app-embedded build can mask). auval is intentionally
+        # skipped: it needs the Audio Unit registered with the system, which is
+        # not reliable on an ephemeral CI runner.
+        run: |
+          set -o pipefail
+          xcodebuild build \
+            -project echolume.xcodeproj \
+            -scheme EcholumeAudioTap \
+            -destination 'platform=macOS' \
+            -configuration Debug \
+            CODE_SIGN_IDENTITY="" \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGNING_ALLOWED=NO \
+            | xcpretty
+
       - name: Upload build result bundle on failure
         if: failure()
         uses: actions/upload-artifact@v7

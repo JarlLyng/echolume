@@ -23,13 +23,16 @@ final class echolumeUITests: XCTestCase {
     }
 
     @MainActor
-    func testExample() throws {
-        // UI tests must launch the application that they test.
+    func testAppLaunchesToForeground() throws {
+        // Smoke test: the app launches without crashing and reaches the foreground.
         let app = XCUIApplication()
         app.launchEnvironment["ECHOLUME_UITEST"] = "1"   // app omits the MenuBarExtra under test
         app.launch()
 
-        // Use XCTAssert and related functions to verify your tests produce the correct results.
+        XCTAssertTrue(
+            app.wait(for: .runningForeground, timeout: 10),
+            "App did not reach the foreground within 10s"
+        )
     }
 
     @MainActor
