@@ -6,7 +6,7 @@ the real Spectrum Ring capture in `docs/images/hero-poster.jpg`.
 
 Regenerate it whenever the price, the headline or the platform changes. The card states
 "$19.99 once" and "Mac App Store", so it drifts the same way the rest of the public copy
-does (see `RELEASE_CHECKLIST.md`).
+does.
 
 ```bash
 cd design/social-card
