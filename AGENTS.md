@@ -50,7 +50,10 @@ reactions in the hub so the overlay can grow from real replies.
 
 ## Before submitting a release
 
-Run [`RELEASE_CHECKLIST.md`](RELEASE_CHECKLIST.md). It gates the voice rules above and the
+Run the App Store submission checklist. It lives in the private
+[iamjarl-strategy](https://github.com/JarlLyng/iamjarl-strategy) hub
+(`Echolume/app-store-submission-checklist.md`), because it points at owner-only material;
+AGENTS.md is the one file here allowed to point there. It gates the voice rules above and the
 public facts that drift between versions (scene/theme counts, JSON-LD version, README
 shipped-vs-planned, sitemap dates), plus the version-numbering rules that have broken
 deliveries before. The App Store description is version-locked, so store copy can only be
@@ -81,5 +84,5 @@ and that is how the site ended up with claims that had to be corrected (#177, #1
 This file is the first thing an assistant reads, so a stale line here propagates into the
 site, the README and the store listing before anyone notices. When the shipped version,
 the price, the platform support or the list above changes, update it in the same commit.
-`RELEASE_CHECKLIST.md` covers the public surfaces; this file is the one that is read
+The hub's submission checklist covers the public surfaces; this file is the one that is read
 before any of them.
