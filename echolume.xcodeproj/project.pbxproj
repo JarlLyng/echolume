@@ -843,7 +843,7 @@
 			repositoryURL = "https://github.com/JarlLyng/iamjarl-design";
 			requirement = {
 				kind = upToNextMajorVersion;
-				minimumVersion = 1.35.1;
+				minimumVersion = 1.35.4;
 			};
 		};
 /* End XCRemoteSwiftPackageReference section */
