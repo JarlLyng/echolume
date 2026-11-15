@@ -10,6 +10,14 @@ and this project aims to follow [Semantic Versioning](https://semver.org/spec/v2
 ### Added
 - **Send Feedback** in the app (Help menu): opens a prefilled email to
   support@iamjarl.com with your Echolume and macOS versions filled in (#213).
+- **Anonymous crash reports and diagnostics** through Sentry, under the
+  portfolio's privacy recipe (#233): one shared user `anonymous`, no identifier
+  leaves the device, no PII, screenshots or view hierarchy, and MetricKit
+  diagnostics. Sessions stay off until an envelope test confirms they carry no
+  per-install ID. The privacy policy, `PrivacyInfo.xcprivacy` and the App Store
+  label are updated to declare Crash Data, Performance Data and Other Diagnostic
+  Data (not linked, not tracking). Reverses the removal in #78, which a later privacy-standard change
+  allowed.
 
 ## [1.3.0] — Mac App Store update (Jul 2026)
 

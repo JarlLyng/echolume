@@ -9,6 +9,7 @@
 /* Begin PBXBuildFile section */
 		2F09CD902FCC5CAB00455D8F /* EcholumeAudioTap.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = 2F09CD662FCC5CAB00455D8F /* EcholumeAudioTap.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		2FA00001300000000017269C /* IAMJARLDesignTokens in Frameworks */ = {isa = PBXBuildFile; productRef = 2FA00002300000000017269C /* IAMJARLDesignTokens */; };
+		2F5E001A300000000017269C /* Sentry in Frameworks */ = {isa = PBXBuildFile; productRef = 2F5E001B300000000017269C /* Sentry */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -50,6 +51,7 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		2F5E0030300000000017269C /* Sentry.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = Sentry.xcconfig; sourceTree = SOURCE_ROOT; };
 		2F0891512F4F27820017269C /* echolume.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = echolume.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		2F08915E2F4F27880017269C /* echolumeTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = echolumeTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		2F0891682F4F27880017269C /* echolumeUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = echolumeUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -111,6 +113,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				2FA00001300000000017269C /* IAMJARLDesignTokens in Frameworks */,
+				2F5E001A300000000017269C /* Sentry in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -162,6 +165,27 @@
 		};
 /* End PBXGroup section */
 
+/* Begin PBXShellScriptBuildPhase section */
+		2F5E0031300000000017269C /* Verify Sentry DSN for Release */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+			);
+			inputPaths = (
+			);
+			name = "Verify Sentry DSN for Release";
+			outputFileListPaths = (
+			);
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "if [ \"$CONFIGURATION\" = \"Release\" ]; then dsn=$(/usr/bin/plutil -extract SentryDSN raw \"$BUILT_PRODUCTS_DIR/$INFOPLIST_PATH\" 2>/dev/null); case \"$dsn\" in https://*@*) ;; *) echo \"error: SentryDSN missing or malformed in the built Info.plist for a Release build; set SENTRY_DSN in Sentry.xcconfig (see Sentry.xcconfig.example for the slash escaping).\"; exit 1;; esac; fi\n";
+		};
+/* End PBXShellScriptBuildPhase section */
+
 /* Begin PBXNativeTarget section */
 		2F0891502F4F27820017269C /* echolume */ = {
 			isa = PBXNativeTarget;
@@ -171,6 +195,7 @@
 				2F08914E2F4F27820017269C /* Frameworks */,
 				2F08914F2F4F27820017269C /* Resources */,
 				2F09CD912FCC5CAB00455D8F /* Embed Foundation Extensions */,
+				2F5E0031300000000017269C /* Verify Sentry DSN for Release */,
 			);
 			buildRules = (
 			);
@@ -183,6 +208,7 @@
 			name = echolume;
 			packageProductDependencies = (
 				2FA00002300000000017269C /* IAMJARLDesignTokens */,
+				2F5E001B300000000017269C /* Sentry */,
 			);
 			productName = echolume;
 			productReference = 2F0891512F4F27820017269C /* echolume.app */;
@@ -293,6 +319,7 @@
 			minimizedProjectReferenceProxies = 1;
 			packageReferences = (
 				2FA00003300000000017269C /* XCRemoteSwiftPackageReference "iamjarl-design" */,
+				2F5E001C300000000017269C /* XCRemoteSwiftPackageReference "sentry-cocoa" */,
 			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 2F0891522F4F27820017269C /* Products */;
@@ -514,6 +541,7 @@
 		};
 		2F0891732F4F27880017269C /* Debug */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReference = 2F5E0030300000000017269C /* Sentry.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
@@ -540,6 +568,7 @@
 				ENABLE_USER_SELECTED_FILES = NO;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_CFBundleDisplayName = Echolume;
+				INFOPLIST_FILE = echolume/Info.plist;
 				INFOPLIST_KEY_ITSAppUsesNonExemptEncryption = NO;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.music";
 				INFOPLIST_KEY_NSHumanReadableCopyright = "Copyright © 2026 IAMJARL. All rights reserved.";
@@ -563,6 +592,7 @@
 		};
 		2F0891742F4F27880017269C /* Release */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReference = 2F5E0030300000000017269C /* Sentry.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
@@ -590,6 +620,7 @@
 				ENABLE_USER_SELECTED_FILES = NO;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_CFBundleDisplayName = Echolume;
+				INFOPLIST_FILE = echolume/Info.plist;
 				INFOPLIST_KEY_ITSAppUsesNonExemptEncryption = NO;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.music";
 				INFOPLIST_KEY_NSHumanReadableCopyright = "Copyright © 2026 IAMJARL. All rights reserved.";
@@ -838,6 +869,14 @@
 /* End XCConfigurationList section */
 
 /* Begin XCRemoteSwiftPackageReference section */
+		2F5E001C300000000017269C /* XCRemoteSwiftPackageReference "sentry-cocoa" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/getsentry/sentry-cocoa";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 9.12.0;
+			};
+		};
 		2FA00003300000000017269C /* XCRemoteSwiftPackageReference "iamjarl-design" */ = {
 			isa = XCRemoteSwiftPackageReference;
 			repositoryURL = "https://github.com/JarlLyng/iamjarl-design";
@@ -849,6 +888,11 @@
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
+		2F5E001B300000000017269C /* Sentry */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 2F5E001C300000000017269C /* XCRemoteSwiftPackageReference "sentry-cocoa" */;
+			productName = Sentry;
+		};
 		2FA00002300000000017269C /* IAMJARLDesignTokens */ = {
 			isa = XCSwiftPackageProductDependency;
 			package = 2FA00003300000000017269C /* XCRemoteSwiftPackageReference "iamjarl-design" */;

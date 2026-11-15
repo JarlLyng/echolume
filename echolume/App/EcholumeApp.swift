@@ -11,6 +11,10 @@ import SwiftUI
 struct EcholumeApp: App {
     @StateObject private var appModel = AppModel()
 
+    init() {
+        CrashReporting.start()
+    }
+
     var body: some Scene {
         WindowGroup {
             RootView(appModel: appModel)

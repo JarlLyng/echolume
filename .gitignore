@@ -43,3 +43,6 @@ CLAUDE.local.md
 .aider*
 .mcp.json
 .github/copilot-instructions.md
+
+# Secrets (Sentry DSN) - never commit; see Sentry.xcconfig.example
+Sentry.xcconfig
