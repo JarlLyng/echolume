@@ -182,7 +182,7 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "if [ \"$CONFIGURATION\" = \"Release\" ] && [ -z \"$SENTRY_DSN\" ]; then echo \"error: SENTRY_DSN is empty for a Release build (set it in Sentry.xcconfig or the environment before archiving).\"; exit 1; fi\n";
+			shellScript = "if [ \"$CONFIGURATION\" = \"Release\" ]; then case \"$SENTRY_DSN\" in https://*@*) ;; *) echo \"error: SENTRY_DSN must be a full https://...@... DSN for a Release build (got: $SENTRY_DSN). See Sentry.xcconfig.example for the required slash escaping.\"; exit 1;; esac; fi\n";
 		};
 /* End PBXShellScriptBuildPhase section */
 
