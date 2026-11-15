@@ -66,7 +66,7 @@ The developer half: how to build and run Echolume, how it is put together, how t
 
 [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) is the reference: the layering, the type contracts, the milestones and the development rules. In short, Echolume keeps four layers: **Audio** (input, analysis, envelopes, beat), **Mapping** (analysis into normalized parameters), **Scene** (geometry and motion) and **Render** (Metal draws the frame). SwiftUI stays thin and wires views to `AppModel`.
 
-The stack is SwiftUI, Metal and MetalKit, AVFoundation (`AVAudioEngine`) with Accelerate for the FFT, CoreMIDI, and Network for the OSC listener. The only package is the IAMJARL design system.
+The stack is SwiftUI, Metal and MetalKit, AVFoundation (`AVAudioEngine`) with Accelerate for the FFT, CoreMIDI, and Network for the OSC listener. Two packages: the IAMJARL design system, and sentry-cocoa for anonymous crash reporting (app target only, never the AUv3).
 
 #### Where things live
 
@@ -97,7 +97,7 @@ Shipped:
 - Audio plugin (beta): the bundled `EcholumeAudioTap` AUv3 forwards bands, spectrum and host BPM over OSC.
 - Video recording: `Record`/`V` in Live writes an H.264 `.mp4` to `~/Movies`, video only with no audio track ([#6](https://github.com/JarlLyng/echolume/issues/6), shipped in 1.2).
 - Settings persistence in `UserDefaults`.
-- Crash reporting through Apple's built-in tooling, with no third-party SDK.
+- Anonymous crash reporting and diagnostics through Sentry, under the portfolio's privacy recipe (no identifiers; see the privacy policy and the Crash reporting note below).
 
 Planned:
 
@@ -113,7 +113,7 @@ Planned:
 - **OSC.** The listener is an `NWListener` on UDP. It needs `ENABLE_INCOMING_NETWORK_CONNECTIONS = YES`, which is set; entitlements come from build settings, and there is no `.entitlements` file. `oscEnabled` defaults to `false`.
 - **Persistence.** `UserDefaults` holds the setup: input device, channel pair, theme, shape style, scene, the five knobs, output display, OSC and Twitch settings. The seed is never persisted, so Randomize starts fresh each launch. Presets are JSON in Application Support.
 - **Permissions.** `NSMicrophoneUsageDescription` comes from the `INFOPLIST_KEY_` build setting: "Echolume needs access to an audio input source to drive real-time visuals." macOS asks for it even for audio interfaces.
-- **Crash reporting.** Apple's built-in reporting only, with no third-party SDK or DSN. Crash reports from users who share analytics reach Xcode's Organizer and App Store Connect, symbolicated from the dSYMs the Release config produces (`DEBUG_INFORMATION_FORMAT = dwarf-with-dsym`). If richer diagnostics are ever needed, [MetricKit](https://developer.apple.com/documentation/metrickit) adds them with no third-party dependency.
+- **Crash reporting.** Anonymous Sentry under the portfolio's privacy recipe (`echolume/App/CrashReporting.swift`, app target only, #233). One shared user `anonymous`, `sendDefaultPii` off, screenshots and view hierarchy off, and `beforeSend` strips the per-install identifiers Sentry adds by default (`contexts.device.id`, `contexts.app.device_app_hash`). `enableMetricKit` is on (hangs, launch and other diagnostics); sessions stay off until an envelope test proves they carry no per-install ID. The environment is set by build type, `production` only for the App Store. The DSN comes from `SENTRY_DSN` (a gitignored `Sentry.xcconfig`, see `Sentry.xcconfig.example`, or an environment variable), never a `.xcscheme` (#10); a Release build with an empty DSN fails the "Verify Sentry DSN for Release" build phase. dSYMs come from the Release config (`DEBUG_INFORMATION_FORMAT = dwarf-with-dsym`) and are uploaded with an auth token kept out of the repo.
 
 #### Design system
 

@@ -1,0 +1,11 @@
+// Copy this file to Sentry.xcconfig and set your real DSN there.
+//
+// Sentry.xcconfig is gitignored. The DSN must NEVER be committed, and never go
+// in a .xcscheme (it leaked that way once, #10). For App Store / Xcode Cloud
+// builds, supply SENTRY_DSN as an environment variable instead.
+//
+// An empty DSN keeps Sentry inactive (fine for CI and local Debug builds). A
+// Release/archive build with an empty DSN fails on purpose (see the "Verify
+// Sentry DSN for Release" build phase), so a shipped build can't silently lose
+// crash reports.
+SENTRY_DSN =

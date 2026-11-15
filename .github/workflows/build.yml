@@ -56,6 +56,9 @@ jobs:
           xcodebuild -version
           swift --version
 
+      - name: Set up Sentry config (empty DSN keeps Sentry inactive in CI)
+        run: cp Sentry.xcconfig.example Sentry.xcconfig
+
       - name: Resolve Swift packages
         run: |
           xcodebuild -resolvePackageDependencies \
@@ -122,6 +125,9 @@ jobs:
           [ -z "$XC" ] && XC=/Applications/Xcode.app
           echo "Selecting $XC"
           sudo xcode-select -s "$XC"
+
+      - name: Set up Sentry config (empty DSN keeps Sentry inactive in CI)
+        run: cp Sentry.xcconfig.example Sentry.xcconfig
 
       - name: Run unit tests
         run: |

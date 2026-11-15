@@ -86,7 +86,7 @@
 
       <section>
         <h2>Diagnostic and crash reporting</h2>
-        <p>Echolume uses no third-party crash-reporting or analytics SDK. Crash reports are handled entirely by Apple's built-in tooling: if you have opted into sharing analytics with developers in your macOS privacy settings, anonymized crash diagnostics for App Store and TestFlight builds reach us through Apple's Xcode Organizer and App Store Connect. This data is governed by <a href="https://www.apple.com/legal/privacy/" target="_blank" rel="noopener">Apple's Privacy Policy</a> and contains no audio streams, personal names, account identifiers, or user files.</p>
+        <p>Echolume sends anonymous crash reports and diagnostics through <a href="https://sentry.io" target="_blank" rel="noopener">Sentry</a>, so we learn when a release breaks. No identifier leaves your device: no installation ID, device ID, advertising ID or IP address. Every install shares one Sentry user named "anonymous", and nothing is stored on your device to measure you, which is why there is no consent banner. A report carries only the crash or diagnostic with coarse facts such as the app version, the macOS version and the device model. It never includes audio, OSC or MIDI content, file names, or anything you create, and there is no session replay, screenshot or view-hierarchy capture. This is Crash Data and Performance Data, not linked to you and not used to track you, as the App Store privacy label and the app's bundled privacy manifest also declare. Sentry's handling of the data is covered by <a href="https://sentry.io/privacy/" target="_blank" rel="noopener">Sentry's Privacy Policy</a>.</p>
       </section>
 
       <section>

@@ -80,7 +80,7 @@ Press **V** or **Record** in Live to record the output to an H.264 `.mp4` in you
 
 ### Privacy
 
-Audio is analysed in memory and never stored or sent anywhere. Only the optional Twitch chat connects to the internet. There is no analytics or crash-reporting SDK; crash reports reach the developer through Apple only if you share analytics with developers in macOS. The full policy is at [echolume.iamjarl.com/privacy.html](https://echolume.iamjarl.com/privacy.html).
+Audio is analysed in memory and never stored or sent anywhere. The optional Twitch chat connects to the internet, and Echolume sends anonymous crash reports and diagnostics through Sentry so we learn when a release breaks. Those reports carry no identifier (every install shares one user, "anonymous"), only the crash and coarse facts like the app and macOS version, and never audio, OSC or MIDI content or file names. The full policy is at [echolume.iamjarl.com/privacy.html](https://echolume.iamjarl.com/privacy.html).
 
 ### Support
 
