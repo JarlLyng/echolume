@@ -182,7 +182,7 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "if [ \"$CONFIGURATION\" = \"Release\" ]; then case \"$SENTRY_DSN\" in https://*@*) ;; *) echo \"error: SENTRY_DSN must be a full https://...@... DSN for a Release build (got: $SENTRY_DSN). See Sentry.xcconfig.example for the required slash escaping.\"; exit 1;; esac; fi\n";
+			shellScript = "if [ \"$CONFIGURATION\" = \"Release\" ]; then dsn=$(/usr/bin/plutil -extract SentryDSN raw \"$BUILT_PRODUCTS_DIR/$INFOPLIST_PATH\" 2>/dev/null); case \"$dsn\" in https://*@*) ;; *) echo \"error: SentryDSN missing or malformed in the built Info.plist for a Release build; set SENTRY_DSN in Sentry.xcconfig (see Sentry.xcconfig.example for the slash escaping).\"; exit 1;; esac; fi\n";
 		};
 /* End PBXShellScriptBuildPhase section */
 
@@ -192,10 +192,10 @@
 			buildConfigurationList = 2F0891722F4F27880017269C /* Build configuration list for PBXNativeTarget "echolume" */;
 			buildPhases = (
 				2F08914D2F4F27820017269C /* Sources */,
-				2F5E0031300000000017269C /* Verify Sentry DSN for Release */,
 				2F08914E2F4F27820017269C /* Frameworks */,
 				2F08914F2F4F27820017269C /* Resources */,
 				2F09CD912FCC5CAB00455D8F /* Embed Foundation Extensions */,
+				2F5E0031300000000017269C /* Verify Sentry DSN for Release */,
 			);
 			buildRules = (
 			);
@@ -568,7 +568,7 @@
 				ENABLE_USER_SELECTED_FILES = NO;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_CFBundleDisplayName = Echolume;
-				INFOPLIST_KEY_SentryDSN = "$(SENTRY_DSN)";
+				INFOPLIST_FILE = echolume/Info.plist;
 				INFOPLIST_KEY_ITSAppUsesNonExemptEncryption = NO;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.music";
 				INFOPLIST_KEY_NSHumanReadableCopyright = "Copyright © 2026 IAMJARL. All rights reserved.";
@@ -620,7 +620,7 @@
 				ENABLE_USER_SELECTED_FILES = NO;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_CFBundleDisplayName = Echolume;
-				INFOPLIST_KEY_SentryDSN = "$(SENTRY_DSN)";
+				INFOPLIST_FILE = echolume/Info.plist;
 				INFOPLIST_KEY_ITSAppUsesNonExemptEncryption = NO;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.music";
 				INFOPLIST_KEY_NSHumanReadableCopyright = "Copyright © 2026 IAMJARL. All rights reserved.";
