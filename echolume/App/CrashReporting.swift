@@ -48,6 +48,7 @@ enum CrashReporting {
             // force the shared user. On Apple, transactions also pass through here.
             options.beforeSend = { event in
                 Self.scrubIdentifiers(event)
+                Self.redactPaths(event)
                 return event
             }
         }
@@ -73,6 +74,44 @@ enum CrashReporting {
             event.context = context
         }
         event.user = anonymousUser()
+    }
+
+    /// Replaces the account name in any `/Users/<name>/…` path with
+    /// `/Users/<redacted>`, keeping the rest of the path so a crash stays
+    /// readable. The home directory shows up in stack-frame packages and in
+    /// debug-image file paths whenever the app runs from somewhere under it
+    /// (a direct build, `~/Applications`, `~/Downloads`), and the account name
+    /// is an identifier, so it must not leave the device.
+    static func redactUserPaths(_ path: String) -> String {
+        path.replacingOccurrences(
+            of: "/Users/[^/]+",
+            with: "/Users/<redacted>",
+            options: .regularExpression
+        )
+    }
+
+    /// Runs `redactUserPaths` over every stack-frame package (exception and
+    /// thread stacktraces) and every debug-image code file on the event.
+    private static func redactPaths(_ event: Event) {
+        for exception in event.exceptions ?? [] {
+            for frame in exception.stacktrace?.frames ?? [] {
+                if let package = frame.package {
+                    frame.package = redactUserPaths(package)
+                }
+            }
+        }
+        for thread in event.threads ?? [] {
+            for frame in thread.stacktrace?.frames ?? [] {
+                if let package = frame.package {
+                    frame.package = redactUserPaths(package)
+                }
+            }
+        }
+        for image in event.debugMeta ?? [] {
+            if let codeFile = image.codeFile {
+                image.codeFile = redactUserPaths(codeFile)
+            }
+        }
     }
 
     /// DSN from the environment, else the Info.plist key `SentryDSN` (= `$(SENTRY_DSN)`).
