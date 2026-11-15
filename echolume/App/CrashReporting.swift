@@ -32,8 +32,9 @@ enum CrashReporting {
 
             // Nothing that identifies or watches.
             options.sendDefaultPii = false          // Sentry's onboarding turns this on; we don't.
-            options.attachScreenshot = false
-            options.attachViewHierarchy = false
+            // Screenshots and view hierarchy are iOS/tvOS/visionOS-only in
+            // sentry-cocoa and never capture on macOS, so there is nothing to
+            // switch off here (the recipe's "no watching" holds by platform).
             options.enableAutoSessionTracking = false   // off until the envelope test (#233 rule 6)
             options.enableMetricKit = true              // hangs, launch and other diagnostics
 
